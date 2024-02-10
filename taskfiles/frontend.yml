@@ -1,0 +1,19 @@
+version: "3"
+
+tasks:
+  dev:
+    dir: frontend
+    cmds:
+      - yarn dev
+  build:
+    dir: frontend
+    cmds:
+      - yarn build
+  test:
+    dir: frontend
+    cmds:
+      - echo "nothing yet"
+  install:
+    dir: frontend
+    cmds:
+      - yarn install

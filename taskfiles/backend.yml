@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  dev:
+    dir: backend/cmd/api
+    cmds:
+      - go run
+  test:
+    dir: backend
+    cmds:
+      - go test -v
+  tidy:
+    dir: backend
+    cmds:
+      - go mod tidy

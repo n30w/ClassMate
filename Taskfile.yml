@@ -1,0 +1,30 @@
+version: "3"
+
+includes:
+  front: ./taskfiles/frontend.yml
+  back: ./taskfiles/backend.yml
+
+tasks:
+  # Initializes tests
+  test:
+    cmds:
+      - task back:test
+
+  # Starts dev servers for both frontend and backend
+  dev:
+    cmds:
+      - task front:dev
+      - task back:dev
+
+  # Builds the frontend for deployment (will be done by Vercel)
+  # Builds the backend for deployment using go
+  build:
+    cmds:
+      - task front:build
+      - task back:build
+
+  # Setup commands for running locally for the first time
+  first-time:
+    cmds:
+      - task front:install
+      - task back:tidy
