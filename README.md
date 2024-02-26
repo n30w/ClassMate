@@ -106,3 +106,8 @@ We must implement endpoint testing.
 
 - [Running postgresql in a Docker container](https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/)
 - [Golang-Nginx-Postgres Docker Compose](https://github.com/docker/awesome-compose/tree/master/nginx-golang-postgres)
+
+## Ideas
+
+- Invite students through link or code
+- Need auth for API routes
