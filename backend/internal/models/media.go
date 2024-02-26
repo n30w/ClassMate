@@ -2,10 +2,21 @@ package models
 
 import "time"
 
+type filetype int
+
+const (
+	JPG filetype = iota
+	PNG
+	PDF
+	M4A
+	MP3
+	NULL
+)
+
 type Media struct {
-	name               string
-	uuid               string
-	dateUploaded       time.Time
-	courseAttributions []Course
-	fileType           string
+	Name               string
+	Uuid               string
+	DateUploaded       time.Time
+	CourseAttributions []Course
+	FileType           string
 }

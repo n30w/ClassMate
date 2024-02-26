@@ -3,28 +3,28 @@ package models
 import "time"
 
 type Assignment struct {
-	name        string
-	uuid        string
-	media       Media
-	discussion  Discussion
-	dueDate     time.Time
-	description string
+	Name        string
+	Uuid        string
+	Media       Media
+	Discussion  Discussion
+	DueDate     time.Time
+	Description string
 }
 
 type Course struct {
-	name        string
-	uuid        string
-	discussions [10]Discussion
-	teachers    []Teacher
-	roster      []Student
-	assignments []Assignment
-	archived    bool
+	Name        string
+	Uuid        string
+	Discussions [10]Discussion
+	Teachers    []Teacher
+	Roster      []Student
+	Assignments []Assignment
+	Archived    bool
 }
 
 type Student struct {
-	user User
+	User User
 }
 
 type Teacher struct {
-	user User
+	User User
 }

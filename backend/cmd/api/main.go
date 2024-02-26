@@ -42,6 +42,32 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
 
+	// Course CRUD operations
+	mux.HandleFunc("/v1/course/create", app.courseCreateHandler)
+	mux.HandleFunc("/v1/course/{id}", app.courseReadHandler)
+	mux.HandleFunc("/v1/course/{id}/update", app.courseUpdateHandler)
+
+	// User CRUD operations
+	mux.HandleFunc("/v1/user/create", app.userCreateHandler)
+	mux.HandleFunc("/v1/user/{id}", app.userReadHandler)
+	mux.HandleFunc("/v1/user/{id}/update", app.userUpdateHandler)
+	mux.HandleFunc("/v1/user/{id}/delete", app.userDeleteHandler)
+
+	// Assignment CRUD operations
+	mux.HandleFunc("/v1/course/assignment/create", app.assignmentCreateHandler)
+	mux.HandleFunc("/v1/course/assignment/{id}", app.assignmentReadHandler)
+	mux.HandleFunc("/v1/course/assignment/{id}/update", app.assignmentUpdateHandler)
+	mux.HandleFunc("/v1/course/assignment/{id}/delete", app.assignmentDeleteHandler)
+
+	// Discussion CRUD operations
+	mux.HandleFunc("/v1/course/discussion/create", app.discussionCreateHandler)
+	mux.HandleFunc("/v1/course/discussion/{id}", app.discussionReadHandler)
+	mux.HandleFunc("/v1/course/discussion/{id}/update", app.discussionUpdateHandler)
+	mux.HandleFunc("/v1/course/discussion/{id}/delete", app.discussionDeleteHandler)
+
+	// Login will require authorization, body will contain the credential info
+	mux.HandleFunc("/v1/user/login", app.userLoginHandler)
+
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      mux,
