@@ -32,6 +32,10 @@ We are using ```yarn``` and NOT npm.
 
 - Next.js
   - Next Auth
+  - Jest (Unit testing)
+  - Cypress (Component and E2E testing)
+  - [Playwright](https://playwright.dev/)
+  - [Mock Service Worker](https://mswjs.io/)
 
 ### Backend
 
@@ -41,6 +45,10 @@ Our database for the backend is SQL based.
   - Gin
   - pq
 - Postgresql
+- Nginx
+- Ngrok
+
+I'm not sure whether we are going to use Nginx or Ngrok. Ngrok requires less work.
 
 #### Directory Structure
 
@@ -88,6 +96,11 @@ We must implement endpoint testing.
 
 - [Setting up and using postgresql on Mac](https://www.sqlshack.com/setting-up-a-postgresql-database-on-mac/)
 - [Setting postgresql on Windows](https://www.prisma.io/dataguide/postgresql/setting-up-a-local-postgresql-database#setting-up-postgresql-on-windows)
+
+### Postgresql
+
+- [Tuning postgresql for memory](https://www.enterprisedb.com/postgres-tutorials/how-tune-postgresql-memory)
+- [Postgresql tuner webapp](https://pgtune.leopard.in.ua/)
 
 ### Docker
 
