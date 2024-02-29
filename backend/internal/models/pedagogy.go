@@ -21,10 +21,21 @@ type Course struct {
 	Archived    bool
 }
 
-type Student struct {
-	User User
+// Contains anything related to communications,
+// such as discussion posts and user messages.
+type Discussion struct {
+	name            string
+	description     string
+	participants    []User
+	mediaReferences []Media
+	commentThreads  []string
 }
 
-type Teacher struct {
-	User User
+type Project struct {
+	Name            string
+	Uuid            string
+	Deadline        time.Time
+	MediaReferences []Media
+	Members         []User
+	Discussion      Discussion
 }

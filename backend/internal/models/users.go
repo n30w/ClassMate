@@ -12,7 +12,15 @@ type User struct {
 	ModifiedDate   time.Time
 	FullName       string
 	ProfilePicture Media
-	Projects       []project
+	Projects       []Project
 	Courses        []Course
 	Bio            string
+}
+
+type Student struct {
+	User User
+}
+
+type Teacher struct {
+	User User
 }
