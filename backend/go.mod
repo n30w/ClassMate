@@ -1,3 +1,3 @@
-module n30w/Darkspace
+module github.com/n30w/Darkspace
 
-go 1.22
+go 1.22.0
