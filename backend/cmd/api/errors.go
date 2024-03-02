@@ -8,6 +8,12 @@ import "net/http"
 // capabilities. Many of these functions contain
 // side effects.
 
+type ServerError error
+
+var (
+	MALFORMED_JSON_SYNTAX ServerError = ServerError(errors.New("malformed json syntax"))
+)
+
 // logError logs an error using the application's logger.
 func (app *application) logError(r *http.Request, err error) {
 	app.logger.Print(err)
