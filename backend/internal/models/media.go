@@ -14,9 +14,9 @@ const (
 )
 
 type Media struct {
-	Name               string
-	Uuid               string
-	DateUploaded       time.Time
-	CourseAttributions []Course
-	FileType           string
+	Name               string    `json:"name"`
+	Uuid               string    `json:"uuid"`
+	DateUploaded       time.Time `json:"date_uploaded"`
+	CourseAttributions []Course  `json:"course_attributions"`
+	FileType           string    `json:"file_type"`
 }
