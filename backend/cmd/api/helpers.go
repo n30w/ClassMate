@@ -85,21 +85,17 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 	}
 
 	return nil
-
 }
 
-// writeJSON ingests a map of map[string]any and writes it to a
+// writeJSON ingests a data, map of map[string]any, and writes it to a
 // http.ResponseWriter stream. It returns an error in case
 // there was one writing to the stream.
 func (app *application) writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
 
-	js, err := json.Marshal(data)
+	js, err := jsonBuilder(data)
 	if err != nil {
 		return err
 	}
-
-	// Convenience \n for terminal view
-	js = append(js, '\n')
 
 	// Add any headers
 	for k, v := range headers {
@@ -112,4 +108,19 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data any, h
 	w.Write(js)
 
 	return nil
+}
+
+// jsonBuilder builds a JSON that can then be written to
+// an http.ResponseWriter stream. The parameter "data", is a
+// map[string]any
+func jsonBuilder(data any) ([]byte, error) {
+	js, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convenience \n for terminal view
+	js = append(js, '\n')
+
+	return js, nil
 }
