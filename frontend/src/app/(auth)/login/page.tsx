@@ -5,11 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 
 const page = () => {
-  const [isBlurred, setIsBlurred] = useState(false);
+  // const [isBlurred, setIsBlurred] = useState(false);
 
-  const handleFormClick = (): void => {
-    setIsBlurred(true);
-  };
+  // const handleFormClick = (): void => {
+  //   setIsBlurred(true);
+  // };
 
   return (
     <div className="flex h-screen">
@@ -36,7 +36,7 @@ const page = () => {
             action="login.php"
             method="post"
             className="flex flex-col"
-            onClick={handleFormClick}
+            // onClick={handleFormClick}
           >
             <label htmlFor="email" className="text-white font-light py-2">
               Email<span className="text-red-500">*</span>
@@ -68,16 +68,19 @@ const page = () => {
           </form>
           <h3 className="text-white font-light text-sm text-center">
             Don't have an account yet?{" "}
+            <Link href="signup" className='underline'>
               Sign up
+            </Link>
           </h3>
         </div>
       </div>
       <div
-        className={`w-1/2 overflow-hidden ${
-          isBlurred
-            ? "filter blur-sm scale-105 transition-all duration-10000"
-            : ""
-        }`}
+        // className={`w-1/2 overflow-hidden ${
+        //   isBlurred
+        //     ? "filter blur-sm scale-105 transition-all duration-10000"
+        //     : ""
+        // }`}
+        className="w-1/2"
         style={{
           backgroundImage: `url('/backgrounds/auth-bg.png')`,
           backgroundSize: "cover",
