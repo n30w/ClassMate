@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-const page = () => {
+export default function Page() {
   // const [isBlurred, setIsBlurred] = useState(false);
 
   // const handleFormClick = (): void => {
@@ -49,7 +49,7 @@ const page = () => {
               required
               className="w-80 h-10 px-4 mb-8"
             />
-            <label htmlFor="password" className="text-white font-ligh py-2">
+            <label htmlFor="password" className="text-white font-light py-2">
               Password<span className="text-red-500">*</span>
             </label>
             <input
@@ -67,8 +67,8 @@ const page = () => {
             />
           </form>
           <h3 className="text-white font-light text-sm text-center">
-            Don't have an account yet?{" "}
-            <Link href="signup" className='underline'>
+            Don&apos;t have an account yet?{" "}
+            <Link href="signup" className="underline">
               Sign up
             </Link>
           </h3>
@@ -89,6 +89,4 @@ const page = () => {
       ></div>
     </div>
   );
-};
-
-export default page;
+}

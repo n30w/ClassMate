@@ -3,51 +3,57 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import validatePassword from "@/app/lib/passwordValidator";
 
-const page = () => {
-//   const [isBlurred, setIsBlurred] = useState(false);
+export default function Page() {
+  //   const [isBlurred, setIsBlurred] = useState(false);
 
-//   const handleFormClick = (): void => {
-//     setIsBlurred(true);
-//   };
+  //   const handleFormClick = (): void => {
+  //     setIsBlurred(true);
+  //   };
 
-  const [password, setPassword] = useState<string>('');
-  const [reenteredPassword, setReenteredPassword] = useState<string>('');
-  const [passwordError, setPasswordError] = useState<string>('');
-  const [reenteredPasswordError, setReenteredPasswordError] = useState<string>('');
+  const [password, setPassword] = useState<string>("");
+  const [reenteredPassword, setReenteredPassword] = useState<string>("");
+  const [passwordError, setPasswordError] = useState<string>("");
+  const [reenteredPasswordError, setReenteredPasswordError] =
+    useState<string>("");
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handlePasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const newPassword = e.target.value;
     setPassword(newPassword);
-    setPasswordError('');
-    if (passwordError) setPasswordError('');
+    setPasswordError("");
+    if (passwordError) setPasswordError("");
   };
 
-  const handleReenteredPasswordChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleReenteredPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const newReenteredPassword = e.target.value;
     setReenteredPassword(newReenteredPassword);
-    setReenteredPasswordError('');
-    if (reenteredPasswordError) setReenteredPasswordError('');
+    setReenteredPasswordError("");
+    if (reenteredPasswordError) setReenteredPasswordError("");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const isValidPassword = validatePassword(password);
     const doPasswordsMatch = password === reenteredPassword;
-    if (!isValidPassword) {
-      setPasswordError('Password must have at least one letter, one number, one special character, and must be at least 8 characters long.');
-      return;
-    }
-    if (!doPasswordsMatch) {
-      setReenteredPasswordError('Passwords do not match.');
-      return;
-    }
-    console.log('Form submitted');
-  };
 
-  const validatePassword = (password: string): boolean => {
-    const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return regex.test(password);
+    if (!isValidPassword) {
+      setPasswordError(
+        "Password must have at least one letter, one number, one special character, and at least 8 characters long."
+      );
+      return;
+    }
+
+    if (!doPasswordsMatch) {
+      setReenteredPasswordError("Passwords do not match.");
+      return;
+    }
+
+    console.log("Form submitted");
   };
 
   return (
@@ -89,7 +95,7 @@ const page = () => {
               required
               className="w-80 h-10 px-4 mb-8"
             />
-            <label htmlFor="password" className="text-white font-ligh py-2">
+            <label htmlFor="password" className="text-white font-light py-2">
               Password<span className="text-red-500">*</span>
             </label>
             <input
@@ -100,10 +106,17 @@ const page = () => {
               required
               value={password}
               onChange={handlePasswordChange}
-              className={`w-80 h-10 px-4 mb-8 ${passwordError && 'border-red-500'}`}
+              className={`w-80 h-10 px-4 mb-8 ${
+                passwordError && "border-red-500"
+              }`}
             />
-            {passwordError && <p className="text-red-500 pb-2">{passwordError}</p>}
-            <label htmlFor="reentered-password" className="text-white font-ligh py-2">
+            {passwordError && (
+              <p className="text-red-500 pb-2">{passwordError}</p>
+            )}
+            <label
+              htmlFor="reentered-password"
+              className="text-white font-ligh py-2"
+            >
               Re-enter Password<span className="text-red-500">*</span>
             </label>
             <input
@@ -112,17 +125,21 @@ const page = () => {
               name="reentered-password"
               placeholder="••••••••••"
               required
-              className={`w-80 h-10 px-4 mb-8 ${reenteredPasswordError && 'border-red-500'}`}
+              className={`w-80 h-10 px-4 mb-8 ${
+                reenteredPasswordError && "border-red-500"
+              }`}
             />
-            {reenteredPasswordError && <p className="text-red-500 pb-2">{reenteredPasswordError}</p>}
+            {reenteredPasswordError && (
+              <p className="text-red-500 pb-2">{reenteredPasswordError}</p>
+            )}
             <input
               type="submit"
-              className='text-white font-bold w-40 h-10 px-4 border border-white my-16 hover:bg-gray-400 active:bg-white active:text-black'
+              className="text-white font-bold w-40 h-10 px-4 border border-white my-16 hover:bg-gray-400 active:bg-white active:text-black"
             />
           </form>
           <h3 className="text-white font-light text-sm text-center">
             Already have an account?{" "}
-            <Link href="login" className='underline'>
+            <Link href="login" className="underline">
               Log in
             </Link>
           </h3>
@@ -143,6 +160,4 @@ const page = () => {
       ></div>
     </div>
   );
-};
-
-export default page;
+}
