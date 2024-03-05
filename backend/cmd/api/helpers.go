@@ -1,28 +1,41 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // jsonWrap wraps a json message response before it gets sent out.
 // This makes it easier for the requester to read the JSON data
 // they get back. You can imagine that this "envelops" the json
 // data that will go into it.
+// TODO: Add example
 type jsonWrap map[string]any
 
-// readJSON reads JSON from a response. This is a more effective
-// way to "triage" errors and issues that arise from
-// decoding JSON data. This is a variation of the readJSON function in the book
-// Let's Go Further by Alex Edwards, page 90.
-// Whats key is that the method call must use a reference for
+// readJSON reads JSON from a request,
+// and places the result in a dst of type any.
+// This MUST be a reference and not a pass by value.
+// Furthermore, this type will be of map[string]any.
+// The error handling logic here is a more effective way to "triage" errors (
+// view documentation for a link to the definition of triage) and
+// issues/that/arise/from decoding JSON data.
+// This is a variation of the readJSON function in the book
+// "Let's Go Further" by Alex Edwards,
+// page 90. What's key is that the method call must use a reference for
 // dst, since that is typically what is consumed in a JSON decode.
-func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
-	// maximum amount of bytes our JSON reader will accept, which is 1MB.
+func (app *application) readJSON(
+	w http.ResponseWriter,
+	r *http.Request,
+	dst any,
+) error {
+	// Maximum amount of bytes our JSON reader will accept, which is 1MB.
 	maxBytes := 1_048_576
 
 	// Limit the size of the incoming request.
@@ -47,17 +60,26 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 
 		switch {
 		case errors.As(err, &syntaxError):
-			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+			return fmt.Errorf(
+				"body contains badly-formed JSON (at character %d)",
+				syntaxError.Offset,
+			)
 
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			return errors.New("body contains badly-formed JSON")
 
 		case errors.As(err, &unmarshalTypeError):
 			if unmarshalTypeError.Field != "" {
-				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+				return fmt.Errorf(
+					"body contains incorrect JSON type for field %q",
+					unmarshalTypeError.Field,
+				)
 			}
 
-			return fmt.Errorf("body contains incorrect JSON type (at character %d)", unmarshalTypeError.Offset)
+			return fmt.Errorf(
+				"body contains incorrect JSON type (at character %d)",
+				unmarshalTypeError.Offset,
+			)
 
 		case errors.Is(err, io.EOF):
 			return errors.New("body must not be empty")
@@ -69,7 +91,10 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 			return fmt.Errorf("body contains unknown key %s", fieldName)
 
 		case errors.As(err, &maxBytesError):
-			return fmt.Errorf("body must not be larger than %d bytes", maxBytesError.Limit)
+			return fmt.Errorf(
+				"body must not be larger than %d bytes",
+				maxBytesError.Limit,
+			)
 
 		case errors.As(err, &invalidUnmarshalError):
 			panic(err)
@@ -90,7 +115,12 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 // writeJSON ingests a data, map of map[string]any, and writes it to a
 // http.ResponseWriter stream. It returns an error in case
 // there was one writing to the stream.
-func (app *application) writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
+func (app *application) writeJSON(
+	w http.ResponseWriter,
+	status int,
+	data any,
+	headers http.Header,
+) error {
 
 	js, err := jsonBuilder(data)
 	if err != nil {
@@ -111,7 +141,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data any, h
 }
 
 // jsonBuilder builds a JSON that can then be written to
-// an http.ResponseWriter stream. The parameter "data", is a
+// a http.ResponseWriter stream. The parameter "data", is a
 // map[string]any
 func jsonBuilder(data any) ([]byte, error) {
 	js, err := json.Marshal(data)
