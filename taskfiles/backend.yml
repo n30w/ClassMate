@@ -8,7 +8,7 @@ tasks:
   test:
     dir: backend
     cmds:
-      - go test -v
+      - go test -v ./backend/**
   tidy:
     dir: backend
     cmds:
