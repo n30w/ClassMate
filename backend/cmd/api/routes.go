@@ -4,9 +4,15 @@ import "net/http"
 
 func (app *application) routes() *http.ServeMux {
 
+	// Enhanced routing patterns in Go 1.22. HandleFuncs now
+	// accept a method and a route variable parameter.
+	// https://tip.golang.org/doc/go1.22
+
 	router := http.NewServeMux()
 
-	router.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
+	router.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
+	router.HandleFunc("GET /v1/home", app.homeHandler)
+	router.HandleFunc("GET /v1/course/{id}", app.courseHomepageHandler)
 
 	// Course CRUD operations
 	router.HandleFunc("/v1/course/create", app.courseCreateHandler)
