@@ -154,3 +154,23 @@ func jsonBuilder(data any) ([]byte, error) {
 
 	return js, nil
 }
+
+// Database helpers
+
+// openDB opens a connection to the database using a certain config.
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open(cfg.db.driver, cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
