@@ -111,3 +111,9 @@ We must implement endpoint testing.
 
 - Invite students through link or code
 - Need auth for API routes
+
+## Glossary
+
+Here are software development terms that may be unfamiliar and are found during the development process.
+
+- [Triage](https://dictionary.cambridge.org/dictionary/english/triage)
