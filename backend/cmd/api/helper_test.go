@@ -15,7 +15,7 @@ func TestJsonBuilder(t *testing.T) {
 		got, _ = jsonBuilder(&data)
 
 		// Compare each index of the byte slice.
-		for i := range len(got) {
+		for i := range got {
 			if want[i] != got[i] {
 				t.Errorf("Incorrect JSON Output: got: %s, want: %s", got, want)
 				return
@@ -54,7 +54,7 @@ func TestJsonBuilder(t *testing.T) {
 		got, _ = jsonBuilder(&data)
 
 		// Compare each index of the byte slice.
-		for i := range len(got) {
+		for i := range got {
 			if want[i] != got[i] {
 				t.Errorf("Incorrect JSON Output: got: %s, want: %s", got, want)
 				return
@@ -74,7 +74,7 @@ func TestJsonBuilder(t *testing.T) {
 		got, _ = jsonBuilder(&data)
 
 		// Compare each index of the byte slice.
-		for i := range len(got) {
+		for i := range got {
 			if want[i] != got[i] {
 				t.Errorf("Incorrect JSON Output: got: %s, want: %s", got, want)
 				return
