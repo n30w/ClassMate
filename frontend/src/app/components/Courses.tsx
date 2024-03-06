@@ -6,7 +6,6 @@ import Image from "next/image";
 interface CourseProps {
   coursename: string;
   professor: string;
-  time: string;
   loc: string;
 }
 
@@ -26,7 +25,6 @@ const Course: React.FC<CourseProps> = (props) => {
               {props.coursename}
             </h1>
             <h2 className="text-white mb-2">with {props.professor}</h2>
-            <h3 className="text-white font-light text-sm">{props.time}</h3>
             <h3 className="text-white font-light text-sm">{props.loc}</h3>
           </div>
         </div>

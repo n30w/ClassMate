@@ -8,10 +8,31 @@ import CreateCourse from "./components/CreateCourse";
 export default function Home() {
   const currentDate = new Date().toLocaleDateString();
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+
+  interface Course {
+    title: string;
+    professor: string;
+    location: string;
+  }
+
+  const handleCreateCourse = (courseData: any) => {
+    setCourses([...courses, courseData]);
+  };
 
   const handleClick = (e: any) => {
     setIsCreatingCourse(true);
   };
+
+  const courseDisplay = courses.map((course) => {
+    return (
+      <Courses
+        coursename={course.title}
+        professor={course.professor}
+        loc={course.location}
+      />
+    );
+  });
 
   return (
     <div>
@@ -44,7 +65,7 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="bg-white">
+      <div className="bg-white bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
           <h1 className="font-bold text-2xl">Spring 2024</h1>
           <button
@@ -54,23 +75,13 @@ export default function Home() {
             + Create Course
           </button>
         </div>
-        <Courses
-          coursename="Software Engineering"
-          professor="Xu, Lihua"
-          time="Tue,Thu 3.45 PM - 5.00 PM"
-          loc="Room S311"
-        />
-        <Courses
-          coursename="Software Engineering"
-          professor="Xu, Lihua"
-          time="Tue,Thu 3.45 PM - 5.00 PM"
-          loc="Room S311"
-        />
+        {courseDisplay}
         {isCreatingCourse && (
           <CreateCourse
             onClose={() => {
               setIsCreatingCourse(false);
             }}
+            onCourseCreate={handleCreateCourse}
           />
         )}
       </div>
