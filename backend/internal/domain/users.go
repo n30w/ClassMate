@@ -1,4 +1,4 @@
-package models
+package domain
 
 import (
 	"errors"
@@ -33,13 +33,18 @@ type User struct {
 	ac *accessControl
 }
 
-func (u User) createDiscussion(title string, description string, media []Media, date time.Time) Discussion {
-	return Discussion{
-		Name:            title,
-		Description:     description,
-		MediaReferences: media,
-	}
-}
+//func (u User) createDiscussion(
+//	title string,
+//	description string,
+//	media []Media,
+//	date time.Time,
+//) Discussion {
+//	return Discussion{
+//		Name:            title,
+//		Description:     description,
+//		MediaReferences: media,
+//	}
+//}
 
 type userConfig struct {
 	creds [4]credentials

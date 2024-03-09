@@ -1,4 +1,4 @@
-package models
+package domain
 
 import "time"
 
@@ -10,6 +10,7 @@ const (
 	PDF
 	M4A
 	MP3
+	TXT
 	NULL
 )
 

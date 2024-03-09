@@ -1,10 +1,10 @@
-package models
+package domain
 
 import "time"
 
 type Post struct {
 	Title       string
-	Uuid        string
+	ID          string
 	Description string
 	Media       []Media
 	Date        time.Time
@@ -32,7 +32,7 @@ type Submission struct {
 
 type Course struct {
 	Name        string         `json:"name"`
-	Uuid        string         `json:"uuid"`
+	ID          int64          `json:"id"`
 	Discussions [10]Discussion `json:"discussions"`
 	Teachers    []User         `json:"teachers"`
 	Roster      []User         `json:"roster"`
@@ -59,7 +59,7 @@ type Comment struct {
 
 type Project struct {
 	Name            string     `json:"name"`
-	Uuid            string     `json:"uuid"`
+	ID              string     `json:"id"`
 	Deadline        time.Time  `json:"deadline"`
 	MediaReferences []Media    `json:"media_references"`
 	Members         []User     `json:"members"`

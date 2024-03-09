@@ -1,4 +1,4 @@
-package models
+package domain
 
 type credentials interface {
 	// valid validates whether a certain type of credential
