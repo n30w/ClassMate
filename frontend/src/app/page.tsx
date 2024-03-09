@@ -6,7 +6,6 @@ import React, { useState } from "react";
 import CreateCourse from "./components/CreateCourse";
 
 export default function Home() {
-  const currentDate = new Date().toLocaleDateString();
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
 
@@ -35,7 +34,7 @@ export default function Home() {
   });
 
   return (
-    <div>
+    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <nav
         style={{
           backgroundImage: `url('/backgrounds/dashboard-bg.jpeg')`,
@@ -65,11 +64,11 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="bg-white bg-cover bg-no-repeat">
+      <div className="bg-black bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
-          <h1 className="font-bold text-2xl">Spring 2024</h1>
+          <h1 className="font-bold text-2xl text-white">Spring 2024</h1>
           <button
-            className="rounded-full bg-black text-white font-light px-4 py-2 h-12"
+            className="rounded-full bg-white text-black font-light px-4 py-2 h-12"
             onClick={handleClick}
           >
             + Create Course

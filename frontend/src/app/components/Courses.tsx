@@ -1,6 +1,6 @@
-import Announcements from "./Announcements";
-import Assignments from "./Assignments";
-import Discussions from "./Discussions";
+import Announcements from "./DashboardAnnouncements";
+import Assignments from "./DashboardAssignments";
+import Discussions from "./DashboardDiscussions";
 import Image from "next/image";
 
 interface CourseProps {
@@ -12,12 +12,13 @@ interface CourseProps {
 const Course: React.FC<CourseProps> = (props) => {
   return (
     <div className="py-4 px-32">
-      <div className="flex border border-gray-300">
-        <div className="relative flex-col">
+      <div className="flex border border-white">
+        <div className="relative flex-col h-96 w-96">
           <Image
-            src="/backgrounds/course-bg.png"
-            width="340"
-            height="340"
+            src="/backgrounds/course-bg.jpg"
+            className="object-cover w-full h-full"
+            width={340}
+            height={340}
             alt="Course Background"
           />
           <div className="absolute inset-0 flex flex-col justify-end items-start text-white p-4">
