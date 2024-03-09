@@ -1,13 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/n30w/Darkspace/internal/dao"
 )
 
 const version = "1.0.0"
@@ -30,7 +31,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
-	sql    *sql.DB
+	models *dao.Models
 }
 
 func main() {
@@ -59,7 +60,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
-		sql:    db,
+		models: dao.NewModels(db),
 	}
 
 	server := &http.Server{

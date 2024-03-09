@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	models "github.com/n30w/Darkspace/internal/models"
+	models "github.com/n30w/Darkspace/internal/domain"
 )
 
 // homeHandler returns a set template of information needed for the home
@@ -15,18 +15,35 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// courseHomepageHandler returns any relevant data about a course from
-// anything requested by the client.
+// courseHomepageHandler returns data related to the homepage of a course.
+//
+// REQUEST: course id
+// RESPONSE:
 func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	// Retrieve that value of the {id} path in the URL using r.PathValue("id")
+	id := r.PathValue("id")
 
-	// Check database for course ID name.
+	var course *models.Course
+	var err error
+
+	course, err = app.models.Course.Get(id)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{}
+
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 
 	// If the course ID exists in the database AND the user requesting this
 	// data has the appropriate permissions, retrieve the course data requested.
+
 }
 
 // createCourseHandler creates a course.
@@ -37,18 +54,40 @@ func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var req models.Course
 
-	err := app.readJSON(w, r, &req)
+	var input struct {
+		Title       string `json:"title"`
+		TeacherName string `json:"username"`
+	}
+
+	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
+
+	var course *models.Course
+
+	// Validate if there is a name associated with the course.
+	// We can also do a fuzzy match of course names.
+	course, err = app.models.Course.Get(input.Title)
+
+	// If course already exists, send error.
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// if not, proceed with course creation.
+	err = app.models.Course.Insert(course)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	// Return success.
 }
 
 // courseReadHandler relays information back to the requester
 // about a certain course.
 //
-// REQUEST: course uuid
+// REQUEST: course ID
 // RESPONSE: course data
 func (app *application) courseReadHandler(
 	w http.ResponseWriter,
@@ -58,7 +97,7 @@ func (app *application) courseReadHandler(
 
 // courseUpdateHandler updates information about a course.
 //
-// REQUEST: course uuid + fields to update
+// REQUEST: course ID + fields to update
 // RESPONSE: course
 func (app *application) courseUpdateHandler(
 	w http.ResponseWriter,
@@ -68,7 +107,7 @@ func (app *application) courseUpdateHandler(
 
 // courseDeleteHandler deletes a course.
 //
-// REQUEST: course uuid.
+// REQUEST: course ID.
 // RESPONSE: updated list of courses
 func (app *application) courseDeleteHandler(
 	w http.ResponseWriter,
@@ -80,12 +119,13 @@ func (app *application) courseDeleteHandler(
 
 // userCreateHandler creates a user.
 //
-// REQUEST: email, password, full name
+// REQUEST: email, password, full name, netid
 // RESPONSE: home page
 func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	// use credential validation
 }
 
 // userReadHandler reads a specific user's data,
