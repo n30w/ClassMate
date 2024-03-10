@@ -3,13 +3,16 @@
 import Image from "next/image";
 import Courses from "./components/Courses";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import CreateCourse from "./components/CreateCourse";
 
-export default function Home() {
+const Home: any = () => {
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
+  const router = useRouter();
 
   interface Course {
+    id: string;
     title: string;
     professor: string;
     location: string;
@@ -26,9 +29,11 @@ export default function Home() {
   const courseDisplay = courses.map((course) => {
     return (
       <Courses
+        key={course.id}
         coursename={course.title}
         professor={course.professor}
         loc={course.location}
+        onClick={() => router.push(`/course/${course.id}`)}
       />
     );
   });
@@ -86,4 +91,6 @@ export default function Home() {
       </div>
     </div>
   );
-}
+};
+
+export default Home;

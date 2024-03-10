@@ -7,11 +7,12 @@ interface CourseProps {
   coursename: string;
   professor: string;
   loc: string;
+  onClick?: () => void;
 }
 
 const Course: React.FC<CourseProps> = (props) => {
   return (
-    <div className="py-4 px-32">
+    <div className="py-4 px-32" onClick={props.onClick}>
       <div className="flex border border-white">
         <div className="relative flex-col h-96 w-96">
           <Image

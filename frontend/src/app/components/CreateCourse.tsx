@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 const CreateCourse = (props: any) => {
   const [courseData, setCourseData] = useState({
+    id: "",
     title: "",
     professor: "",
     location: "",
@@ -19,6 +20,11 @@ const CreateCourse = (props: any) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
+    const idnum = Date.now().toString();
+    setCourseData({
+      ...courseData,
+      id: idnum,
+    });
     props.onCourseCreate(courseData);
     props.onClose();
   };
