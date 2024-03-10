@@ -3,6 +3,7 @@
         "cmds",
         "Darkspace",
         "healthcheck",
+        "netid",
         "Taskfile",
         "taskfiles",
         "Vercel"
