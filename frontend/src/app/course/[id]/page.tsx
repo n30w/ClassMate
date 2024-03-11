@@ -1,10 +1,9 @@
-import React, { useState } from "react";
 import Image from "next/image";
-import Announcements from "@/app/components/Announcements";
-import Assignments from "@/app/components/Assignments";
-import Discussions from "@/app/components/Discussions";
+import Announcements from "@/components/Announcements";
+import Assignments from "@/components/Assignments";
+import Discussions from "@/components/Discussions";
 
-const page = () => {
+export default function Page() {
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <nav
@@ -69,6 +68,4 @@ const page = () => {
       </div>
     </div>
   );
-};
-
-export default page;
+}
