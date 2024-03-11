@@ -7,21 +7,31 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/n30w/Darkspace/internal/dao"
 )
 
 const version = "1.0.0"
 
 type config struct {
-	// port the server will run on.
+	// Port the server will run on.
 	port int
 
-	// runtime environment, either "development", "staging", or "production".
+	// Runtime environment, either "development", "staging", or "production".
 	env string
+
+	// Database configurations
+	db struct {
+		// Database driver and DataSourceName
+		driver string
+		dsn    string
+	}
 }
 
 type application struct {
 	config config
 	logger *log.Logger
+	models *dao.Models
 }
 
 func main() {
@@ -29,14 +39,28 @@ func main() {
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 6789, "API server port")
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.StringVar(
+		&cfg.env,
+		"env",
+		"development",
+		"Environment (development|staging|production)",
+	)
+
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	defer db.Close()
+
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: dao.NewModels(db),
 	}
 
 	server := &http.Server{
@@ -49,8 +73,7 @@ func main() {
 
 	logger.Printf("starting %s server on %s", cfg.env, server.Addr)
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 
 	logger.Fatal(err)
-
 }
