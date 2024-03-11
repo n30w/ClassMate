@@ -1,36 +1,32 @@
 "use client";
 
 import Image from "next/image";
-import Courses from "./components/Courses";
+import Courses from "@/components/Courses";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import CreateCourse from "./components/CreateCourse";
+import CreateCourse from "@/components/CreateCourse";
 
-const Home: any = () => {
+interface Course {
+  id: string;
+  title: string;
+  professor: string;
+  location: string;
+}
+
+export default function Home() {
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const router = useRouter();
 
-  interface Course {
-    id: string;
-    title: string;
-    professor: string;
-    location: string;
-  }
-
   const handleCreateCourse = (courseData: any) => {
     setCourses([...courses, courseData]);
-  };
-
-  const handleClick = (e: any) => {
-    setIsCreatingCourse(true);
   };
 
   const courseDisplay = courses.map((course) => {
     return (
       <Courses
         key={course.id}
-        coursename={course.title}
+        courseName={course.title}
         professor={course.professor}
         loc={course.location}
         onClick={() => router.push(`/course/${course.id}`)}
@@ -74,7 +70,9 @@ const Home: any = () => {
           <h1 className="font-bold text-2xl text-white">Spring 2024</h1>
           <button
             className="rounded-full bg-white text-black font-light px-4 py-2 h-12"
-            onClick={handleClick}
+            onClick={() => {
+              setIsCreatingCourse(true);
+            }}
           >
             + Create Course
           </button>
@@ -91,6 +89,4 @@ const Home: any = () => {
       </div>
     </div>
   );
-};
-
-export default Home;
+}
