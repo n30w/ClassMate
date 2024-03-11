@@ -1,4 +1,4 @@
-const Assignments = () => {
+const Assignments: React.FC = () => {
   const homeworks = [
     { name: "Homework 1", duedate: "Feb 8" },
     { name: "Homework 2", duedate: "Feb 25" },

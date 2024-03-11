@@ -2,11 +2,16 @@
 
 import React, { useState } from "react";
 
-const CreateAssignment = (props: any) => {
+interface props {
+  onClose: () => void;
+  onCourseCreate: (assignmentData: any) => void;
+}
+
+const CreateAssignment: React.FC<props> = (props: props) => {
   const [assignmentData, setAssignmentData] = useState({
     id: "",
     title: "",
-    duedate: "",
+    dueDate: "",
     description: "",
   });
 
@@ -20,12 +25,12 @@ const CreateAssignment = (props: any) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idnum = Date.now().toString();
+    const idNum = Date.now().toString();
     setAssignmentData({
       ...assignmentData,
-      id: idnum,
+      id: idNum,
     });
-    props.onCourseCreate({ ...assignmentData, id: idnum });
+    props.onCourseCreate({ ...assignmentData, id: idNum });
     props.onClose();
   };
 
@@ -69,7 +74,7 @@ const CreateAssignment = (props: any) => {
               type="long text"
               id="duedate"
               name="duedate"
-              value={assignmentData.duedate}
+              value={assignmentData.dueDate}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />

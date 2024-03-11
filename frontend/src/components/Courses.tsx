@@ -4,13 +4,13 @@ import Discussions from "./DashboardDiscussions";
 import Image from "next/image";
 
 interface CourseProps {
-  coursename: string;
+  courseName: string;
   professor: string;
   loc: string;
   onClick?: () => void;
 }
 
-const Course: React.FC<CourseProps> = (props) => {
+const Course: React.FC<CourseProps> = (props: CourseProps) => {
   return (
     <div className="py-4 px-32" onClick={props.onClick}>
       <div className="flex border border-white">
@@ -24,7 +24,7 @@ const Course: React.FC<CourseProps> = (props) => {
           />
           <div className="absolute inset-0 flex flex-col justify-end items-start text-white p-4">
             <h1 className="text-white font-bold text-2xl">
-              {props.coursename}
+              {props.courseName}
             </h1>
             <h2 className="text-white mb-2">with {props.professor}</h2>
             <h3 className="text-white font-light text-sm">{props.loc}</h3>

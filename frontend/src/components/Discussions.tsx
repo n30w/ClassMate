@@ -1,6 +1,6 @@
 import React from "react";
 
-const Discussions = () => {
+const Discussions: React.FC = () => {
   const currentDate = new Date();
 
   const formattedDate = currentDate

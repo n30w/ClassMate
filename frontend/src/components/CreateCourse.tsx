@@ -2,7 +2,12 @@
 
 import React, { useState } from "react";
 
-const CreateCourse = (props: any) => {
+interface props {
+  onClose: () => void;
+  onCourseCreate: (courseData: any) => void;
+}
+
+const CreateCourse: React.FC<props> = (props: props) => {
   const [courseData, setCourseData] = useState({
     id: "",
     title: "",
@@ -20,12 +25,12 @@ const CreateCourse = (props: any) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idnum = Date.now().toString();
+    const idNum = Date.now().toString();
     setCourseData({
       ...courseData,
-      id: idnum,
+      id: idNum,
     });
-    props.onCourseCreate({ ...courseData, id: idnum });
+    props.onCourseCreate({ ...courseData, id: idNum });
     props.onClose();
   };
 

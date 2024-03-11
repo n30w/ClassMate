@@ -1,4 +1,4 @@
-const Announcements = () => {
+const Announcements: React.FC = () => {
   return (
     <div className="w-60 h-70 px-4">
       <h1 className="text-white font-bold text-xl border-b-2 border-white mb-4 pb-4">

@@ -3,29 +3,33 @@
 import React, { useState } from "react";
 import CreateAnnouncement from "./CreateAnnouncement";
 
-const Announcements = () => {
+interface Announcements {
+  id: string;
+  title: string;
+  date: string;
+  description: string;
+}
+
+const Announcements: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcements[]>([]);
   const [isCreatingAnnouncement, setIsCreatingAnnouncement] = useState(false);
-
-  interface Announcements {
-    id: string;
-    title: string;
-    date: string;
-    description: string;
-  }
 
   const handleCreateAnnouncement = (announcementData: any) => {
     setAnnouncements([...announcements, announcementData]);
   };
 
-  const handleMakeAnnouncement = (e: any) => {
+  const closeMakeAnnouncement = () => {
+    setIsCreatingAnnouncement(false);
+  };
+
+  const handleMakeAnnouncement = () => {
     setIsCreatingAnnouncement(true);
   };
 
   const announcementsDisplay =
     announcements.length > 0 ? (
-      announcements.map((announcement) => (
-        <div>
+      announcements.map((announcement, key) => (
+        <div key={key}>
           <h2 className="text-white text-2xl mb-1">{announcement.title}</h2>
           <h3 className="text-white text-sm mb-2">{announcement.date}</h3>
           <p className="text-white text-sm font-light border-b-2 border-white mb-4 pb-4">
@@ -51,9 +55,7 @@ const Announcements = () => {
       {announcementsDisplay}
       {isCreatingAnnouncement && (
         <CreateAnnouncement
-          onClose={() => {
-            setIsCreatingAnnouncement(false);
-          }}
+          onClose={closeMakeAnnouncement}
           onCourseCreate={handleCreateAnnouncement}
         />
       )}

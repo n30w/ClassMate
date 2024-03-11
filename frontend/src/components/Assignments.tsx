@@ -3,18 +3,18 @@
 import React, { useState } from "react";
 import CreateAssignment from "./CreateAssignment";
 
+interface Assignments {
+  id: string;
+  title: string;
+  duedate: string;
+  description: string;
+}
+
 const Assignments = () => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [assignments, setAssignments] = useState<Assignments[]>([]);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
-
-  interface Assignments {
-    id: string;
-    title: string;
-    duedate: string;
-    description: string;
-  }
 
   const handleCreateAssignment = (assignmentData: any) => {
     setAssignments([...assignments, assignmentData]);

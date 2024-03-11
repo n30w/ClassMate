@@ -2,7 +2,12 @@
 
 import React, { useState } from "react";
 
-const CreateAnnouncement = (props: any) => {
+interface props {
+  onClose: () => void;
+  onCourseCreate: (announcementData: any) => void;
+}
+
+const CreateAnnouncement: React.FC<props> = (props: props) => {
   const currentDate = new Date();
 
   const formattedDate = `${currentDate
@@ -33,12 +38,12 @@ const CreateAnnouncement = (props: any) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idnum = Date.now().toString();
+    const idNum = Date.now().toString();
     setAnnouncementData({
       ...announcementData,
-      id: idnum,
+      id: idNum,
     });
-    props.onCourseCreate({ ...announcementData, id: idnum });
+    props.onCourseCreate({ ...announcementData, id: idNum });
     props.onClose();
   };
 
