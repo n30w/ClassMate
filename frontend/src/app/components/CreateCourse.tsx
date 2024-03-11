@@ -25,7 +25,7 @@ const CreateCourse = (props: any) => {
       ...courseData,
       id: idnum,
     });
-    props.onCourseCreate(courseData);
+    props.onCourseCreate({ ...courseData, id: idnum });
     props.onClose();
   };
 

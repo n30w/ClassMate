@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 const CreateAssignment = (props: any) => {
   const [assignmentData, setAssignmentData] = useState({
+    id: "",
     title: "",
     duedate: "",
     description: "",
@@ -19,7 +20,12 @@ const CreateAssignment = (props: any) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onCourseCreate(assignmentData);
+    const idnum = Date.now().toString();
+    setAssignmentData({
+      ...assignmentData,
+      id: idnum,
+    });
+    props.onCourseCreate({ ...assignmentData, id: idnum });
     props.onClose();
   };
 
@@ -54,7 +60,7 @@ const CreateAssignment = (props: any) => {
           </div>
           <div className="mb-2">
             <label
-              htmlFor="teacher"
+              htmlFor="duedate"
               className="block text-lg font-medium text-gray-700 py-2"
             >
               Due Date:
@@ -70,7 +76,7 @@ const CreateAssignment = (props: any) => {
           </div>
           <div className="mb-2">
             <label
-              htmlFor="location"
+              htmlFor="description"
               className="block text-lg font-medium text-gray-700 py-2"
             >
               Description:

@@ -3,9 +3,23 @@
 import React, { useState } from "react";
 
 const CreateAnnouncement = (props: any) => {
+  const currentDate = new Date();
+
+  const formattedDate = `${currentDate
+    .toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+    })
+    .replace(/\//g, "-")} ${currentDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+
   const [announcementData, setAnnouncementData] = useState({
+    id: "",
     title: "",
-    date: "",
+    date: formattedDate,
     description: "",
   });
 
@@ -19,7 +33,12 @@ const CreateAnnouncement = (props: any) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onCourseCreate(announcementData);
+    const idnum = Date.now().toString();
+    setAnnouncementData({
+      ...announcementData,
+      id: idnum,
+    });
+    props.onCourseCreate({ ...announcementData, id: idnum });
     props.onClose();
   };
 
@@ -54,23 +73,7 @@ const CreateAnnouncement = (props: any) => {
           </div>
           <div className="mb-2">
             <label
-              htmlFor="teacher"
-              className="block text-lg font-medium text-gray-700 py-2"
-            >
-              Date:
-            </label>
-            <input
-              type="long text"
-              id="date"
-              name="date"
-              value={announcementData.date}
-              onChange={handleChange}
-              className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
-            />
-          </div>
-          <div className="mb-2">
-            <label
-              htmlFor="location"
+              htmlFor="description"
               className="block text-lg font-medium text-gray-700 py-2"
             >
               Description:

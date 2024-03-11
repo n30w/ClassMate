@@ -8,6 +8,7 @@ const Announcements = () => {
   const [isCreatingAnnouncement, setIsCreatingAnnouncement] = useState(false);
 
   interface Announcements {
+    id: string;
     title: string;
     date: string;
     description: string;

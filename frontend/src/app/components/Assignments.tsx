@@ -10,6 +10,7 @@ const Assignments = () => {
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
 
   interface Assignments {
+    id: string;
     title: string;
     duedate: string;
     description: string;
