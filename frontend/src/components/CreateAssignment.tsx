@@ -2,24 +2,35 @@
 
 import React, { useState } from "react";
 
-const CreateCourse = (props: any) => {
-  const [courseData, setCourseData] = useState({
+interface props {
+  onClose: () => void;
+  onCourseCreate: (assignmentData: any) => void;
+}
+
+const CreateAssignment: React.FC<props> = (props: props) => {
+  const [assignmentData, setAssignmentData] = useState({
+    id: "",
     title: "",
-    professor: "",
-    location: "",
+    dueDate: "",
+    description: "",
   });
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
-    setCourseData({
-      ...courseData,
+    setAssignmentData({
+      ...assignmentData,
       [name]: value,
     });
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onCourseCreate(courseData);
+    const idNum = Date.now().toString();
+    setAssignmentData({
+      ...assignmentData,
+      id: idNum,
+    });
+    props.onCourseCreate({ ...assignmentData, id: idNum });
     props.onClose();
   };
 
@@ -34,52 +45,52 @@ const CreateCourse = (props: any) => {
         </button>
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
-            Create New Course
+            Create Assignment
           </h1>
           <div className="mb-2">
             <label
               htmlFor="title"
               className="block text-lg font-medium text-gray-700 py-2"
             >
-              Course Name:
+              Assignment Title:
             </label>
             <input
               type="text"
               id="title"
               name="title"
-              value={courseData.title}
+              value={assignmentData.title}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />
           </div>
           <div className="mb-2">
             <label
-              htmlFor="teacher"
+              htmlFor="duedate"
               className="block text-lg font-medium text-gray-700 py-2"
             >
-              Professor:
+              Due Date:
             </label>
             <input
-              type="text"
-              id="teacher"
-              name="professor"
-              value={courseData.professor}
+              type="long text"
+              id="duedate"
+              name="duedate"
+              value={assignmentData.dueDate}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />
           </div>
           <div className="mb-2">
             <label
-              htmlFor="location"
+              htmlFor="description"
               className="block text-lg font-medium text-gray-700 py-2"
             >
-              Location:
+              Description:
             </label>
             <input
               type="text"
-              id="location"
-              name="location"
-              value={courseData.location}
+              id="description"
+              name="description"
+              value={assignmentData.description}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />
@@ -96,4 +107,4 @@ const CreateCourse = (props: any) => {
   );
 };
 
-export default CreateCourse;
+export default CreateAssignment;

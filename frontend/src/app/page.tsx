@@ -1,41 +1,41 @@
 "use client";
 
 import Image from "next/image";
-import Courses from "./components/Courses";
+import Courses from "@/components/Courses";
 import React, { useState } from "react";
-import CreateCourse from "./components/CreateCourse";
+import { useRouter } from "next/navigation";
+import CreateCourse from "@/components/CreateCourse";
+
+interface Course {
+  id: string;
+  title: string;
+  professor: string;
+  location: string;
+}
 
 export default function Home() {
-  const currentDate = new Date().toLocaleDateString();
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
-
-  interface Course {
-    title: string;
-    professor: string;
-    location: string;
-  }
+  const router = useRouter();
 
   const handleCreateCourse = (courseData: any) => {
     setCourses([...courses, courseData]);
   };
 
-  const handleClick = (e: any) => {
-    setIsCreatingCourse(true);
-  };
-
   const courseDisplay = courses.map((course) => {
     return (
       <Courses
-        coursename={course.title}
+        key={course.id}
+        courseName={course.title}
         professor={course.professor}
         loc={course.location}
+        onClick={() => router.push(`/course/${course.id}`)}
       />
     );
   });
 
   return (
-    <div>
+    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <nav
         style={{
           backgroundImage: `url('/backgrounds/dashboard-bg.jpeg')`,
@@ -65,12 +65,14 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="bg-white bg-cover bg-no-repeat">
+      <div className="bg-black bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
-          <h1 className="font-bold text-2xl">Spring 2024</h1>
+          <h1 className="font-bold text-2xl text-white">Spring 2024</h1>
           <button
-            className="rounded-full bg-black text-white font-light px-4 py-2 h-12"
-            onClick={handleClick}
+            className="rounded-full bg-white text-black font-light px-4 py-2 h-12"
+            onClick={() => {
+              setIsCreatingCourse(true);
+            }}
           >
             + Create Course
           </button>

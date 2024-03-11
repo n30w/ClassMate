@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import validatePassword from "@/app/lib/passwordValidator";
+import validatePassword from "@/lib/passwordValidator";
 
 export default function Page() {
   //   const [isBlurred, setIsBlurred] = useState(false);
