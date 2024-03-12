@@ -1,10 +1,12 @@
 package main
 
 import (
+	"github.com/n30w/Darkspace/internal/models"
 	"net/http"
-
-	models "github.com/n30w/Darkspace/internal/domain"
 )
+
+// An input struct is used for ushering in data because it makes it explicit
+// as to what we are getting from the incoming request.
 
 // homeHandler returns a set template of information needed for the home
 // page.
@@ -12,7 +14,7 @@ import (
 // REQUEST: Netid
 // RESPONSE: Active course data [name, 3 most recent assignments uncompleted, ]
 func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
-
+	// Get user's enrolled courses
 }
 
 // courseHomepageHandler returns data related to the homepage of a course.
@@ -23,7 +25,6 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	// Retrieve that value of the {id} path in the URL using r.PathValue("id")
 	id := r.PathValue("id")
 
 	var course *models.Course
@@ -34,7 +35,7 @@ func (app *application) courseHomepageHandler(
 		app.serverError(w, r, err)
 	}
 
-	res := jsonWrap{}
+	res := jsonWrap{"course": course}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
@@ -49,7 +50,7 @@ func (app *application) courseHomepageHandler(
 // createCourseHandler creates a course.
 //
 // REQUEST: course
-// RESPONSE: course + course uuid
+// RESPONSE: course id, name, teacher, assignments
 func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -125,7 +126,36 @@ func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	// use credential validation
+	var input struct {
+		Username string `json:"username,omitempty"`
+		Password string `json:"password,omitempty"`
+		Netid    string `json:"netid,omitempty"`
+		Email    string `json:"email,omitempty"`
+	}
+
+	// Read the JSON into the input struct.
+	// This guarantees that we received the right information.
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// Map the input fields to the appropriate model fields.
+	c := models.NewCredentials(
+		input.Username, input.Password, input.Email,
+	)
+
+	user := models.NewUser(input.Netid, c)
+
+	err = app.services.UserService.CreateUser(user)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// Here we would generate a session token, but not now.
+
+	// Send back home page.
+
 }
 
 // userReadHandler reads a specific user's data,

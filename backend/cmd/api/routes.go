@@ -15,10 +15,10 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("GET /v1/course/{id}", app.courseHomepageHandler)
 
 	// Course CRUD operations
-	router.HandleFunc("/v1/course/create", app.courseCreateHandler)
-	router.HandleFunc("/v1/course/read", app.courseReadHandler)
-	router.HandleFunc("/v1/course/update", app.courseUpdateHandler)
-	router.HandleFunc("/v1/course/delete", app.courseDeleteHandler)
+	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
+	router.HandleFunc("GET /v1/course/read/{id}", app.courseReadHandler)
+	router.HandleFunc("PATCH /v1/course/update/{id}", app.courseUpdateHandler)
+	router.HandleFunc("POST /v1/course/delete/{id}", app.courseDeleteHandler)
 
 	// User CRUD operations
 	router.HandleFunc("/v1/user/create", app.userCreateHandler)
@@ -33,16 +33,34 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("/v1/user/login", app.userLoginHandler)
 
 	// Assignment CRUD operations
-	router.HandleFunc("/v1/course/assignment/create", app.assignmentCreateHandler)
+	router.HandleFunc(
+		"/v1/course/assignment/create",
+		app.assignmentCreateHandler,
+	)
 	router.HandleFunc("/v1/course/assignment/read", app.assignmentReadHandler)
-	router.HandleFunc("/v1/course/assignment/update", app.assignmentUpdateHandler)
-	router.HandleFunc("/v1/course/assignment/delete", app.assignmentDeleteHandler)
+	router.HandleFunc(
+		"/v1/course/assignment/update",
+		app.assignmentUpdateHandler,
+	)
+	router.HandleFunc(
+		"/v1/course/assignment/delete",
+		app.assignmentDeleteHandler,
+	)
 
 	// Discussion CRUD operations
-	router.HandleFunc("/v1/course/discussion/create", app.discussionCreateHandler)
+	router.HandleFunc(
+		"/v1/course/discussion/create",
+		app.discussionCreateHandler,
+	)
 	router.HandleFunc("/v1/course/discussion/read", app.discussionReadHandler)
-	router.HandleFunc("/v1/course/discussion/update", app.discussionUpdateHandler)
-	router.HandleFunc("/v1/course/discussion/delete", app.discussionDeleteHandler)
+	router.HandleFunc(
+		"/v1/course/discussion/update",
+		app.discussionUpdateHandler,
+	)
+	router.HandleFunc(
+		"/v1/course/discussion/delete",
+		app.discussionDeleteHandler,
+	)
 
 	return router
 }

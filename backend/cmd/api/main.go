@@ -3,36 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/n30w/Darkspace/internal/domain"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/n30w/Darkspace/internal/dao"
+	"github.com/n30w/Darkspace/internal/dal"
 )
 
 const version = "1.0.0"
-
-type config struct {
-	// Port the server will run on.
-	port int
-
-	// Runtime environment, either "development", "staging", or "production".
-	env string
-
-	// Database configurations
-	db struct {
-		// Database driver and DataSourceName
-		driver string
-		dsn    string
-	}
-}
-
-type application struct {
-	config config
-	logger *log.Logger
-	models *dao.Models
-}
 
 func main() {
 
@@ -57,10 +37,13 @@ func main() {
 
 	defer db.Close()
 
+	store := dal.NewStore(db)
+
 	app := &application{
-		config: cfg,
-		logger: logger,
-		models: dao.NewModels(db),
+		config:   cfg,
+		logger:   logger,
+		models:   dal.NewModels(db),
+		services: domain.NewServices(store),
 	}
 
 	server := &http.Server{
