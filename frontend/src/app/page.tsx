@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Courses from "@/components/Courses";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CreateCourse from "@/components/CreateCourse";
 
@@ -67,7 +67,7 @@ export default function Home() {
       </nav>
       <div className="bg-black bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
-          <h1 className="font-bold text-2xl text-white">Spring 2024</h1>
+          <h1 className="font-bold text-4xl text-white">Spring 2024</h1>
           <button
             className="rounded-full bg-white text-black font-light px-4 py-2 h-12"
             onClick={() => {

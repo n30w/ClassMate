@@ -15,6 +15,29 @@ const CreateCourse: React.FC<props> = (props: props) => {
     location: "",
   });
 
+  const postNewCourse = async (courseData: any) => {
+    try {
+      const res = await fetch("/v1/course/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(courseData),
+      });
+      if (res.ok) {
+        const newCourse = await res.json();
+        newCourse.name = courseData.title;
+        newCourse.id = courseData.id;
+        newCourse.teachers.push(courseData.professor);
+        newCourse.archived = false;
+      } else {
+        console.error("Failed to create course:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
+  };
+
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
     setCourseData({
@@ -31,6 +54,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
       id: idNum,
     });
     props.onCourseCreate({ ...courseData, id: idNum });
+    postNewCourse(courseData);
     props.onClose();
   };
 
