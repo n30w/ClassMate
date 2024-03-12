@@ -42,7 +42,6 @@ We are using ```yarn``` and NOT npm.
 Our database for the backend is SQL based.
 
 - Go
-  - Gin
   - pq
 - Postgresql
 - Nginx
@@ -63,6 +62,18 @@ The backend directory is structured in this manner:
 ```migrations``` is where SQL database migrations live.
 
 ```remote``` contains Docker files and anything needed for deployment purposes, like setup scripts.
+
+#### Understanding the Backend **internal** Package
+
+```internal``` has three packages inside it:
+
+- dal
+- domain
+- models
+
+```dal``` stands for Data Access Layer, and is what directly interfaces with any database implementation. ```domain``` contains services that interface with the ```dal``` package.
+
+#### Authentication vs Authorization
 
 ## Getting Started
 
