@@ -1,6 +1,8 @@
-package domain
+package models
 
-import "time"
+import (
+	"time"
+)
 
 type filetype int
 

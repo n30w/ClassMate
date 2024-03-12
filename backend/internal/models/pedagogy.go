@@ -1,6 +1,8 @@
-package domain
+package models
 
-import "time"
+import (
+	"time"
+)
 
 type Post struct {
 	Title       string
@@ -64,6 +66,4 @@ type Project struct {
 	MediaReferences []Media    `json:"media_references"`
 	Members         []User     `json:"members"`
 	Discussion      Discussion `json:"discussion"`
-
-	ac *accessControl
 }
