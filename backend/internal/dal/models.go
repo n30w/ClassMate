@@ -1,11 +1,11 @@
-package dao
+package dal
 
 import (
 	"database/sql"
 	"errors"
+	"github.com/n30w/Darkspace/internal/models"
 
 	"github.com/lib/pq"
-	models "github.com/n30w/Darkspace/internal/domain"
 )
 
 var (
