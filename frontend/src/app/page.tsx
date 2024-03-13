@@ -5,6 +5,7 @@ import Courses from "@/components/Courses";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CreateCourse from "@/components/CreateCourse";
+import AddButton from "@/components/AddButton";
 
 interface Course {
   id: string;
@@ -68,6 +69,7 @@ export default function Home() {
       <div className="bg-black bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
           <h1 className="font-bold text-4xl text-white">Spring 2024</h1>
+          <AddButton text={"Course"}/>
           <button
             className="rounded-full bg-white text-black font-light px-4 py-2 h-12"
             onClick={() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import {AddIcon} from "@sanity/icons";
 
 interface props {
   onClose: () => void;
@@ -65,7 +66,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
           className="absolute top-0 right-0 m-2 text-black text-lg font-bold cursor-pointer"
           onClick={props.onClose}
         >
-          x
+          <AddIcon />
         </button>
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
