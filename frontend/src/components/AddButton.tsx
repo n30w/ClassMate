@@ -7,13 +7,14 @@ import {AddIcon} from "@sanity/icons";
 
 interface ButtonProps {
     text: string
+    onClick: () => void
 }
 
 const AddButton: React.FC<ButtonProps>  = (props: ButtonProps) => {
     return (
         <button
             className="flex space-x-1 items-center bg-white transition-all ease-out duration-75 hover:bg-green-300 text-black font-light px-4 py-2 h-12"
-        >
+        onClick={props.onClick}>
             <AddIcon className={""}/>
             <p>{props.text}</p>
         </button>
