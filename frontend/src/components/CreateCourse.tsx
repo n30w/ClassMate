@@ -18,13 +18,13 @@ const CreateCourse: React.FC<props> = (props: props) => {
 
   const postNewCourse = async (courseData: any) => {
     try {
-      const res = await fetch("/v1/course/create", {
+      const res: Response = await fetch("/v1/course/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(courseData),
-      });
+      })
       if (res.ok) {
         const newCourse = await res.json();
         newCourse.name = courseData.title;
