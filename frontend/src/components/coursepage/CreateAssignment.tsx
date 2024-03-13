@@ -1,37 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
+import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
-  onCourseCreate: (announcementData: any) => void;
+  onCourseCreate: (assignmentData: any) => void;
 }
 
-const CreateAnnouncement: React.FC<props> = (props: props) => {
-  const currentDate = new Date();
-
-  const formattedDate = `${currentDate
-    .toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    })
-    .replace(/\//g, "-")} ${currentDate.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
-
-  const [announcementData, setAnnouncementData] = useState({
+const CreateAssignment: React.FC<props> = (props: props) => {
+  const [assignmentData, setAssignmentData] = useState({
     id: "",
     title: "",
-    date: formattedDate,
+    dueDate: "",
     description: "",
   });
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
-    setAnnouncementData({
-      ...announcementData,
+    setAssignmentData({
+      ...assignmentData,
       [name]: value,
     });
   };
@@ -39,39 +27,50 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     const idNum = Date.now().toString();
-    setAnnouncementData({
-      ...announcementData,
+    setAssignmentData({
+      ...assignmentData,
       id: idNum,
     });
-    props.onCourseCreate({ ...announcementData, id: idNum });
+    props.onCourseCreate({ ...assignmentData, id: idNum });
     props.onClose();
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <button
-          className="absolute top-0 right-0 m-2 text-black text-lg font-bold cursor-pointer"
-          onClick={props.onClose}
-        >
-          x
-        </button>
+        <CloseButton onClick={props.onClose}/>
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
-            Create Announcement
+            Create Assignment
           </h1>
           <div className="mb-2">
             <label
               htmlFor="title"
               className="block text-lg font-medium text-gray-700 py-2"
             >
-              Announcement Title:
+              Assignment Title:
             </label>
             <input
               type="text"
               id="title"
               name="title"
-              value={announcementData.title}
+              value={assignmentData.title}
+              onChange={handleChange}
+              className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+            />
+          </div>
+          <div className="mb-2">
+            <label
+              htmlFor="duedate"
+              className="block text-lg font-medium text-gray-700 py-2"
+            >
+              Due Date:
+            </label>
+            <input
+              type="long text"
+              id="duedate"
+              name="duedate"
+              value={assignmentData.dueDate}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />
@@ -87,7 +86,7 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
               type="text"
               id="description"
               name="description"
-              value={announcementData.description}
+              value={assignmentData.description}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />
@@ -104,4 +103,4 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
   );
 };
 
-export default CreateAnnouncement;
+export default CreateAssignment;

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {CloseIcon} from "@sanity/icons";
+import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
@@ -62,12 +63,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <button
-          className="absolute top-0 right-0 m-2 text-black text-lg font-bold cursor-pointer"
-          onClick={props.onClose}
-        >
-          <CloseIcon style={{ color: `white`, scale: `1.5`}} />
-        </button>
+        <CloseButton onClick={props.onClose}/>
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
             Create New Course

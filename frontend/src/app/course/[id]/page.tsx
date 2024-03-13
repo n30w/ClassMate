@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Announcements from "@/components/Announcements";
-import Assignments from "@/components/Assignments";
+import Announcements from "@/components/coursepage/Announcements";
+import Assignments from "@/components/coursepage/Assignments";
 import Discussions from "@/components/Discussions";
 
 export default function Page() {
