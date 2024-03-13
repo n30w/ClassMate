@@ -125,7 +125,36 @@ func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	// use credential validation
+	var input struct {
+		Username string `json:"username,omitempty"`
+		Password string `json:"password,omitempty"`
+		Netid    string `json:"netid,omitempty"`
+		Email    string `json:"email,omitempty"`
+	}
+
+	// Read the JSON into the input struct.
+	// This guarantees that we received the right information.
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// Map the input fields to the appropriate model fields.
+	c := models.NewCredentials(
+		input.Username, input.Password, input.Email,
+	)
+
+	user := models.NewUser(input.Netid, c)
+
+	err = app.services.UserService.CreateUser(user)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// Here we would generate a session token, but not now.
+
+	// Send back home page.
+
 }
 
 // userReadHandler reads a specific user's data,
