@@ -14,6 +14,19 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("GET /v1/home", app.homeHandler)
 	router.HandleFunc("GET /v1/course/{id}", app.courseHomepageHandler)
 
+	router.HandleFunc(
+		"POST /v1/course/announcement/create",
+		app.announcementCreateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/announcement/update",
+		app.announcementUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/announcement/update",
+		app.announcementDeleteHandler,
+	)
+
 	// Course CRUD operations
 	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
 	router.HandleFunc("GET /v1/course/read/{id}", app.courseReadHandler)

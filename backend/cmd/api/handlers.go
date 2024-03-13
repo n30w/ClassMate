@@ -44,7 +44,6 @@ func (app *application) courseHomepageHandler(
 
 	// If the course ID exists in the database AND the user requesting this
 	// data has the appropriate permissions, retrieve the course data requested.
-
 }
 
 // createCourseHandler creates a course.
@@ -116,6 +115,27 @@ func (app *application) courseDeleteHandler(
 ) {
 }
 
+func (app *application) announcementCreateHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+
+func (app *application) announcementUpdateHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+
+func (app *application) announcementDeleteHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+
 // User handlers, deals with anything user side.
 
 // userCreateHandler creates a user.
@@ -126,36 +146,7 @@ func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		Username string `json:"username,omitempty"`
-		Password string `json:"password,omitempty"`
-		Netid    string `json:"netid,omitempty"`
-		Email    string `json:"email,omitempty"`
-	}
-
-	// Read the JSON into the input struct.
-	// This guarantees that we received the right information.
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-
-	// Map the input fields to the appropriate model fields.
-	c := models.NewCredentials(
-		input.Username, input.Password, input.Email,
-	)
-
-	user := models.NewUser(input.Netid, c)
-
-	err = app.services.UserService.CreateUser(user)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-
-	// Here we would generate a session token, but not now.
-
-	// Send back home page.
-
+	// use credential validation
 }
 
 // userReadHandler reads a specific user's data,
