@@ -21,9 +21,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "latest"
-      - name: install
+      - name: enable corepack
+        run: corepack enable
+      - name: set yarn version
+        run: corepack use yarn@stable
+      - name: install dependencies
         run: yarn
-      - name: ESLint
+      - name: run eslint
         run: yarn lint
-      - name: Prettier
+      - name: format with prettier
         run: yarn format:fix
