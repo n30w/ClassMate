@@ -12,7 +12,7 @@ func (app *application) routes() *http.ServeMux {
 
 	router.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 	router.HandleFunc("GET /v1/home", app.homeHandler)
-	router.HandleFunc("GET /v1/course/{id}", app.courseHomepageHandler)
+	router.HandleFunc("GET /v1/course/homepage/{id}", app.courseHomepageHandler)
 
 	router.HandleFunc(
 		"POST /v1/course/announcement/create",
@@ -34,10 +34,10 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("POST /v1/course/delete/{id}", app.courseDeleteHandler)
 
 	// User CRUD operations
-	router.HandleFunc("/v1/user/create", app.userCreateHandler)
-	router.HandleFunc("/v1/user/read", app.userReadHandler)
-	router.HandleFunc("/v1/user/update", app.userUpdateHandler)
-	router.HandleFunc("/v1/user/delete", app.userDeleteHandler)
+	router.HandleFunc("POST /v1/user/create", app.userCreateHandler)
+	router.HandleFunc("GET /v1/user/read/{id}", app.userReadHandler)
+	router.HandleFunc("PATCH /v1/user/update/{id}", app.userUpdateHandler)
+	router.HandleFunc("POST /v1/user/delete/{id}", app.userDeleteHandler)
 
 	// A user posts something to a discussion
 	router.HandleFunc("/v1/user/post", app.userPostHandler)
