@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
 	"log"
 )
@@ -24,6 +23,5 @@ type config struct {
 type application struct {
 	config   config
 	logger   *log.Logger
-	models   *dal.Models
 	services *domain.Service
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
-// Store will implement interfaces found in respective domain packages.
+// Store implements interfaces found in respective domain packages.
 type Store struct {
 	db *sql.DB
 }

@@ -5,14 +5,6 @@ import (
 	"time"
 )
 
-type member uint8
-
-const (
-	STUDENT member = iota
-	TEACHER
-	ADMIN
-)
-
 // User represents the concept of a User in a database.
 // It is composed of an entity, the basic unit of a database object.
 // The ID in this case will be the NetID,
@@ -20,8 +12,10 @@ const (
 type User struct {
 	Entity
 	Credentials
+	*AccessControl
 
 	// General user information.
+	FullName       string    `json:"fullName,omitempty"`
 	ProfilePicture Media     `json:"profile_picture,omitempty"`
 	Projects       []Project `json:"projects,omitempty"`
 	Courses        []Course  `json:"courses,omitempty"`
@@ -43,8 +37,8 @@ func NewUser(netid string, c Credentials) *User {
 // Credentials are user credentials gathered from the JSON request body.
 // They represent custom types that implement the credential interface method.
 type Credentials struct {
-	Username Credential
-	Password Credential
-	Email    Credential
-	FullName Credential
+	Username   Credential
+	Password   Credential
+	Email      Credential
+	Membership Credential
 }

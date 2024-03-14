@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/n30w/Darkspace/internal/domain"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/n30w/Darkspace/internal/domain"
 
 	"github.com/n30w/Darkspace/internal/dal"
 )
@@ -42,7 +43,6 @@ func main() {
 	app := &application{
 		config:   cfg,
 		logger:   logger,
-		models:   dal.NewModels(db),
 		services: domain.NewServices(store),
 	}
 

@@ -2,6 +2,19 @@ package models
 
 import "strings"
 
+// Member defines the affiliation of a user, whether they are a student,
+// a teacher, or an administrator. In other words,
+// it defines what group someone is a part of.
+// The frontend will send either a 0 for STUDENT or a 1 for TEACHER.
+// The affiliation ADMIN is only created server-side.
+type member uint8
+
+const (
+	STUDENT member = iota
+	TEACHER
+	ADMIN
+)
+
 type scope uint8
 
 const (
@@ -119,29 +132,30 @@ func fromString(s string) permission {
 	return p
 }
 
-// accessControl defines a user's membership and their permissions.
+// AccessControl defines a user's membership and their permissions.
 // Essentially, the scope of their abilities. It abstracts away type permissions
 // in order to conceal behavior and interference in the higher levels
 // of the API. AccessControl exists on pedagogical types or users as a pointer.
 // Reason being, remember that in Go, pointers have a null value as their
 // zero value. This means that a null value has the meaning that an object
 // has no permissions at all.
-type accessControl struct {
-	perms permissions
+type AccessControl struct {
+	membership member
+	perms      permissions
 }
 
-func (a accessControl) read(s scope) bool {
+func (a AccessControl) read(s scope) bool {
 	return a.perms[s].read
 }
 
-func (a accessControl) write(s scope) bool {
+func (a AccessControl) write(s scope) bool {
 	return a.perms[s].write
 }
 
-func (a accessControl) update(s scope) bool {
+func (a AccessControl) update(s scope) bool {
 	return a.perms[s].update
 }
 
-func (a accessControl) delete(s scope) bool {
+func (a AccessControl) delete(s scope) bool {
 	return a.perms[s].delete
 }

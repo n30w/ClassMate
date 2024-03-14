@@ -21,5 +21,5 @@ type Media struct {
 	Uuid               string    `json:"uuid"`
 	DateUploaded       time.Time `json:"date_uploaded"`
 	CourseAttributions []Course  `json:"course_attributions"`
-	FileType           string    `json:"file_type"`
+	FileType           int       `json:"file_type"`
 }

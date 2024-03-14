@@ -16,7 +16,7 @@ type CourseService struct {
 func NewCourseService(c CourseStore) *CourseService { return &CourseService{store: c} }
 
 func (cs *CourseService) CreateCourse(c *models.Course) error {
-	// Check if course already exists.
+	// Check if course already exists. Can also try and do fuzzy name matching.
 	_, err := cs.store.GetCourseByName(c.Name)
 	if err != nil {
 		return err

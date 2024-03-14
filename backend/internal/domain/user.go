@@ -21,23 +21,11 @@ func NewUserService(us UserStore) *UserService {
 	return &UserService{store: us}
 }
 
-func (us *UserService) NewUsername(s string) Username {
-	return Username(s)
-}
-
-func (us *UserService) NewPassword(s string) Password {
-	return Password(s)
-}
-
-func (us *UserService) NewEmail(s string) Email {
-	return Email(s)
-}
-
 // CreateUser validates User model values, and if all is well,
 // creates the user in the database.
 func (us *UserService) CreateUser(um *models.User) error {
 	// First check if user exists.
-	_, err := us.GetByID(um.ID)
+	_, err := us.store.GetUserByID(um.ID)
 	if err != nil {
 		return err
 	}
@@ -63,6 +51,9 @@ func (us *UserService) CreateUser(um *models.User) error {
 
 	// If all is well...
 	err = us.store.InsertUser(um)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -74,4 +65,20 @@ func (us *UserService) GetByID(id string) (*models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (us *UserService) NewUsername(s string) Username {
+	return Username(s)
+}
+
+func (us *UserService) NewPassword(s string) Password {
+	return Password(s)
+}
+
+func (us *UserService) NewEmail(s string) Email {
+	return Email(s)
+}
+
+func (us *UserService) NewMembership(d int) Membership {
+	return Membership(d)
 }

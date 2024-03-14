@@ -29,6 +29,11 @@ func validateCredentials(c *models.User) error {
 		return err
 	}
 
+	err = c.Credentials.Membership.Valid()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -72,4 +77,18 @@ func (e Email) Valid() error {
 
 func (e Email) String() string {
 	return fmt.Sprintf("%s", e)
+}
+
+type Membership int
+
+func (m Membership) Valid() error {
+	if m < 0 || m > 1 {
+		return errors.New("membership must either be 0 or 1")
+	}
+
+	return nil
+}
+
+func (m Membership) String() string {
+	return fmt.Sprintf("%d", m)
 }

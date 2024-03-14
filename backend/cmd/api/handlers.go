@@ -31,7 +31,7 @@ func (app *application) courseHomepageHandler(
 	var course *models.Course
 	var err error
 
-	course, err = app.models.Course.Get(id)
+	course, err = app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -49,13 +49,12 @@ func (app *application) courseHomepageHandler(
 
 // createCourseHandler creates a course.
 //
-// REQUEST: course
+// REQUEST: course title, username
 // RESPONSE: course id, name, teacher, assignments
 func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-
 	var input struct {
 		Title       string `json:"title"`
 		TeacherName string `json:"username"`
@@ -68,21 +67,17 @@ func (app *application) courseCreateHandler(
 
 	var course *models.Course
 
-	// Validate if there is a name associated with the course.
-	// We can also do a fuzzy match of course names.
-	course, err = app.models.Course.Get(input.Title)
-
-	// If course already exists, send error.
+	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
-	// if not, proceed with course creation.
-	err = app.models.Course.Insert(course)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
 	// Return success.
+	res := jsonWrap{"course": course}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // courseReadHandler relays information back to the requester
@@ -141,31 +136,31 @@ func (app *application) announcementDeleteHandler(
 
 // userCreateHandler creates a user.
 //
-// REQUEST: email, password, full name, netid
+// REQUEST: email, password, full name, netid, membership
 // RESPONSE: home page
 func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		Username string `json:"username,omitempty"`
-		Password string `json:"password,omitempty"`
-		Netid    string `json:"netid,omitempty"`
-		Email    string `json:"email,omitempty"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		Email      string `json:"email"`
+		Netid      string `json:"netid"`
+		Membership int    `json:"membership"`
 	}
 
-	// Read the JSON into the input struct.
-	// This guarantees that we received the right information.
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
-	// Map the input fields to the appropriate model fields.
+	// Map the input fields to the appropriate credentials fields.
 	c := models.Credentials{
-		Username: app.services.UserService.NewUsername(input.Username),
-		Password: app.services.UserService.NewPassword(input.Password),
-		Email:    app.services.UserService.NewEmail(input.Email),
+		Username:   app.services.UserService.NewUsername(input.Username),
+		Password:   app.services.UserService.NewPassword(input.Password),
+		Email:      app.services.UserService.NewEmail(input.Email),
+		Membership: app.services.UserService.NewMembership(input.Membership),
 	}
 
 	user := models.NewUser(input.Netid, c)
@@ -184,36 +179,30 @@ func (app *application) userCreateHandler(
 // userReadHandler reads a specific user's data,
 // which is specified by the requester.
 //
-// REQUEST: user uuid
+// REQUEST: user netid
 // RESPONSE: user
 func (app *application) userReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	// Create a new user model, this will be used to perform SQL actions.
+	id := r.PathValue("id")
 
-	// Create a new User to read the JSON into.
-	u := models.User{}
+	var err error
+	var user *models.User
 
-	// read the JSON from the client into the User Model.
-	err := app.readJSON(w, r, &u)
+	// Perform a database lookup of user.
+	user, err = app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
-	// Perform a database lookup of user.
+	res := jsonWrap{"user": user}
 
-	// If user exists, read permissions of the user using accessControl,
-	// then send back the information requested.
-	//if u.perms[SELF].read {
-	//	// Send back the requested user's bio/media/name/email,
-	//	// by first wrapping the JSON into a readable map,
-	//	// then writing to the http writer stream.
-	//	d := jsonWrap{}
-	//	err := app.writeJSON(w, http.StatusOK, d, nil)
-	//} else {
-	//	app.serverError(w, r, http.ErrHandlerTimeout)
-	//}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
 // userUpdateHandler updates a user's data.
