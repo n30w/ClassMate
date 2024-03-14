@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -31,10 +32,10 @@ func validateCredentials(c *models.User) error {
 	return nil
 }
 
-type Password struct{ Value string }
+type Password string
 
 func (p Password) Valid() error {
-	if p.Value == "" {
+	if p == "" {
 		return errors.New("password field empty")
 	}
 
@@ -42,7 +43,7 @@ func (p Password) Valid() error {
 }
 
 func (p Password) String() string {
-	return fmt.Sprintf("%s", p.Value)
+	return fmt.Sprintf("%s", p)
 }
 
 type Username string

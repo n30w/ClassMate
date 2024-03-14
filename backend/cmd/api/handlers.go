@@ -162,6 +162,11 @@ func (app *application) userCreateHandler(
 	}
 
 	// Map the input fields to the appropriate model fields.
+	c := models.Credentials{
+		Username: app.services.UserService.NewUsername(input.Username),
+		Password: app.services.UserService.NewPassword(input.Password),
+		Email:    app.services.UserService.NewEmail(input.Email),
+	}
 
 	user := models.NewUser(input.Netid, c)
 

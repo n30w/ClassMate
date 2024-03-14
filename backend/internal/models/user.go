@@ -43,18 +43,8 @@ func NewUser(netid string, c Credentials) *User {
 // Credentials are user credentials gathered from the JSON request body.
 // They represent custom types that implement the credential interface method.
 type Credentials struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-	Email    string `json:"email,omitempty"`
-	FullName string `json:"full_name,omitempty"`
-}
-
-func NewCredentials(
-	username, password, email string,
-) Credentials {
-	return Credentials{
-		Username: username,
-		Password: password,
-		Email:    email,
-	}
+	Username Credential
+	Password Credential
+	Email    Credential
+	FullName Credential
 }
