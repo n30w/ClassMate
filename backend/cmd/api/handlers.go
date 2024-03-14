@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/n30w/Darkspace/internal/models"
 	"net/http"
+
+	"github.com/n30w/Darkspace/internal/models"
 )
 
 // An input struct is used for ushering in data because it makes it explicit
@@ -25,22 +26,22 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	id := r.PathValue("id")
+	// id := r.PathValue("id")
 
-	var course *models.Course
-	var err error
+	// var course *models.Course
+	// var err error
 
-	course, err = app.models.Course.Get(id)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	// course, err = app.models.Course.Get(id)
+	// if err != nil {
+	// 	app.serverError(w, r, err)
+	// }
 
-	res := jsonWrap{"course": course}
+	// res := jsonWrap{"course": course}
 
-	err = app.writeJSON(w, http.StatusOK, res, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	// err = app.writeJSON(w, http.StatusOK, res, nil)
+	// if err != nil {
+	// 	app.serverError(w, r, err)
+	// }
 
 	// If the course ID exists in the database AND the user requesting this
 	// data has the appropriate permissions, retrieve the course data requested.
