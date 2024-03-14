@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import CreateAnnouncement from "./CreateAnnouncement";
+import AddButton from "@/components/buttons/AddButton";
 
 interface Announcements {
   id: string;
@@ -45,12 +46,7 @@ const Announcements: React.FC = () => {
     <div className="w-full">
       <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
         <h1 className="text-white font-bold text-2xl">Announcements</h1>
-        <button
-          className="rounded-full bg-white text-black text-sm font-light py-1 px-2 mt-2 flex items-center justify-center"
-          onClick={handleMakeAnnouncement}
-        >
-          +
-        </button>
+          <AddButton onClick={handleMakeAnnouncement} />
       </div>
       {announcementsDisplay}
       {isCreatingAnnouncement && (
