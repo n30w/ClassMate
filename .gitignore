@@ -45,3 +45,4 @@ frontend/next-env.d.ts
 
 # Jetbrains IDE
 /.idea
+backend/.env
