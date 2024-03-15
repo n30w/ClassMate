@@ -48,7 +48,7 @@ func (p Password) Valid() error {
 }
 
 func (p Password) String() string {
-	return fmt.Sprintf("%s", p)
+	return string(p)
 }
 
 type Username string
@@ -62,7 +62,7 @@ func (u Username) Valid() error {
 }
 
 func (u Username) String() string {
-	return fmt.Sprintf("%s", u)
+	return string(u)
 }
 
 type Email string
@@ -76,7 +76,7 @@ func (e Email) Valid() error {
 }
 
 func (e Email) String() string {
-	return fmt.Sprintf("%s", e)
+	return string(e)
 }
 
 type Membership int
