@@ -32,7 +32,7 @@ func TestPermission_String(t *testing.T) {
 			p.update = true
 			p.delete = true
 
-			want := "----"
+			want := "rwud"
 
 			got := fmt.Sprintf("%s", p)
 
