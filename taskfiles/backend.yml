@@ -13,11 +13,26 @@ tasks:
     dir: backend
     cmds:
       - go mod tidy
+
+  # Docker commands
+
   db-up:
     dir: backend/remote
     cmds:
-      - docker compose up -d
-  db-down:
+      - docker compose --env-file ../.env  up -d
+  # db-stop stops running containers, does not delete them.
+  db-stop:
     dir: backend/remote
     cmds:
       - docker compose stop
+  db-down:
+    dir: backend/remote
+    cmds:
+      - docker compose down
+
+  # db-down-clean deletes volumes and their data! See:
+  # https://docs.docker.com/compose/gettingstarted/#step-8-experiment-with-some-other-commands
+  db-down-clean:
+    dir: backend/remote
+    cmds:
+      - docker compose down --volumes
