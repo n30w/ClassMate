@@ -97,6 +97,8 @@ The frontend exists at http://localhost:3000/ and the backend exists at http://l
 
 #### PostgreSQL Docker Database
 
+To connect directly to the database from the command-line, run the command: ```psql postgresql://{username}:{password}@{host}:{port}/{database name}```. The parameters in brackets are for you to set.
+
 A ```compose.yaml``` file exists in backend/remote, which defines a backend docker compose structure for the API and the PostgreSQL database. To run the database, execute ```task back:db-up``` in the root directory.
 
 To access the running container from the command line, do these series of steps:
