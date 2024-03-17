@@ -23,7 +23,7 @@ func (app *application) routes() *http.ServeMux {
 		app.announcementUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/announcement/update",
+		"POST /v1/course/announcement/delete",
 		app.announcementDeleteHandler,
 	)
 
