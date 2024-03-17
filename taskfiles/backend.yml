@@ -13,3 +13,11 @@ tasks:
     dir: backend
     cmds:
       - go mod tidy
+  db-up:
+    dir: backend/remote
+    cmds:
+      - docker compose up -d
+  db-down:
+    dir: backend/remote
+    cmds:
+      - docker compose stop
