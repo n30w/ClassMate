@@ -5,7 +5,7 @@ import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
-  onCourseCreate: (announcementData: any) => void;
+  onAnnouncementCreate: (announcementData: any) => void;
 }
 
 const CreateAnnouncement: React.FC<props> = (props: props) => {
@@ -67,7 +67,7 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
       ...announcementData,
       id: idNum,
     });
-    props.onCourseCreate({ ...announcementData, id: idNum });
+    props.onAnnouncementCreate({ ...announcementData, id: idNum });
     postNewAnnouncement(announcementData);
     props.onClose();
   };

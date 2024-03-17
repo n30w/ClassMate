@@ -14,26 +14,60 @@ interface Course {
   location: string;
 }
 
+const CourseDisplay: React.FC<{ courses: any[] }> = ({ courses }) => {
+  const router = useRouter();
+  return (
+    <>
+      {courses.map((course) => (
+        <Courses
+          key={course.id}
+          courseName={course.title}
+          professor={course.professor}
+          loc={course.location}
+          onClick={() => router.push(`/course/${course.id}`)}
+        />
+      ))}
+    </>
+  );
+};
+
 export default function Home() {
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
-  const router = useRouter();
 
   const handleCreateCourse = (courseData: any) => {
     setCourses([...courses, courseData]);
   };
 
-  const courseDisplay = courses.map((course) => {
-    return (
-      <Courses
-        key={course.id}
-        courseName={course.title}
-        professor={course.professor}
-        loc={course.location}
-        onClick={() => router.push(`/course/${course.id}`)}
-      />
-    );
-  });
+  const fetchCourses = async () => {
+    try {
+      const res: Response = await fetch("/v1/course/read", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (res.ok) {
+        const courses = await res.json();
+        return courses;
+      } else {
+        console.error("Failed to fetch courses:", res.statusText);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const getCourses = async () => {
+      const fetchedCourses = await fetchCourses();
+      setCourses(fetchedCourses);
+    };
+
+    getCourses();
+  }, []);
 
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
@@ -69,9 +103,14 @@ export default function Home() {
       <div className="bg-black bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
           <h1 className="font-bold text-4xl text-white">Spring 2024</h1>
-          <AddButton text={"New Course"} onClick={() => {setIsCreatingCourse(true);}}/>
+          <AddButton
+            text={"New Course"}
+            onClick={() => {
+              setIsCreatingCourse(true);
+            }}
+          />
         </div>
-        {courseDisplay}
+        <CourseDisplay courses={courses} />
         {isCreatingCourse && (
           <CreateCourse
             onClose={() => {
