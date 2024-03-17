@@ -15,8 +15,11 @@ type config struct {
 	// Database configurations
 	db struct {
 		// Database driver and DataSourceName
-		driver string
-		dsn    string
+		driver       string
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
 	}
 }
 

@@ -27,9 +27,28 @@ func main() {
 		"Environment (development|staging|production)",
 	)
 
+	// Database driver.
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("DB_DSN"), "PostgreSQL DSN")
+
+	// Database configuration for connection settings.
+	flag.IntVar(
+		&cfg.db.maxOpenConns, "db-max-open-conns", 25,
+		"PostgreSQL max open connections",
+	)
+	flag.IntVar(
+		&cfg.db.maxIdleConns, "db-max-idle-conns", 25,
+		"PostgreSQL max idle connections",
+	)
+	flag.StringVar(
+		&cfg.db.maxIdleTime, "db-max-idle-time", "15m",
+		"PostgreSQL max connection idle time",
+	)
+
 	flag.Parse()
 
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := log.New(os.Stdout, "[DKSE] ", log.Ldate|log.Ltime)
+
+	cfg.db.driver = "postgres"
 
 	db, err := openDB(cfg)
 	if err != nil {
