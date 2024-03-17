@@ -95,6 +95,19 @@ There are several types of tasks, some of which are ```dev```, ```build```, ```t
 
 The frontend exists at http://localhost:3000/ and the backend exists at http://localhost:6789/api/v1/
 
+#### PostgreSQL Docker Database
+
+A ```compose.yaml``` file exists in backend/remote, which defines a backend docker compose structure for the API and the PostgreSQL database. To run the database, execute ```task back:db-up``` in the root directory.
+
+To access the running container from the command line, do these series of steps:
+
+1. Run ```docker ps``` to see running containers' IDs. Find the entry for the container named ```db-postgres```.
+2. If our container's ID was abcdef1234, run the command ```docker exec -it abdef1234 bash``` to enter the container's shell environment.
+3. In the shell, enter the command ```su postgres``` to change the current user from root to postgres. Postgres cannot be accessed from root.
+4. Now enter ```psql -U postgres```. This lets us into the postgresql command line environment. You can now execute psql commands.
+
+To exit out of this environment, type ```exit```.
+
 ## Testing
 
 We must implement endpoint testing.

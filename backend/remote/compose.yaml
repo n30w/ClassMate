@@ -1,18 +1,18 @@
-name: Darkspace Backend
+name: darkspace-backend
 
 services:
   database:
     image: postgres:latest
     # env_file:
     #   - ../.env
-    container_name: Database
+    container_name: db-postgres
     restart: always
     environment:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - 5432:5432
+      - ${DB_PORT}:5432
     volumes:
       - db-data:/data/postgres
     networks:

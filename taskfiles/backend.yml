@@ -30,6 +30,12 @@ tasks:
     cmds:
       - docker compose down
 
+  # Rebuild the container(s) due to adjusted settings.
+  db-build:
+    dir: backend/remote
+    cmds:
+      - docker compose build
+
   # db-down-clean deletes volumes and their data! See:
   # https://docs.docker.com/compose/gettingstarted/#step-8-experiment-with-some-other-commands
   db-down-clean:
