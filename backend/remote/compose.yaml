@@ -1,6 +1,31 @@
-version: '3.9'
+name: Darkspace Backend
 
 services:
+  database:
+    image: postgres:latest
+    # env_file:
+    #   - ../.env
+    container_name: Database
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/data/postgres
+    networks:
+      - dksp
+
+networks:
+  dksp:
+    driver: bridge
+
+volumes:
+  db-data:
+
+
   # api:
   #   build:
   #     context: .
@@ -19,27 +44,3 @@ services:
   #     - database
   #   networks:
   #     - dksp
-
-  database:
-    image: postgres:latest
-    env_file:
-      - ../.env
-    container_name: Database
-    restart: always
-    environment:
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    ports:
-      - 5432:5432
-    volumes:
-      - db-data:/data/postgres
-    networks:
-      - dksp
-
-  networks:
-    dksp:
-      driver: bridge
-
-  volumes:
-    db-data:
