@@ -29,6 +29,29 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
     description: "",
   });
 
+  const postNewAnnouncement = async (announcementData: any) => {
+    try {
+      const res: Response = await fetch("/v1/course/announcement/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(announcementData),
+      });
+      if (res.ok) {
+        const newAnnouncement = await res.json();
+        newAnnouncement.name = announcementData.title;
+        newAnnouncement.id = announcementData.id;
+        newAnnouncement.description = announcementData.description;
+        newAnnouncement.date = announcementData.date;
+      } else {
+        console.error("Failed to create announcement:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating announcement:", error);
+    }
+  };
+
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
     setAnnouncementData({
@@ -45,13 +68,14 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
       id: idNum,
     });
     props.onCourseCreate({ ...announcementData, id: idNum });
+    postNewAnnouncement(announcementData);
     props.onClose();
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <CloseButton onClick={props.onClose}/>
+        <CloseButton onClick={props.onClose} />
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
             Create Announcement
