@@ -8,14 +8,20 @@ import (
 	"os"
 	"time"
 
+	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
 
-	"github.com/n30w/Darkspace/internal/dal"
+	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	var cfg config
 
@@ -49,6 +55,15 @@ func main() {
 	logger := log.New(os.Stdout, "[DKSE] ", log.Ldate|log.Ltime)
 
 	cfg.db.driver = "postgres"
+
+	// Set config database parameters via environment variables.
+
+	cfg.db.name = os.Getenv("DB_NAME")
+	cfg.db.username = os.Getenv("DB_USERNAME")
+	cfg.db.password = os.Getenv("DB_PASSWORD")
+	cfg.db.host = os.Getenv("DB_HOST")
+	cfg.db.port = os.Getenv("DB_PORT")
+	cfg.db.sslMode = os.Getenv("DB_SSL_MODE")
 
 	db, err := openDB(cfg)
 	if err != nil {

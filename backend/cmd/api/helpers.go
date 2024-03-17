@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // jsonWrap wraps a json message response before it gets sent out.
@@ -156,34 +153,3 @@ func jsonBuilder(data any) ([]byte, error) {
 }
 
 // Database helpers
-
-// openDB opens a connection to the database using a certain config.
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open(cfg.db.driver, cfg.db.dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	// Passing a value less than or equal to 0 means no limit.
-	db.SetMaxOpenConns(cfg.db.maxOpenConns)
-
-	// Passing a value less than or equal to 0 means no limit.
-	db.SetMaxIdleConns(cfg.db.maxIdleConns)
-
-	duration, err := time.ParseDuration(cfg.db.maxIdleTime)
-	if err != nil {
-		return nil, err
-	}
-
-	db.SetConnMaxIdleTime(duration)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err = db.PingContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
