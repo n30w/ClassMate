@@ -123,6 +123,10 @@ We must implement endpoint testing.
 - [Setting up and using postgresql on Mac](https://www.sqlshack.com/setting-up-a-postgresql-database-on-mac/)
 - [Setting postgresql on Windows](https://www.prisma.io/dataguide/postgresql/setting-up-a-local-postgresql-database#setting-up-postgresql-on-windows)
 
+### Go
+
+- [Connecting to postgresql database](https://www.calhoun.io/connecting-to-a-postgresql-database-with-gos-database-sql-package/)
+
 ### Postgresql
 
 - [Tuning postgresql for memory](https://www.enterprisedb.com/postgres-tutorials/how-tune-postgresql-memory)
@@ -132,6 +136,9 @@ We must implement endpoint testing.
 
 - [Running postgresql in a Docker container](https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/)
 - [Golang-Nginx-Postgres Docker Compose](https://github.com/docker/awesome-compose/tree/master/nginx-golang-postgres)
+- [Init script for docker postgres](https://mkyong.com/docker/how-to-run-an-init-script-for-docker-postgres/)
+- [Custom dockerfile for postgres container](https://forums.docker.com/t/how-to-make-a-docker-file-for-your-own-postgres-container/126526/8)
+- [Docker compose env file](https://www.warp.dev/terminus/docker-compose-env-file)
 
 ## Ideas
 
