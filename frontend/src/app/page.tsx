@@ -34,6 +34,8 @@ const CourseDisplay: React.FC<{ courses: any[] }> = ({ courses }) => {
 export default function Home() {
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [navbarActive, setNavbarActive] = useState(false);
+  const router = useRouter();
 
   const handleCreateCourse = (courseData: any) => {
     setCourses([...courses, courseData]);
@@ -69,6 +71,10 @@ export default function Home() {
     getCourses();
   }, []);
 
+  const handleIconClick = () => {
+    setNavbarActive(!navbarActive);
+  };
+
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <nav
@@ -80,21 +86,44 @@ export default function Home() {
       >
         <div className="relative">
           <div className="absolute inset-0 bg-black opacity-70"></div>
-          <div className="py-8 px-32">
+          <div className="py-8 px-32 flex justify-between items-center relative z-10">
             <div className="flex items-center gap-4">
               <Image
                 src="/backgrounds/NYU-logo.png"
                 width="150"
                 height="39"
                 alt="NYU Logo"
-                className="z-10"
               />
               <Image
                 src="/backgrounds/darkspace.png"
                 width="200"
                 height="39"
                 alt="Darkspace Logo"
-                className="z-10"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              {navbarActive && (
+                <div className="bg-white h-16 w-40 p-2 flex justify-center items-center rounded-md gap-4">
+                  <p
+                    className="text-black border-black hover:text-gray-500"
+                    onClick={() => router.push("/login")}
+                  >
+                    Login
+                  </p>
+                  <p
+                    className="text-black border-black hover:text-gray-500"
+                    onClick={() => router.push("/signup")}
+                  >
+                    Sign up
+                  </p>
+                </div>
+              )}
+              <Image
+                src="/backgrounds/profile-icon.png"
+                width="50"
+                height="39"
+                alt="Profile Icon"
+                onClick={handleIconClick}
               />
             </div>
           </div>
