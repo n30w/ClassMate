@@ -12,34 +12,61 @@ export default function Page() {
   //     setIsBlurred(true);
   //   };
 
-  const [password, setPassword] = useState<string>("");
+  // const [password, setPassword] = useState<string>("");
   const [reenteredPassword, setReenteredPassword] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
   const [reenteredPasswordError, setReenteredPasswordError] =
     useState<string>("");
+  const [userData, setUserData] = useState({
+    email: "",
+    password: "",
+    netid: "",
+  });
 
-  const handlePasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    setPasswordError("");
-    if (passwordError) setPasswordError("");
-  };
+  // const handlePasswordChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ): void => {
+  //   const newPassword = e.target.value;
+  //   setPassword(newPassword);
+  //   setPasswordError("");
+  //   if (passwordError) setPasswordError("");
+  // };
 
-  const handleReenteredPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const newReenteredPassword = e.target.value;
-    setReenteredPassword(newReenteredPassword);
-    setReenteredPasswordError("");
-    if (reenteredPasswordError) setReenteredPasswordError("");
+  // const handleReenteredPasswordChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ): void => {
+  //   const newReenteredPassword = e.target.value;
+  //   setReenteredPassword(newReenteredPassword);
+  //   setReenteredPasswordError("");
+  //   if (reenteredPasswordError) setReenteredPasswordError("");
+  // };
+
+  const postNewUser = async (userData: any) => {
+    try {
+      const res: Response = await fetch("/v1/user/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+      if (res.ok) {
+        const newUser = await res.json();
+        newUser.email = userData.email;
+        newUser.password = userData.password;
+        newUser.netid = userData.netid;
+      } else {
+        console.error("Failed to create user:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    const isValidPassword = validatePassword(password);
-    const doPasswordsMatch = password === reenteredPassword;
+    const isValidPassword = validatePassword(userData.password);
+    const doPasswordsMatch = userData.password === reenteredPassword;
 
     if (!isValidPassword) {
       setPasswordError(
@@ -52,8 +79,19 @@ export default function Page() {
       setReenteredPasswordError("Passwords do not match.");
       return;
     }
-
+    postNewUser(userData);
     console.log("Form submitted");
+  };
+
+  const handleChange = (e: { target: { name: any; value: any } }) => {
+    const { name, value } = e.target;
+    setUserData({
+      ...userData,
+      [name]: value,
+    });
+    setPasswordError("");
+    setReenteredPassword(value);
+    setReenteredPasswordError("");
   };
 
   return (
@@ -85,6 +123,19 @@ export default function Page() {
             onSubmit={handleSubmit}
           >
             <label htmlFor="email" className="text-white font-light py-2">
+              NetId<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="netid"
+              name="netid"
+              placeholder="abc123"
+              required
+              className="w-80 h-10 px-4 mb-8"
+              value={userData.netid}
+              onChange={handleChange}
+            />
+            <label htmlFor="email" className="text-white font-light py-2">
               Email<span className="text-red-500">*</span>
             </label>
             <input
@@ -94,6 +145,8 @@ export default function Page() {
               placeholder="abc123@nyu.edu"
               required
               className="w-80 h-10 px-4 mb-8"
+              value={userData.email}
+              onChange={handleChange}
             />
             <label htmlFor="password" className="text-white font-light py-2">
               Password<span className="text-red-500">*</span>
@@ -104,8 +157,8 @@ export default function Page() {
               name="password"
               placeholder="••••••••••"
               required
-              value={password}
-              onChange={handlePasswordChange}
+              value={userData.password}
+              onChange={handleChange}
               className={`w-80 h-10 px-4 mb-8 ${
                 passwordError && "border-red-500"
               }`}
@@ -128,6 +181,7 @@ export default function Page() {
               className={`w-80 h-10 px-4 mb-8 ${
                 reenteredPasswordError && "border-red-500"
               }`}
+              onChange={handleChange}
             />
             {reenteredPasswordError && (
               <p className="text-red-500 pb-2">{reenteredPasswordError}</p>

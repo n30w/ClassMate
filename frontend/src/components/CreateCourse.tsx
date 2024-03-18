@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {CloseIcon} from "@sanity/icons";
+import { CloseIcon } from "@sanity/icons";
 import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
@@ -25,7 +25,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(courseData),
-      })
+      });
       if (res.ok) {
         const newCourse = await res.json();
         newCourse.name = courseData.title;
@@ -63,7 +63,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <CloseButton onClick={props.onClose}/>
+        <CloseButton onClick={props.onClose} />
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
             Create New Course
@@ -82,6 +82,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
               value={courseData.title}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
             />
           </div>
           <div className="mb-2">
@@ -98,6 +99,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
               value={courseData.professor}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
             />
           </div>
           <div className="mb-2">
@@ -114,6 +116,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
               value={courseData.location}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
             />
           </div>
           <button
