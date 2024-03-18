@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { CloseIcon } from "@sanity/icons";
 import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
