@@ -3,42 +3,17 @@
 import React, { useState, useEffect } from "react";
 import CreateAssignment from "./CreateAssignment";
 import AddButton from "@/components/buttons/AddButton";
+import { Assignment } from "@/lib/types";
 
-interface Assignments {
-  id: string;
-  title: string;
-  duedate: string;
-  description: string;
+interface props {
+  entries: Assignment[];
 }
 
-const Assignments = () => {
+const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [assignments, setAssignments] = useState<Assignments[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
-
-  useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        const res = await fetch("/v1/course/assignment/read", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (res.ok) {
-          const assignmentsData = await res.json();
-          setAssignments(assignmentsData);
-        } else {
-          console.error("Failed to fetch assignments:", res.statusText);
-        }
-      } catch (error) {
-        console.error("Error fetching assignments:", error);
-      }
-    };
-
-    fetchAssignments();
-  }, []);
 
   const handleCreateAssignment = (assignmentData: any) => {
     setAssignments([...assignments, assignmentData]);
