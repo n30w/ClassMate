@@ -7,6 +7,8 @@ type CourseStore interface {
 	GetCourseByName(name string) (*models.Course, error)
 	GetCourseByID(id string) (*models.Course, error)
 	GetRoster(id string) ([]models.User, error)
+	ChangeCourseName(c *models.Course, name string) error
+	DeleteCourse(c *models.Course) error
 }
 
 type CourseService struct {
@@ -48,4 +50,19 @@ func (cs *CourseService) RetrieveRoster(id string) ([]models.User, error) {
 	}
 
 	return c, nil
+}
+
+func (cs *CourseService) UpdateCourseName(id string, name string) (*models.Course, error) {
+
+	c, err := cs.RetrieveCourse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cs.store.ChangeCourseName(c, name)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+
 }

@@ -61,11 +61,18 @@ func (app *application) courseCreateHandler(
 	}
 
 	err := app.readJSON(w, r, &input)
+
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
 	var course *models.Course
+
+	// Might need to reconsider how we store teachers in course model, currently by user struct
+	teacher, err := app.services.UserService.GetByUsername(input.TeacherName)
+
+	course.Name = input.Title
+	course.Teachers = append(course.Teachers, teacher)
 
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
@@ -89,26 +96,94 @@ func (app *application) courseReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Id string `json:"id"`
+	}
+
+	err := app.readJSON(w, r, &input)
+
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	course, err := app.services.CourseService.RetrieveCourse(input.Id)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{"course": course}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // courseUpdateHandler updates information about a course.
-//
+// ^ should only update the name of course as other subcomponents
+// of a course can be added/deleted with its respective handlers
 // REQUEST: course ID + fields to update
 // RESPONSE: course
 func (app *application) courseUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	course, err := app.services.CourseService.UpdateCourseName(input.Id, input.Name)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"course": course}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
-// courseDeleteHandler deletes a course.
+// courseDeleteHandler deletes a course
 //
-// REQUEST: course ID.
+// REQUEST: course ID, user id
 // RESPONSE: updated list of courses
 func (app *application) courseDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId string `json:"courseid"`
+		UserId   string `json:"userid`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	user, err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Need to implement specific field retrieval for Users, i.e. retrieving courses of a user
+
+	res := jsonWrap{"course": courses}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 func (app *application) announcementCreateHandler(

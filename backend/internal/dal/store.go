@@ -3,6 +3,7 @@ package dal
 import (
 	"database/sql"
 	"errors"
+
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -109,3 +110,9 @@ func (s *Store) GetCourseByID(id string) (
 }
 
 func (s *Store) GetRoster(id string) ([]models.User, error) { return nil, nil }
+
+func (s *Store) DeleteCourse()
+
+func (s *Store) ChangeCourseName(course *models.Course, newName string) error {
+	return nil
+}
