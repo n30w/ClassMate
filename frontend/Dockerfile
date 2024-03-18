@@ -1,8 +1,9 @@
-FROM node:18
+FROM node:latest
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN corepack enable
+RUN yarn
 COPY . .
 EXPOSE 3000
-CMD npm run dev
+CMD yarn dev
