@@ -1,3 +1,8 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": ["next/core-web-vitals", "prettier"],
+  "rules": {
+    "@next/next/no-html-link-for-pages": ["error"],
+    "@next/next/no-img-element": ["error"],
+    "@next/next/no-typos": ["error"]
+  }
 }
