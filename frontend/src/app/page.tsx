@@ -1,41 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import Courses from "@/components/Courses";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CreateCourse from "@/components/CreateCourse";
 import AddButton from "@/components/buttons/AddButton";
-
-interface Course {
-  id: string;
-  title: string;
-  professor: string;
-  location: string;
-}
-
-const CourseDisplay: React.FC<{ courses: any[] }> = ({ courses }) => {
-  const router = useRouter();
-  return (
-    <>
-      {courses.map((course) => (
-        <Courses
-          key={course.id}
-          courseName={course.title}
-          professor={course.professor}
-          loc={course.location}
-          onClick={() => router.push(`/course/${course.id}`)}
-        />
-      ))}
-    </>
-  );
-};
+import { Course } from "@/lib/types";
+import CourseItem from "@/components/homepage/Courses";
 
 export default function Home() {
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [navbarActive, setNavbarActive] = useState(false);
   const router = useRouter();
+
+  const currentTerm = "Spring 2024";
 
   const handleCreateCourse = (courseData: any) => {
     setCourses([...courses, courseData]);
@@ -49,6 +28,7 @@ export default function Home() {
           "Content-Type": "application/json",
         },
       });
+
       if (res.ok) {
         const courses = await res.json();
         return courses;
@@ -131,7 +111,7 @@ export default function Home() {
       </nav>
       <div className="bg-black bg-cover bg-no-repeat">
         <div className="flex items-center justify-between py-8 px-32">
-          <h1 className="font-bold text-4xl text-white">Spring 2024</h1>
+          <h1 className="font-bold text-4xl text-white">{currentTerm}</h1>
           <AddButton
             text={"New Course"}
             onClick={() => {
@@ -139,7 +119,17 @@ export default function Home() {
             }}
           />
         </div>
-        <CourseDisplay courses={courses} />
+
+        {courses.map((course, i) => (
+          <CourseItem
+            key={i}
+            data={course}
+            onClick={() => {
+              router.push(`/course/${course.id}`);
+            }}
+          />
+        ))}
+
         {isCreatingCourse && (
           <CreateCourse
             onClose={() => {
