@@ -27,6 +27,9 @@ frontend/build
 .DS_Store
 *.pem
 
+# fonts
+.woff2
+
 # debug
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
