@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
@@ -14,6 +15,29 @@ const CreateCourse: React.FC<props> = (props: props) => {
     professor: "",
     location: "",
   });
+
+  const postNewCourse = async (courseData: any) => {
+    try {
+      const res: Response = await fetch("/v1/course/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(courseData),
+      });
+      if (res.ok) {
+        const newCourse = await res.json();
+        newCourse.name = courseData.title;
+        newCourse.id = courseData.id;
+        newCourse.teachers.push(courseData.professor);
+        newCourse.archived = false;
+      } else {
+        console.error("Failed to create course:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
+  };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
@@ -31,18 +55,14 @@ const CreateCourse: React.FC<props> = (props: props) => {
       id: idNum,
     });
     props.onCourseCreate({ ...courseData, id: idNum });
+    postNewCourse(courseData);
     props.onClose();
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <button
-          className="absolute top-0 right-0 m-2 text-black text-lg font-bold cursor-pointer"
-          onClick={props.onClose}
-        >
-          x
-        </button>
+        <CloseButton onClick={props.onClose} />
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
             Create New Course
@@ -61,6 +81,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
               value={courseData.title}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
             />
           </div>
           <div className="mb-2">
@@ -77,6 +98,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
               value={courseData.professor}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
             />
           </div>
           <div className="mb-2">
@@ -93,6 +115,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
               value={courseData.location}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
             />
           </div>
           <button

@@ -11,6 +11,7 @@
     "format:fix": "prettier --write --list-different ./src"
   },
   "dependencies": {
+    "@sanity/icons": "^2.11.2",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18"

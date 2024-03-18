@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
@@ -14,6 +15,28 @@ const CreateAssignment: React.FC<props> = (props: props) => {
     dueDate: "",
     description: "",
   });
+
+  const postNewAssignment = async (assignmentData: any) => {
+    try {
+      const res: Response = await fetch("/v1/course/assignment/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(assignmentData),
+      });
+      if (res.ok) {
+        const newAssignment = await res.json();
+        newAssignment.name = assignmentData.title;
+        newAssignment.id = assignmentData.id;
+        newAssignment.due_date = assignmentData.dueDate;
+      } else {
+        console.error("Failed to create assignment:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+    }
+  };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
@@ -31,18 +54,14 @@ const CreateAssignment: React.FC<props> = (props: props) => {
       id: idNum,
     });
     props.onCourseCreate({ ...assignmentData, id: idNum });
+    postNewAssignment(assignmentData);
     props.onClose();
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <button
-          className="absolute top-0 right-0 m-2 text-black text-lg font-bold cursor-pointer"
-          onClick={props.onClose}
-        >
-          x
-        </button>
+        <CloseButton onClick={props.onClose} />
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
             Create Assignment

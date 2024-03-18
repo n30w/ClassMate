@@ -293,6 +293,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sanity/icons@npm:^2.11.2":
+  version: 2.11.2
+  resolution: "@sanity/icons@npm:2.11.2"
+  peerDependencies:
+    react: ^18
+  checksum: 10c0/b380f49eacd1b4034f4f66f1df50d077019a83817126b81ec9fcae59088d769b761bc2621cfec9cac9dc0bd9451d00eed6efd7dde51abfc0d8ca501d5a154e4e
+  languageName: node
+  linkType: hard
+
 "@swc/helpers@npm:0.5.2":
   version: 0.5.2
   resolution: "@swc/helpers@npm:0.5.2"
@@ -1646,6 +1655,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "frontend@workspace:."
   dependencies:
+    "@sanity/icons": "npm:^2.11.2"
     "@types/node": "npm:^20"
     "@types/react": "npm:^18"
     "@types/react-dom": "npm:^18"

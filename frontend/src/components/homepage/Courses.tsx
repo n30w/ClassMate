@@ -1,16 +1,15 @@
+import { Course } from "@/lib/types";
 import Announcements from "./DashboardAnnouncements";
-import Assignments from "./DashboardAssignments";
-import Discussions from "./DashboardDiscussions";
+import Assignments from "../DashboardAssignments";
+import Discussions from "../DashboardDiscussions";
 import Image from "next/image";
 
-interface CourseProps {
-  courseName: string;
-  professor: string;
-  loc: string;
-  onClick?: () => void;
+interface props {
+  data: Course;
+  onClick: () => void;
 }
 
-const Course: React.FC<CourseProps> = (props: CourseProps) => {
+const CourseItem: React.FC<props> = (props: props) => {
   return (
     <div className="py-4 px-32" onClick={props.onClick}>
       <div className="flex border border-white">
@@ -24,10 +23,12 @@ const Course: React.FC<CourseProps> = (props: CourseProps) => {
           />
           <div className="absolute inset-0 flex flex-col justify-end items-start text-white p-4">
             <h1 className="text-white font-bold text-2xl">
-              {props.courseName}
+              {props.data.title}
             </h1>
-            <h2 className="text-white mb-2">with {props.professor}</h2>
-            <h3 className="text-white font-light text-sm">{props.loc}</h3>
+            <h2 className="text-white mb-2">with {props.data.professor}</h2>
+            <h3 className="text-white font-light text-sm">
+              {props.data.location}
+            </h3>
           </div>
         </div>
         <div className="flex my-8 mx-4 justify-between">
@@ -46,4 +47,4 @@ const Course: React.FC<CourseProps> = (props: CourseProps) => {
   );
 };
 
-export default Course;
+export default CourseItem;
