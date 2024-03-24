@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -65,6 +66,22 @@ func (us *UserService) GetByID(id string) (*models.User, error) {
 	}
 
 	return user, nil
+}
+
+// What if we want only some information from Assignments or Courses?
+func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, error) {
+	user, err := us.store.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	model := reflect.ValueOf(user)
+	fieldValue := model.FieldByName(field)
+
+	if fieldValue == reflect.ValueOf(nil) {
+		return nil, error // need to change
+	}
+	return fieldValue, nil
 }
 
 func (us *UserService) NewUsername(s string) Username {

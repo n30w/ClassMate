@@ -61,7 +61,6 @@ func (app *application) courseCreateHandler(
 	}
 
 	err := app.readJSON(w, r, &input)
-
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -101,7 +100,6 @@ func (app *application) courseReadHandler(
 	}
 
 	err := app.readJSON(w, r, &input)
-
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -119,35 +117,69 @@ func (app *application) courseReadHandler(
 }
 
 // courseUpdateHandler updates information about a course.
-// ^ should only update the name of course as other subcomponents
-// of a course can be added/deleted with its respective handlers
-// REQUEST: course ID + fields to update
+// REQUEST: course ID + fields to update (add user, delete user, rename)
 // RESPONSE: course
 func (app *application) courseUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		Id   string `json:"id"`
-		Name string `json:"name"`
-	}
+	courseid := r.PathValue("id")
+	action := r.PathValue("action")
 
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	switch action {
 
-	course, err := app.services.CourseService.UpdateCourseName(input.Id, input.Name)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	case "add", "delete":
+		var input struct {
+			UserId string
+		}
+		err := app.readJSON(w, r, &input)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+		if action == "add" {
+			course, err := app.services.CourseService.AddToRoster(courseid, input.UserId)
+			if err != nil {
+				app.serverError(w, r, err)
+			}
+			res := jsonWrap{"course": course}
+			err = app.writeJSON(w, http.StatusOK, res, nil)
+			if err != nil {
+				app.serverError(w, r, err)
+			}
+		} else if action == "delete" {
+			course, err := app.services.CourseService.RemoveFromRoster(courseid, input.UserId)
+			if err != nil {
+				app.serverError(w, r, err)
+			}
+			res := jsonWrap{"course": course}
+			err = app.writeJSON(w, http.StatusOK, res, nil)
+			if err != nil {
+				app.serverError(w, r, err)
+			}
+		}
 
-	res := jsonWrap{"course": course}
-	err = app.writeJSON(w, http.StatusOK, res, nil)
-	if err != nil {
-		app.serverError(w, r, err)
+	case "rename":
+		var input struct {
+			Name string
+		}
+		err := app.readJSON(w, r, &input)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+
+		course, err := app.services.CourseService.UpdateCourseName(courseid, input.Name)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		res := jsonWrap{"course": course}
+		err = app.writeJSON(w, http.StatusOK, res, nil)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+
+	default:
+		app.serverError(w, r, err) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -155,14 +187,14 @@ func (app *application) courseUpdateHandler(
 // courseDeleteHandler deletes a course
 //
 // REQUEST: course ID, user id
-// RESPONSE: updated list of courses
+// RESPONSE: updated list of course
 func (app *application) courseDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
 		CourseId string `json:"courseid"`
-		UserId   string `json:"userid`
+		UserId   string `json:"userid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -171,13 +203,18 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	user, err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId)
+	err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
+	// RetrieveUserCourse requires overlapping store functions
 	// Need to implement specific field retrieval for Users, i.e. retrieving courses of a user
+	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	res := jsonWrap{"course": courses}
 	err = app.writeJSON(w, http.StatusOK, res, nil)

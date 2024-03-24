@@ -5,10 +5,12 @@ import "github.com/n30w/Darkspace/internal/models"
 type CourseStore interface {
 	InsertCourse(c *models.Course) error
 	GetCourseByName(name string) (*models.Course, error)
-	GetCourseByID(id string) (*models.Course, error)
-	GetRoster(id string) ([]models.User, error)
+	GetCourseByID(courseid string) (*models.Course, error)
+	GetRoster(courseid string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
 	DeleteCourse(c *models.Course) error
+	AddStudent(c *models.Course, userid string) (*models.Course, error)
+	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 }
 
 type CourseService struct {
@@ -23,38 +25,57 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 	if err != nil {
 		return err
 	}
-
 	// Create the course.
 	err = cs.store.InsertCourse(c)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (cs *CourseService) RetrieveCourse(id string) (*models.Course, error) {
-	c, err := cs.store.GetCourseByID(id)
+func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error) {
+	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
 	}
-
 	return c, nil
 }
 
-func (cs *CourseService) RetrieveRoster(id string) ([]models.User, error) {
+func (cs *CourseService) RetrieveRoster(courseid string) ([]models.User, error) {
 	// TODO fix this implementation
-	c, err := cs.store.GetRoster(id)
+	c, err := cs.store.GetRoster(courseid)
 	if err != nil {
 		return nil, err
 	}
-
 	return c, nil
 }
 
-func (cs *CourseService) UpdateCourseName(id string, name string) (*models.Course, error) {
+func (cs *CourseService) AddToRoster(courseid string, userid string) (*models.Course, error) {
+	c, err := cs.store.GetCourseByID(courseid)
+	if err != nil {
+		return nil, err
+	}
+	c, err = cs.store.AddStudent(c, userid)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
 
-	c, err := cs.RetrieveCourse(id)
+func (cs *CourseService) RemoveFromRoster(courseid string, userid string) (*models.Course, error) {
+	c, err := cs.store.GetCourseByID(courseid)
+	if err != nil {
+		return nil, err
+	}
+	c, err = cs.store.RemoveStudent(c, userid)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (cs *CourseService) UpdateCourseName(courseid string, name string) (*models.Course, error) {
+	c, err := cs.RetrieveCourse(courseid)
 	if err != nil {
 		return nil, err
 	}
@@ -64,5 +85,8 @@ func (cs *CourseService) UpdateCourseName(id string, name string) (*models.Cours
 		return nil, err
 	}
 	return c, nil
+}
 
+func (cs *CourseService) DeleteCourse(courseid string) error {
+	return nil
 }
