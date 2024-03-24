@@ -29,7 +29,6 @@ func (app *application) courseHomepageHandler(
 	id := r.PathValue("id")
 
 	var course *models.Course
-	var err error
 
 	course, err = app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
@@ -130,7 +129,7 @@ func (app *application) courseUpdateHandler(
 
 	case "add", "delete":
 		var input struct {
-			UserId string
+			UserId string `json:"userid"`
 		}
 		err := app.readJSON(w, r, &input)
 		if err != nil {
@@ -203,7 +202,7 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId)
+	err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId) // needs work
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -223,10 +222,27 @@ func (app *application) courseDeleteHandler(
 	}
 }
 
+// REQUEST: course ID, teacher ID, announcement description
+// RESPONSE: announcement
 func (app *application) announcementCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId     string           `json:"courseid"`
+		TeacherId    string           `json:"teacherid"`
+		Announcement string           `json:"announcement"`
+		Media        []models.MediaId `json:"media"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	var anno *models.Announcement
+	anno.Post.Description, anno.Post.Owner, anno.Post.Media = input.Announcement, input.TeacherId, input.Media
 
 }
 

@@ -12,13 +12,14 @@ type MediaId int64
 type SubmissionId int64
 type DiscussionId int64
 type CommentId int64
+type AnnouncementId int64
 
 type Post struct {
 	Title       string
 	Description string
 	Media       []MediaId
 	Date        time.Time
-	Owner       User
+	Owner       string
 }
 
 type Assignment struct {
@@ -53,6 +54,13 @@ type Course struct {
 type Discussion struct {
 	Post     Post
 	ID       DiscussionId
+	Comments []CommentId
+}
+
+// Announcements have the same structure as Discussions but they are displayed differently
+type Announcement struct {
+	Post     Post
+	ID       AnnouncementId
 	Comments []CommentId
 }
 
