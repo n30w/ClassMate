@@ -30,7 +30,7 @@ func (app *application) courseHomepageHandler(
 
 	var course *models.Course
 
-	course, err = app.services.CourseService.RetrieveCourse(id)
+	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -48,15 +48,15 @@ func (app *application) courseHomepageHandler(
 
 // createCourseHandler creates a course.
 //
-// REQUEST: course title, username
+// REQUEST: course title, user id
 // RESPONSE: course id, name, teacher, assignments
 func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		Title       string `json:"title"`
-		TeacherName string `json:"username"`
+		Title     string           `json:"title"`
+		TeacherID models.TeacherId `json:"teacherid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -66,11 +66,8 @@ func (app *application) courseCreateHandler(
 
 	var course *models.Course
 
-	// Might need to reconsider how we store teachers in course model, currently by user struct
-	teacher, err := app.services.UserService.GetByUsername(input.TeacherName)
-
 	course.Name = input.Title
-	course.Teachers = append(course.Teachers, teacher)
+	course.Teachers = append(course.Teachers, input.TeacherID)
 
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
@@ -195,18 +192,25 @@ func (app *application) courseDeleteHandler(
 		CourseId string `json:"courseid"`
 		UserId   string `json:"userid"`
 	}
-
+	// include authentication for user to check membership
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId) // needs work
+	// if teacher, delete course
+	err = app.services.CourseService.DeleteCourse(input.CourseId) // needs work
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+	// if student, unenroll
+	err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	err = app.services.UserService.RemoveCourseFromUser(input.CourseId, input.UserId)
 	// RetrieveUserCourse requires overlapping store functions
 	// Need to implement specific field retrieval for Users, i.e. retrieving courses of a user
 	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
@@ -241,9 +245,20 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	var anno *models.Announcement
-	anno.Post.Description, anno.Post.Owner, anno.Post.Media = input.Announcement, input.TeacherId, input.Media
+	var anno *models.Message
+	anno.Post.Description, anno.Post.Owner, anno.Post.Media, anno.Type = input.Announcement, input.TeacherId, input.Media, 0
 
+	anno, err = app.services.MessageService.CreateMessage(anno)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"announcement": anno}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 func (app *application) announcementUpdateHandler(

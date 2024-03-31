@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -11,7 +12,8 @@ type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(id string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
-	GetByUsername(username string) (*models.User, error)
+	GetUserByUsername(username string) (*models.User, error)
+	DeleteCourseFromUser(courseid string, u *models.User) error
 }
 
 type UserService struct {
@@ -44,7 +46,7 @@ func (us *UserService) CreateUser(um *models.User) error {
 	}
 
 	// Check if username is already in use.
-	_, err = us.store.GetByUsername(um.Username.String())
+	_, err = us.store.GetUserByUsername(um.Username.String())
 	// Notice that err IS EQUAL TO nil and not NOT EQUAL TO.
 	if err == nil {
 		return errors.New("username already taken")
@@ -79,9 +81,17 @@ func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, e
 	fieldValue := model.FieldByName(field)
 
 	if fieldValue == reflect.ValueOf(nil) {
-		return nil, error // need to change
+		return nil, fmt.Errorf("can't retrieve %s field", fieldValue) // need to change
 	}
 	return fieldValue, nil
+}
+
+func (us *UserService) RemoveCourseFromUser(courseid string, userid string) error {
+	user, err := us.store.GetUserByID(userid)
+	if err != nil {
+		return err
+	}
+	err = us.store.DeleteCourseFromUser(courseid, user)
 }
 
 func (us *UserService) NewUsername(s string) Username {

@@ -1,6 +1,8 @@
 package domain
 
-import "github.com/n30w/Darkspace/internal/models"
+import (
+	"github.com/n30w/Darkspace/internal/models"
+)
 
 type CourseStore interface {
 	InsertCourse(c *models.Course) error
@@ -8,9 +10,9 @@ type CourseStore interface {
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(courseid string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
-	DeleteCourse(c *models.Course) error
-	AddStudent(c *models.Course, userid string) (*models.Course, error)
-	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
+	DeleteUserFromCourse(c *models.Course) error
+	AddStudent(c *models.Course, userid string) error
+	RemoveStudent(c *models.Course, userid string) error
 }
 
 type CourseService struct {
@@ -62,16 +64,16 @@ func (cs *CourseService) AddToRoster(courseid string, userid string) (*models.Co
 	return c, nil
 }
 
-func (cs *CourseService) RemoveFromRoster(courseid string, userid string) (*models.Course, error) {
+func (cs *CourseService) RemoveFromRoster(courseid string, userid string) error {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	c, err = cs.store.RemoveStudent(c, userid)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return c, nil
+	return nil
 }
 
 func (cs *CourseService) UpdateCourseName(courseid string, name string) (*models.Course, error) {
@@ -88,5 +90,13 @@ func (cs *CourseService) UpdateCourseName(courseid string, name string) (*models
 }
 
 func (cs *CourseService) DeleteCourse(courseid string) error {
+	c, err := cs.store.GetCourseByID(courseid)
+	if err != nil {
+		return err
+	}
+	err = cs.store.DeleteUserFromCourse(c)
+	if err != nil {
+		return err
+	}
 	return nil
 }

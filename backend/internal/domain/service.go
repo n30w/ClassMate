@@ -9,7 +9,8 @@ type Service struct {
 
 func NewServices(s *dal.Store) *Service {
 	return &Service{
-		UserService:   NewUserService(s),
-		CourseService: NewCourseService(s),
+		UserService:    NewUserService(s),
+		CourseService:  NewCourseService(s),
+		MessageService: NewMessageService(s),
 	}
 }
