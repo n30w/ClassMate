@@ -144,6 +144,7 @@ We must implement endpoint testing.
 
 - Invite students through link or code
 - Need auth for API routes
+- Need to clarify what specific elements the frontend needs after calling API endpoints 
 
 ## Glossary
 

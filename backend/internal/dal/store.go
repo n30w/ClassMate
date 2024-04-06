@@ -3,6 +3,7 @@ package dal
 import (
 	"database/sql"
 	"errors"
+
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -33,12 +34,12 @@ func (s *Store) InsertUser(u *models.User) error {
 	return nil
 }
 
-func (s *Store) GetUserByID(id string) (*models.User, error) {
+func (s *Store) GetUserByID(userid string) (*models.User, error) {
 
 	u := &models.User{}
 
 	query := `SELECT id, email, full_name FROM users WHERE id = $1`
-	err := s.db.QueryRow(query, id).Scan(u.ID, u.Email, u.FullName)
+	err := s.db.QueryRow(query, userid).Scan(u.ID, u.Email, u.FullName)
 
 	if err != nil {
 		switch {
@@ -72,7 +73,7 @@ func (s *Store) GetUserByEmail(email string) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) GetByUsername(username string) (*models.User, error) {
+func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 
 	u := &models.User{}
 
@@ -101,11 +102,59 @@ func (s *Store) GetCourseByName(name string) (
 	return nil, nil
 }
 
-func (s *Store) GetCourseByID(id string) (
+func (s *Store) GetCourseByID(courseid string) (
 	*models.Course,
 	error,
 ) {
 	return nil, nil
 }
 
-func (s *Store) GetRoster(id string) ([]models.User, error) { return nil, nil }
+func (s *Store) GetRoster(courseid string) (
+	[]models.User,
+	error,
+) {
+	return nil, nil
+}
+
+func (s *Store) DeleteUserFromCourse(c *models.Course) error { return nil }
+
+func (s *Store) DeleteCourseFromUser(
+	courseid string,
+	u *models.User,
+) error {
+	return nil
+}
+
+func (s *Store) ChangeCourseName(c *models.Course, name string) error {
+	return nil
+}
+
+func (s *Store) AddStudent(c *models.Course, userid string) error {
+	return nil
+}
+func (s *Store) RemoveStudent(c *models.Course, userid string) error {
+	return nil
+}
+
+func (s *Store) InsertMessage(m *models.Message) (
+	*models.Message,
+	error,
+) {
+	return nil, nil
+}
+
+func (s *Store) GetMessageById(id string) (
+	*models.Message,
+	error,
+) {
+	return nil, nil
+}
+
+func (s *Store) DeleteMessage(id string) error { return nil }
+
+func (s *Store) EditMessage(id string) (
+	*models.Message,
+	error,
+) {
+	return nil, nil
+}

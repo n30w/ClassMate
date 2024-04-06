@@ -15,11 +15,11 @@ type User struct {
 	*AccessControl
 
 	// General user information.
-	FullName       string    `json:"fullName,omitempty"`
-	ProfilePicture Media     `json:"profile_picture,omitempty"`
-	Projects       []Project `json:"projects,omitempty"`
-	Courses        []Course  `json:"courses,omitempty"`
-	Bio            string    `json:"bio,omitempty"`
+	FullName       string `json:"fullName,omitempty"`
+	ProfilePicture Media  `json:"profile_picture,omitempty"`
+	// Projects       []Project `json:"projects,omitempty"`
+	Courses []Course `json:"courses,omitempty"`
+	Bio     string   `json:"bio,omitempty"`
 }
 
 func NewUser(netid string, c Credentials) *User {

@@ -4,29 +4,35 @@ import (
 	"time"
 )
 
+type UserId string
+type TeacherId string
+type CourseId int64
+type AssignmentId int64
+type MediaId int64
+type SubmissionId int64
+type CommentId int64
+type MessageId int64
+
 type Post struct {
 	Title       string
-	ID          string
 	Description string
-	Media       []Media
+	Media       []MediaId
 	Date        time.Time
-	Owner       User
+	Owner       string
 }
 
 type Assignment struct {
 	Post       Post
-	Submission []Submission
+	ID         AssignmentId
+	Submission []SubmissionId
 	Feedback   string
 	Grade      int
 	DueDate    time.Time `json:"due_date"`
 }
 
-func (a Assignment) addSubmission(submission Submission) {
-	a.Submission = append(a.Submission, submission)
-}
-
 type Submission struct {
 	User           User
+	ID             SubmissionId
 	FileType       string
 	SubmissionTime time.Time
 	OnTime         bool
@@ -34,36 +40,36 @@ type Submission struct {
 
 type Course struct {
 	Name        string         `json:"name"`
-	ID          int64          `json:"id"`
-	Discussions [10]Discussion `json:"discussions"`
-	Teachers    []User         `json:"teachers"`
-	Roster      []User         `json:"roster"`
-	Assignments []Assignment   `json:"assignments"`
+	ID          CourseId       `json:"id"`
+	Messages    [10]MessageId  `json:"discussions"`
+	Teachers    []TeacherId    `json:"teachers"`
+	Roster      []UserId       `json:"roster"`
+	Assignments []AssignmentId `json:"assignments"`
 	Archived    bool           `json:"archived"`
 }
 
-// Discussion contains anything related to communications,
-// such as discussion posts and user messages.
-type Discussion struct {
+// Discussion contains anything related to communication,
+// such as discussion posts and user messages
+// Announcements have the same structure as Discussions but they are displayed differently in the frontend
+type Message struct {
 	Post     Post
-	Comments []Comment
-}
-
-func (d Discussion) addComment(comment Comment) {
-	d.Comments = append(d.Comments, comment)
+	ID       MessageId
+	Type     uint8 //0 for announcement, 1 for discussion
+	Comments []CommentId
 }
 
 // TODO: Linked lists
 type Comment struct {
+	ID      CommentId
 	Post    Post
-	Replies []Comment
+	Replies []CommentId
 }
 
-type Project struct {
-	Name            string     `json:"name"`
-	ID              string     `json:"id"`
-	Deadline        time.Time  `json:"deadline"`
-	MediaReferences []Media    `json:"media_references"`
-	Members         []User     `json:"members"`
-	Discussion      Discussion `json:"discussion"`
-}
+// type Project struct {
+// 	Name            string     `json:"name"`
+// 	ID              string     `json:"id"`
+// 	Deadline        time.Time  `json:"deadline"`
+// 	MediaReferences []MediaId  `json:"media_references"`
+// 	Members         []User     `json:"members"`
+// 	Discussion      Discussion `json:"discussion"`
+// }
