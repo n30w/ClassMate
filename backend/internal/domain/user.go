@@ -71,7 +71,10 @@ func (us *UserService) GetByID(id string) (*models.User, error) {
 }
 
 // What if we want only some information from Assignments or Courses?
-func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, error) {
+func (us *UserService) RetrieveFromUser(id string, field string) (
+	interface{},
+	error,
+) {
 	user, err := us.store.GetUserByID(id)
 	if err != nil {
 		return nil, err
@@ -81,17 +84,24 @@ func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, e
 	fieldValue := model.FieldByName(field)
 
 	if fieldValue == reflect.ValueOf(nil) {
-		return nil, fmt.Errorf("can't retrieve %s field", fieldValue) // need to change
+		return nil, fmt.Errorf(
+			"can't retrieve %s field",
+			fieldValue,
+		) // need to change
 	}
 	return fieldValue, nil
 }
 
-func (us *UserService) RemoveCourseFromUser(courseid string, userid string) error {
+func (us *UserService) RemoveCourseFromUser(
+	courseid string,
+	userid string,
+) error {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return err
 	}
 	err = us.store.DeleteCourseFromUser(courseid, user)
+	return err
 }
 
 func (us *UserService) NewUsername(s string) Username {

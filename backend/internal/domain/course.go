@@ -35,7 +35,10 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 	return nil
 }
 
-func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error) {
+func (cs *CourseService) RetrieveCourse(courseid string) (
+	*models.Course,
+	error,
+) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -43,7 +46,10 @@ func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error)
 	return c, nil
 }
 
-func (cs *CourseService) RetrieveRoster(courseid string) ([]models.User, error) {
+func (cs *CourseService) RetrieveRoster(courseid string) (
+	[]models.User,
+	error,
+) {
 	// TODO fix this implementation
 	c, err := cs.store.GetRoster(courseid)
 	if err != nil {
@@ -52,31 +58,40 @@ func (cs *CourseService) RetrieveRoster(courseid string) ([]models.User, error) 
 	return c, nil
 }
 
-func (cs *CourseService) AddToRoster(courseid string, userid string) (*models.Course, error) {
+func (cs *CourseService) AddToRoster(
+	courseid string,
+	userid string,
+) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
 	}
-	c, err = cs.store.AddStudent(c, userid)
+	err = cs.store.AddStudent(c, userid)
 	if err != nil {
 		return nil, err
 	}
 	return c, nil
 }
 
-func (cs *CourseService) RemoveFromRoster(courseid string, userid string) error {
+func (cs *CourseService) RemoveFromRoster(
+	courseid string,
+	userid string,
+) error {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return err
 	}
-	c, err = cs.store.RemoveStudent(c, userid)
+	err = cs.store.RemoveStudent(c, userid)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (cs *CourseService) UpdateCourseName(courseid string, name string) (*models.Course, error) {
+func (cs *CourseService) UpdateCourseName(
+	courseid string,
+	name string,
+) (*models.Course, error) {
 	c, err := cs.RetrieveCourse(courseid)
 	if err != nil {
 		return nil, err

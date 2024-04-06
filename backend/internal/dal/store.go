@@ -109,11 +109,21 @@ func (s *Store) GetCourseByID(courseid string) (
 	return nil, nil
 }
 
-func (s *Store) GetRoster(courseid string) ([]models.User, error) { return nil, nil }
+func (s *Store) GetRoster(courseid string) (
+	[]models.User,
+	error,
+) {
+	return nil, nil
+}
 
 func (s *Store) DeleteUserFromCourse(c *models.Course) error { return nil }
 
-func (s *Store) DeleteCourseFromUser(courseid string, u *models.User) error { return nil }
+func (s *Store) DeleteCourseFromUser(
+	courseid string,
+	u *models.User,
+) error {
+	return nil
+}
 
 func (s *Store) ChangeCourseName(c *models.Course, name string) error {
 	return nil
@@ -126,10 +136,25 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) error {
 	return nil
 }
 
-func (s *Store) InsertMessage(m *models.Message) (*models.Message, error) { return nil, nil }
+func (s *Store) InsertMessage(m *models.Message) (
+	*models.Message,
+	error,
+) {
+	return nil, nil
+}
 
-func (s *Store) GetMessageById(id string) (*models.Message, error) { return nil, nil }
+func (s *Store) GetMessageById(id string) (
+	*models.Message,
+	error,
+) {
+	return nil, nil
+}
 
-func (s *Store) DeleteMessage(id string) (*models.Message, error) { return nil, nil }
+func (s *Store) DeleteMessage(id string) error { return nil }
 
-func (s *Store) EditMessage(id string) (*models.Message, error) { return nil, nil }
+func (s *Store) EditMessage(id string) (
+	*models.Message,
+	error,
+) {
+	return nil, nil
+}

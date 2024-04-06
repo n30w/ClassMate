@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -122,8 +123,10 @@ func (app *application) courseUpdateHandler(
 	courseid := r.PathValue("id")
 	action := r.PathValue("action")
 
-	switch action {
+	var course *models.Course
+	var err error = errors.New("invalid update action")
 
+	switch action {
 	case "add", "delete":
 		var input struct {
 			UserId string `json:"userid"`
@@ -133,7 +136,10 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 		if action == "add" {
-			course, err := app.services.CourseService.AddToRoster(courseid, input.UserId)
+			course, err = app.services.CourseService.AddToRoster(
+				courseid,
+				input.UserId,
+			)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -143,11 +149,15 @@ func (app *application) courseUpdateHandler(
 				app.serverError(w, r, err)
 			}
 		} else if action == "delete" {
-			course, err := app.services.CourseService.RemoveFromRoster(courseid, input.UserId)
+			err = app.services.CourseService.RemoveFromRoster(
+				courseid,
+				input.UserId,
+			)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
-			res := jsonWrap{"course": course}
+			// TODO: Change this
+			res := jsonWrap{"message": "success"}
 			err = app.writeJSON(w, http.StatusOK, res, nil)
 			if err != nil {
 				app.serverError(w, r, err)
@@ -163,7 +173,10 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 
-		course, err := app.services.CourseService.UpdateCourseName(courseid, input.Name)
+		course, err := app.services.CourseService.UpdateCourseName(
+			courseid,
+			input.Name,
+		)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -175,7 +188,11 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(w, r, err) //need to format error, input field is not one of the 3 options
+		app.serverError(
+			w,
+			r,
+			err,
+		)
 	}
 
 }
@@ -205,15 +222,24 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 	// if student, unenroll
-	err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId)
+	err = app.services.CourseService.RemoveFromRoster(
+		input.CourseId,
+		input.UserId,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	err = app.services.UserService.RemoveCourseFromUser(input.CourseId, input.UserId)
+	err = app.services.UserService.RemoveCourseFromUser(
+		input.CourseId,
+		input.UserId,
+	)
 	// RetrieveUserCourse requires overlapping store functions
 	// Need to implement specific field retrieval for Users, i.e. retrieving courses of a user
-	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
+	courses, err := app.services.UserService.RetrieveFromUser(
+		input.UserId,
+		"courses",
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
