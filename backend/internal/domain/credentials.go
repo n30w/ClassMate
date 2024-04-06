@@ -37,6 +37,7 @@ func validateCredentials(c *models.User) error {
 	return nil
 }
 
+// Password is a hashed string from the frontend.
 type Password string
 
 func (p Password) Valid() error {
@@ -51,6 +52,8 @@ func (p Password) String() string {
 	return string(p)
 }
 
+// Username is a string defined by the user they can
+// use to login.
 type Username string
 
 func (u Username) Valid() error {
@@ -65,6 +68,7 @@ func (u Username) String() string {
 	return string(u)
 }
 
+// Email is a valid NYU email address.
 type Email string
 
 func (e Email) Valid() error {
@@ -79,6 +83,12 @@ func (e Email) String() string {
 	return string(e)
 }
 
+// Membership defines the type of permissions that a user is default
+// scoped to. There are only two valid Membership possibilities for
+// a POST request can add or change in the database, 0 and 1. Although
+// there are integers greater than 1 defined, such as ADMIN,
+// this is not supposed to be accessible by the frontend, and therefore,
+// not bothered to be checked.
 type Membership int
 
 func (m Membership) Valid() error {
