@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --check ./src",
-    "format:fix": "prettier --write --list-different ./src"
+    "format:fix": "prettier --write --list-different ./src",
+    "test": "jest"
   },
   "dependencies": {
     "@sanity/icons": "^2.11.2",
@@ -24,6 +25,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
     "eslint-config-prettier": "^9.1.0",
+    "jest": "^27.0.0",
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
