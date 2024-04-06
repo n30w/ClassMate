@@ -70,7 +70,7 @@ func (us *UserService) GetByID(id string) (*models.User, error) {
 	return user, nil
 }
 
-// What if we want only some information from Assignments or Courses?
+// TODO: What if we want only some information from Assignments or Courses?
 func (us *UserService) RetrieveFromUser(id string, field string) (
 	interface{},
 	error,
