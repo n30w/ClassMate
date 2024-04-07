@@ -155,7 +155,7 @@ export default function Page() {
               type="text"
               id="password"
               name="password"
-              placeholder="••••••••••"
+              placeholder="Enter password"
               required
               value={userData.password}
               onChange={handleChange}
@@ -168,7 +168,7 @@ export default function Page() {
             )}
             <label
               htmlFor="reentered-password"
-              className="text-white font-ligh py-2"
+              className="text-white font-light py-2"
             >
               Re-enter Password<span className="text-red-500">*</span>
             </label>
@@ -176,7 +176,7 @@ export default function Page() {
               type="text"
               id="reentered-password"
               name="reentered-password"
-              placeholder="••••••••••"
+              placeholder="Re-enter password"
               required
               className={`w-80 h-10 px-4 mb-8 ${
                 reenteredPasswordError && "border-red-500"
