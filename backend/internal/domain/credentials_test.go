@@ -49,91 +49,98 @@ func TestUsername_Valid(t *testing.T) {
 
 func TestPassword_Valid(t *testing.T) {
 	var p Password
-	fail := func() {
-		err := p.Valid()
-		if err == nil {
-			t.Errorf("invalid validity")
-		}
-	}
 
 	t.Run(
 		"too short", func(t *testing.T) {
 			p = "abc"
-			fail()
+			err := p.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 
 	t.Run(
 		"No numbers", func(t *testing.T) {
 			p = "aBcdefghijk"
-			fail()
+			err := p.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 
 	t.Run(
 		"One number", func(t *testing.T) {
 			p = "aBcdefghijk3"
-			fail()
+			err := p.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 
 	t.Run(
 		"no special characters", func(t *testing.T) {
 			p = "aBcdefghijk39"
-			fail()
+			err := p.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 
 	t.Run(
 		"all lowercase", func(t *testing.T) {
 			p = "abcdefghijk39"
-			fail()
+			err := p.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 }
 
 func TestMembership_Valid(t *testing.T) {
 	var m Membership
-	fail := func() {
-		err := m.Valid()
-		if err == nil {
-			t.Errorf("invalid validity")
-		}
-	}
-
-	pass := func() {
-		err := m.Valid()
-		if err != nil {
-			t.Errorf("%s", err)
-		}
-	}
 
 	t.Run(
 		"less than 0", func(t *testing.T) {
 			m = -1
-			fail()
+			err := m.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 
 	t.Run(
 		"greater than 1", func(t *testing.T) {
 			m = 2
-			fail()
+			err := m.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
 		},
 	)
 
 	t.Run(
 		"equal to 0", func(t *testing.T) {
 			m = 0
-			pass()
+			err := m.Valid()
+			if err != nil {
+				t.Errorf("%s", err)
+			}
 		},
 	)
 
 	t.Run(
 		"equal to 1", func(t *testing.T) {
 			m = 1
-			pass()
+			err := m.Valid()
+			if err != nil {
+				t.Errorf("%s", err)
+			}
 		},
 	)
-
 }
