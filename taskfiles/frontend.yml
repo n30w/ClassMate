@@ -12,7 +12,7 @@ tasks:
   test:
     dir: frontend
     cmds:
-      - echo "nothing yet"
+      - yarn test
   install:
     dir: frontend
     cmds:
