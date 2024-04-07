@@ -20,35 +20,86 @@ func Test_validateCredentials(t *testing.T) {
 	}
 }
 
-// The functions pass and fail denote assertions.
-// In other words, a test that calls pass() expects
-// the invalidity to be successfully caught. A test
-// that calls fail() expects the validity to be invalid.
-
 func TestEmail_Valid(t *testing.T) {
 	var e Email
-	fail := func() {
-		err := e.Valid()
-		if err == nil {
-			t.Errorf("invalid validity")
-		}
-	}
-	fail()
+
+	t.Run(
+		"empty field", func(t *testing.T) {
+			e = ""
+			err := e.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
+
+	t.Run(
+		"does not contain nyu.edu", func(t *testing.T) {
+			e = "randomguy@yahoo.com"
+			err := e.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
+
+	t.Run(
+		"no TLD", func(t *testing.T) {
+			e = "randomguy@nyu"
+			err := e.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
+
+	t.Run(
+		"two character email", func(t *testing.T) {
+			e = "ab@nyu.edu"
+			err := e.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
 }
 
 func TestUsername_Valid(t *testing.T) {
 	var u Username
-	fail := func() {
-		err := u.Valid()
-		if err == nil {
-			t.Errorf("invalid validity")
-		}
-	}
-	fail()
+
+	t.Run(
+		"empty field", func(t *testing.T) {
+			u = ""
+			err := u.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
+
+	t.Run(
+		"less than 3 characters", func(t *testing.T) {
+			u = "abc"
+			err := u.Valid()
+			if err != nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
 }
 
 func TestPassword_Valid(t *testing.T) {
 	var p Password
+
+	t.Run(
+		"empty field", func(t *testing.T) {
+			p = ""
+			err := p.Valid()
+			if err == nil {
+				t.Errorf("invalid validity")
+			}
+		},
+	)
 
 	t.Run(
 		"too short", func(t *testing.T) {

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"github.com/n30w/Darkspace/internal/models"
 	"strconv"
 	"testing"
@@ -12,7 +13,7 @@ func TestUserService_CreateUser(t *testing.T) {
 	// cred is fake credentials.
 	cred := models.Credentials{
 		Username:   Username("snow"),
-		Password:   Password("butter"),
+		Password:   Password("buTter1290310923!09q3t"),
 		Email:      Email("snow@nyu.edu"),
 		Membership: Membership(0),
 	}
@@ -32,22 +33,25 @@ func TestUserService_CreateUser(t *testing.T) {
 
 func newMockUserStore() *mockUserStore {
 	return &mockUserStore{
-		id:      0,
-		byID:    make(map[string]*models.User),
-		byEmail: make(map[string]int),
+		id:         0,
+		byID:       make(map[string]*models.User),
+		byEmail:    make(map[string]int),
+		byUsername: make(map[string]int),
 	}
 }
 
 type mockUserStore struct {
-	id      int
-	byID    map[string]*models.User
-	byEmail map[string]int
+	id         int
+	byID       map[string]*models.User
+	byEmail    map[string]int
+	byUsername map[string]int
 }
 
 func (mus *mockUserStore) InsertUser(u *models.User) error {
 	mus.id += 1
 	mus.byID[strconv.Itoa(mus.id)] = u
 	mus.byEmail[u.Email.String()] = mus.id
+	mus.byUsername[u.Username.String()] = mus.id
 	return nil
 }
 
@@ -60,6 +64,9 @@ func (mus *mockUserStore) GetUserByID(id string) (
 }
 
 func (mus *mockUserStore) GetUserByEmail(email string) (*models.User, error) {
+	if u, ok := mus.byEmail[email]; !ok {
+		return mus.byID[strconv.Itoa(u)], errors.New("email already taken")
+	}
 	return nil, nil
 }
 
@@ -67,6 +74,10 @@ func (mus *mockUserStore) GetUserByUsername(username string) (
 	*models.User,
 	error,
 ) {
+	if u, ok := mus.byUsername[username]; !ok {
+		return mus.byID[strconv.Itoa(u)],
+			errors.New("username already taken")
+	}
 	return nil, nil
 }
 
