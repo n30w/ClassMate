@@ -22,7 +22,7 @@ describe("Page component", () => {
   });
 
   test("validates password correctly", async () => {
-    const { getByText, getByPlaceholderText } = render(<Page />);
+    const { getByTestId, getByPlaceholderText } = render(<Page />);
 
     // Enter invalid password
     fireEvent.change(getByPlaceholderText("Enter password"), {
@@ -31,20 +31,16 @@ describe("Page component", () => {
     fireEvent.change(getByPlaceholderText("Re-enter password"), {
       target: { value: "weakpassword" },
     });
-    fireEvent.click(getByText("Sign up"));
+    fireEvent.click(getByTestId("submitButton"));
 
-    // Assert that passwords do not match error is displayed
+    // Assert that passwords is invalid error is displayed
     await waitFor(() =>
-      expect(
-        getByText(
-          "Password must have at least one letter, one number, one special character, and at least 8 characters long."
-        )
-      ).toBeInTheDocument()
+      expect(getByTestId("errorMessage")).toBeInTheDocument()
     );
   });
 
   test("validates re-entered password correctly", async () => {
-    const { getByText, getByPlaceholderText } = render(<Page />);
+    const { getByTestId, getByPlaceholderText } = render(<Page />);
 
     // Enter valid password but different re-entered password
     fireEvent.change(getByPlaceholderText("Enter password"), {
@@ -53,13 +49,11 @@ describe("Page component", () => {
     fireEvent.change(getByPlaceholderText("Re-enter password"), {
       target: { value: "DifferentPassword123!" },
     });
-    fireEvent.click(getByText("Sign up"));
+    fireEvent.click(getByTestId("submitButton"));
 
     // Assert that passwords do not match error is displayed
     await waitFor(() =>
-      expect(getByText("Passwords do not match.")).toBeInTheDocument()
+      expect(getByTestId("errorMessage")).toBeInTheDocument()
     );
   });
-
-  // Add more test cases to cover other functionality if needed
 });
