@@ -9,6 +9,7 @@ tasks:
   test:
     cmds:
       - task back:test
+      - task front:test
 
   # Starts dev servers for both frontend and backend
   dev:

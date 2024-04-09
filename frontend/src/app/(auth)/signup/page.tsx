@@ -1,69 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import React, { useState } from "react";
 import validatePassword from "@/lib/helpers/passwordValidator";
+import FormInput from "./FormInput.tsx";
 
-export default function Page() {
-  //   const [isBlurred, setIsBlurred] = useState(false);
-
-  //   const handleFormClick = (): void => {
-  //     setIsBlurred(true);
-  //   };
-
-  // const [password, setPassword] = useState<string>("");
-  const [reenteredPassword, setReenteredPassword] = useState<string>("");
-  const [passwordError, setPasswordError] = useState<string>("");
-  const [reenteredPasswordError, setReenteredPasswordError] =
-    useState<string>("");
+const SignUpForm = () => {
   const [userData, setUserData] = useState({
     email: "",
     password: "",
     netid: "",
   });
+  const [passwordError, setPasswordError] = useState("");
+  const [reenteredPassword, setReenteredPassword] = useState("");
+  const [reenteredPasswordError, setReenteredPasswordError] = useState("");
 
-  // const handlePasswordChange = (
-  //   e: React.ChangeEvent<HTMLInputElement>
-  // ): void => {
-  //   const newPassword = e.target.value;
-  //   setPassword(newPassword);
-  //   setPasswordError("");
-  //   if (passwordError) setPasswordError("");
-  // };
-
-  // const handleReenteredPasswordChange = (
-  //   e: React.ChangeEvent<HTMLInputElement>
-  // ): void => {
-  //   const newReenteredPassword = e.target.value;
-  //   setReenteredPassword(newReenteredPassword);
-  //   setReenteredPasswordError("");
-  //   if (reenteredPasswordError) setReenteredPasswordError("");
-  // };
-
-  const postNewUser = async (userData: any) => {
-    try {
-      const res: Response = await fetch("/v1/user/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      });
-      if (res.ok) {
-        const newUser = await res.json();
-        newUser.email = userData.email;
-        newUser.password = userData.password;
-        newUser.netid = userData.netid;
-      } else {
-        console.error("Failed to create user:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error creating user:", error);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     const isValidPassword = validatePassword(userData.password);
     const doPasswordsMatch = userData.password === reenteredPassword;
@@ -79,8 +32,7 @@ export default function Page() {
       setReenteredPasswordError("Passwords do not match.");
       return;
     }
-    postNewUser(userData);
-    console.log("Form submitted");
+    // Call the function to post new user data
   };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
@@ -122,73 +74,46 @@ export default function Page() {
             // onClick={handleFormClick}
             onSubmit={handleSubmit}
           >
-            <label htmlFor="email" className="text-white font-light py-2">
-              NetId<span className="text-red-500">*</span>
-            </label>
-            <input
+            <FormInput
+              label="NetId"
               type="text"
-              id="netid"
               name="netid"
               placeholder="abc123"
-              required
-              className="w-80 h-10 px-4 mb-8"
               value={userData.netid}
               onChange={handleChange}
             />
-            <label htmlFor="email" className="text-white font-light py-2">
-              Email<span className="text-red-500">*</span>
-            </label>
-            <input
+            <FormInput
+              label="Email"
               type="text"
-              id="email"
               name="email"
               placeholder="abc123@nyu.edu"
-              required
-              className="w-80 h-10 px-4 mb-8"
               value={userData.email}
               onChange={handleChange}
             />
-            <label htmlFor="password" className="text-white font-light py-2">
-              Password<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="password"
+            <FormInput
+              label="Password"
+              type="password"
               name="password"
-              placeholder="••••••••••"
-              required
+              placeholder="Enter password"
               value={userData.password}
               onChange={handleChange}
-              className={`w-80 h-10 px-4 mb-8 ${
-                passwordError && "border-red-500"
-              }`}
+              errorMessage={passwordError}
             />
-            {passwordError && (
-              <p className="text-red-500 pb-2">{passwordError}</p>
-            )}
-            <label
-              htmlFor="reentered-password"
-              className="text-white font-ligh py-2"
-            >
-              Re-enter Password<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="reentered-password"
-              name="reentered-password"
-              placeholder="••••••••••"
-              required
-              className={`w-80 h-10 px-4 mb-8 ${
-                reenteredPasswordError && "border-red-500"
-              }`}
-              onChange={handleChange}
+            <FormInput
+              label="Re-enter Password"
+              type="password"
+              name="reenteredPassword"
+              placeholder="Re-enter password"
+              value={reenteredPassword}
+              onChange={(e: {
+                target: { value: React.SetStateAction<string> };
+              }) => setReenteredPassword(e.target.value)}
+              errorMessage={reenteredPasswordError}
             />
-            {reenteredPasswordError && (
-              <p className="text-red-500 pb-2">{reenteredPasswordError}</p>
-            )}
             <input
               type="submit"
               className="text-white font-bold w-40 h-10 px-4 border border-white my-16 hover:bg-gray-400 active:bg-white active:text-black"
+              data-testid="submitButton"
             />
           </form>
           <h3 className="text-white font-light text-sm text-center">
@@ -214,4 +139,6 @@ export default function Page() {
       ></div>
     </div>
   );
-}
+};
+
+export default SignUpForm;
