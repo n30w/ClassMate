@@ -1,34 +1,43 @@
 package dal
 
 import (
+	"database/sql"
+	"log"
 	"testing"
-	"github.com/n30w/Darkspace/internal/dal"
-	"github.com/n30w/Darkspace/internal/models"
+
 	_ "github.com/lib/pq"
+	"github.com/n30w/Darkspace/internal/models"
 )
 
 func TestStore_InsertUser(t *testing.T) {
-	db, err := sql.Open("postgres", "postgres://username:password@localhost/test_db?sslmode=disable")
+	db, err := sql.Open("postgres", "postgres://reesedychiao:Parker84!@localhost/test_db?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	store := dal.NewStore(db)
+	store := NewStore(db)
 
-	user := &models.User{
-		Username:  "testuser",
-		Password:  "testpassword",
-		Email:     "test@example.com",
-		CreatedAt: "2022-04-15",
+	cred := &models.Credentials{
+		Username:  Username("testuser"),
+		Password:  Password("testpassword"),
+		Email:     Email("test@example.com"),
+		CreatedAt: Membership("2022-04-15"),
 	}
 
-	err := store.InsertUser(user)
+	user := &models.User{
+		Credentials: cred,
+	}
+
+	err = store.InsertUser(user)
 	if err != nil {
 		t.Errorf("Insert user unsuccessful")
 	}
 }
 
+func Username(s string) {
+	panic("unimplemented")
+}
 
 func TestGetUserByID(t *testing.T) {
 	db, err := sql.Open("postgres", "postgres://username:password@localhost/test_db?sslmode=disable")
@@ -40,12 +49,12 @@ func TestGetUserByID(t *testing.T) {
 	store := dal.NewStore(db)
 
 	expectedUser := &models.User{
-		ID:        "1",
-		Email:     "test@example.com",
-		FullName:  "Test User",
+		ID:       "1",
+		Email:    "test@example.com",
+		FullName: "Test User",
 	}
-	
-	err := store.InsertUser(user)
+
+	err = store.InsertUser(user)
 	if err != nil {
 		t.Errorf("Insert user unsuccessful")
 	}
@@ -72,12 +81,12 @@ func TestGetUserByEmail(t *testing.T) {
 	store := dal.NewStore(db)
 
 	expectedUser := &models.User{
-		ID:        "1",
-		Email:     "test@example.com",
-		FullName:  "Test User",
+		ID:       "1",
+		Email:    "test@example.com",
+		FullName: "Test User",
 	}
 
-	err := store.InsertUser(user)
+	err = store.InsertUser(user)
 	if err != nil {
 		t.Errorf("Insert user unsuccessful")
 	}
@@ -104,12 +113,12 @@ func TestGetUserByUsername(t *testing.T) {
 	store := dal.NewStore(db)
 
 	expectedUser := &models.User{
-		ID:        "1",
-		Email:     "test@example.com",
-		FullName:  "Test User",
-	} 
+		ID:       "1",
+		Email:    "test@example.com",
+		FullName: "Test User",
+	}
 
-	err := store.InsertUser(user)
+	err = store.InsertUser(user)
 	if err != nil {
 		t.Errorf("Insert user unsuccessful")
 	}
