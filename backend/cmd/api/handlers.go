@@ -242,7 +242,11 @@ func (app *application) announcementCreateHandler(
 	}
 
 	var anno *models.Announcement
-	anno.Post.Description, anno.Post.Owner, anno.Post.Media = input.Announcement, input.TeacherId, input.Media
+	var msg *models.Message
+	msg.Post.Description, msg.Post.Owner, msg.Post.Media = input.Announcement, input.TeacherId, input.Media
+
+	msg, err = app.services.MessageService.CreateMessage(msg)
+	anno.Message = *msg
 
 }
 

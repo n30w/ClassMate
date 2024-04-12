@@ -117,9 +117,22 @@ func (s *Store) ChangeCourseName(c *models.Course, name string) error {
 	return nil
 }
 
-func (s *Store) AddStudent(c *models.Course, userid string) error {
-
+func (s *Store) AddStudent(c *models.Course, userid string) (*models.Course, error) {
+	return nil, nil
 }
-func (s *Store) RemoveStudent(c *models.Course, userid string) error {
+func (s *Store) RemoveStudent(c *models.Course, userid string) (*models.Course, error) {
+	return nil, nil
+}
 
+func (s *Store) InsertMessage(m *models.Message) error {
+	return nil
+}
+func (s *Store) GetMessageById(messageid int64) (*models.Message, error) {
+	return nil, nil
+}
+func (s *Store) DeleteMessage(m *models.Message) error {
+	return nil
+}
+func (s *Store) ChangeMessage(m *models.Message, msg string) (*models.Message, error) {
+	return nil, nil
 }

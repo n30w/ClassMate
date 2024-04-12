@@ -10,9 +10,8 @@ type CourseId int64
 type AssignmentId int64
 type MediaId int64
 type SubmissionId int64
-type DiscussionId int64
+type MessageId int64
 type CommentId int64
-type AnnouncementId int64
 
 type Post struct {
 	Title       string
@@ -40,28 +39,30 @@ type Submission struct {
 }
 
 type Course struct {
-	Name        string           `json:"name"`
-	ID          CourseId         `json:"id"`
-	Discussions [10]DiscussionId `json:"discussions"`
-	Teachers    []TeacherId      `json:"teachers"`
-	Roster      []UserId         `json:"roster"`
-	Assignments []AssignmentId   `json:"assignments"`
-	Archived    bool             `json:"archived"`
+	Name        string         `json:"name"`
+	ID          CourseId       `json:"id"`
+	Messages    [10]MessageId  `json:"discussions"` //announcements + discussions
+	Teachers    []TeacherId    `json:"teachers"`
+	Roster      []UserId       `json:"roster"`
+	Assignments []AssignmentId `json:"assignments"`
+	Archived    bool           `json:"archived"`
+}
+
+type Message struct {
+	Post     Post
+	ID       MessageId
+	Comments []CommentId
 }
 
 // Discussion contains anything related to communications,
-// such as discussion posts and user messages.
+// such as discussion posts and user messages
 type Discussion struct {
-	Post     Post
-	ID       DiscussionId
-	Comments []CommentId
+	Message
 }
 
 // Announcements have the same structure as Discussions but they are displayed differently
 type Announcement struct {
-	Post     Post
-	ID       AnnouncementId
-	Comments []CommentId
+	Message
 }
 
 // TODO: Linked lists
