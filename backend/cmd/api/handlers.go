@@ -241,27 +241,81 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	var anno *models.Announcement
 	var msg *models.Message
-	msg.Post.Description, msg.Post.Owner, msg.Post.Media = input.Announcement, input.TeacherId, input.Media
+	msg.Post.Description, msg.Post.Owner, msg.Post.Media, msg.Type = input.Announcement, input.TeacherId, input.Media, 1
 
-	msg, err = app.services.MessageService.CreateMessage(msg)
-	anno.Message = *msg
+	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
 
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"announcement": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
+// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
+// RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId     string `json:"courseid"`
+		TeacherId    string `json:"teacherid"`
+		MsgId        int64  `json:"announcementid"`
+		Action       string `json:"action"`
+		UpdatedField string `json:"updatedfield"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 func (app *application) announcementDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId  string `json:"courseid"`
+		TeacherId string `json:"teacherid"`
+		MsgId     int64  `json:"announcementid"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.services.MessageService.DeleteMessage(input.MsgId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": nil}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // User handlers, deals with anything user side.
@@ -476,6 +530,18 @@ func (app *application) discussionUpdateHandler(
 // RESPONSE: 200 or 500 response
 func (app *application) discussionDeleteHandler(
 	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+
+// Media handlers
+func (app *application) mediaCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+func (app *application) mediaDeleteHandler(w http.ResponseWriter,
 	r *http.Request,
 ) {
 

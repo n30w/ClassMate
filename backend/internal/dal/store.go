@@ -124,7 +124,7 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (*models.Course, 
 	return nil, nil
 }
 
-func (s *Store) InsertMessage(m *models.Message) error {
+func (s *Store) InsertMessage(m *models.Message, courseid string) error {
 	return nil
 }
 func (s *Store) GetMessageById(messageid int64) (*models.Message, error) {

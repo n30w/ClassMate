@@ -52,17 +52,7 @@ type Message struct {
 	Post     Post
 	ID       MessageId
 	Comments []CommentId
-}
-
-// Discussion contains anything related to communications,
-// such as discussion posts and user messages
-type Discussion struct {
-	Message
-}
-
-// Announcements have the same structure as Discussions but they are displayed differently
-type Announcement struct {
-	Message
+	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
 // TODO: Linked lists
