@@ -34,19 +34,19 @@ func main() {
 	)
 
 	// Database driver.
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("DB_DSN"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.Dsn, "db-dsn", os.Getenv("DB_DSN"), "PostgreSQL DSN")
 
 	// Database configuration for connection settings.
 	flag.IntVar(
-		&cfg.db.maxOpenConns, "db-max-open-conns", 25,
+		&cfg.db.MaxOpenConns, "db-max-open-conns", 25,
 		"PostgreSQL max open connections",
 	)
 	flag.IntVar(
-		&cfg.db.maxIdleConns, "db-max-idle-conns", 25,
+		&cfg.db.MaxIdleConns, "db-max-idle-conns", 25,
 		"PostgreSQL max idle connections",
 	)
 	flag.StringVar(
-		&cfg.db.maxIdleTime, "db-max-idle-time", "15m",
+		&cfg.db.MaxIdleTime, "db-max-idle-time", "15m",
 		"PostgreSQL max connection idle time",
 	)
 
@@ -54,16 +54,10 @@ func main() {
 
 	logger := log.New(os.Stdout, "[DKSE] ", log.Ldate|log.Ltime)
 
-	cfg.db.driver = "postgres"
+	cfg.db.Driver = "postgres"
 
 	// Set config database parameters via environment variables.
-
-	cfg.db.name = os.Getenv("DB_NAME")
-	cfg.db.username = os.Getenv("DB_USERNAME")
-	cfg.db.password = os.Getenv("DB_PASSWORD")
-	cfg.db.host = os.Getenv("DB_HOST")
-	cfg.db.port = os.Getenv("DB_PORT")
-	cfg.db.sslMode = os.Getenv("DB_SSL_MODE")
+	cfg.SetFromEnv()
 
 	db, err := openDB(cfg)
 	if err != nil {

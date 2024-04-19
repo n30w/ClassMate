@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"github.com/n30w/Darkspace/internal/dal"
 	"log"
 	"time"
 
@@ -21,39 +21,23 @@ type config struct {
 	env string
 
 	// Database configurations
-	db struct {
-		// Database driver and DataSourceName
-		driver string
-		dsn    string
-
-		// Database parameters, similar to .env file variables.
-		name     string
-		username string
-		password string
-		host     string
-		port     string
-		sslMode  string
-
-		maxOpenConns int
-		maxIdleConns int
-		maxIdleTime  string
-	}
+	db dal.DBConfig
 }
 
 // openDB opens a connection to the database using a certain config.
 func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open(cfg.db.driver, cfg.createDataSourceName())
+	db, err := sql.Open(cfg.db.Driver, cfg.createDataSourceName())
 	if err != nil {
 		return nil, err
 	}
 
 	// Passing a value less than or equal to 0 means no limit.
-	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	db.SetMaxOpenConns(cfg.db.MaxOpenConns)
 
 	// Passing a value less than or equal to 0 means no limit.
-	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+	db.SetMaxIdleConns(cfg.db.MaxIdleConns)
 
-	duration, err := time.ParseDuration(cfg.db.maxIdleTime)
+	duration, err := time.ParseDuration(cfg.db.MaxIdleTime)
 	if err != nil {
 		return nil, err
 	}
@@ -71,16 +55,14 @@ func openDB(cfg config) (*sql.DB, error) {
 	return db, nil
 }
 
+// createDataSourceName creates the dataSourceName parameter of the
+// sql.Open function.
 func (cfg config) createDataSourceName() string {
-	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.db.host,
-		cfg.db.port,
-		cfg.db.username,
-		cfg.db.password,
-		cfg.db.name,
-		cfg.db.sslMode,
-	)
+	return cfg.db.CreateDataSourceName()
+}
+
+func (cfg config) SetFromEnv() {
+	cfg.db.SetFromEnv()
 }
 
 type application struct {
