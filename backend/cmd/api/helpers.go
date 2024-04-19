@@ -7,10 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/n30w/Darkspace/internal/models"
 )
 
 // jsonWrap wraps a json message response before it gets sent out.

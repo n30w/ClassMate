@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -12,7 +11,7 @@ type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(userid string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
-	GetByUsername(username string) (*models.User, error)
+	GetUserByUsername(username string) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid models.CourseId) error
 }
 
@@ -71,7 +70,10 @@ func (us *UserService) GetByID(userid string) (*models.User, error) {
 }
 
 // What if we want only some information from Assignments or Courses?
-func (us *UserService) RetrieveFromUser(userid string, field string) (interface{}, error) {
+func (us *UserService) RetrieveFromUser(
+	userid string,
+	field string,
+) (interface{}, error) {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return nil, err
@@ -81,13 +83,19 @@ func (us *UserService) RetrieveFromUser(userid string, field string) (interface{
 	fieldValue := model.FieldByName(field)
 
 	if fieldValue == reflect.ValueOf(nil) {
-		return nil, fmt.Errorf("field %s does not exist or is uninitialized", field)
+		return nil, fmt.Errorf(
+			"field %s does not exist or is uninitialized",
+			field,
+		)
 	}
 	return fieldValue, nil
 
 }
 
-func (us *UserService) UnenrollUserFromCourse(userid string, courseid models.CourseId) error {
+func (us *UserService) UnenrollUserFromCourse(
+	userid string,
+	courseid models.CourseId,
+) error {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return err
