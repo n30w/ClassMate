@@ -2,16 +2,20 @@ package models
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
+
+type CustomId uuid.UUID
 
 type UserId string
 type TeacherId string
-type CourseId int64
-type AssignmentId int64
-type MediaId int64
-type SubmissionId int64
-type MessageId int64
-type CommentId int64
+type CourseId CustomId
+type AssignmentId CustomId
+type MediaId CustomId
+type SubmissionId CustomId
+type MessageId CustomId
+type CommentId CustomId
 
 type Post struct {
 	Title       string
@@ -49,7 +53,7 @@ type Course struct {
 }
 
 type Message struct {
-	Post     Post
+	Post     *Post
 	ID       MessageId
 	Comments []CommentId
 	Type     uint8 // 0 if discussion, 1 if announcement

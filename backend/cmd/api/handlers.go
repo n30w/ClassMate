@@ -30,7 +30,7 @@ func (app *application) courseHomepageHandler(
 
 	var course *models.Course
 
-	course, err = app.services.CourseService.RetrieveCourse(id)
+	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -240,9 +240,15 @@ func (app *application) announcementCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	var msg *models.Message
-	msg.Post.Description, msg.Post.Owner, msg.Post.Media, msg.Type = input.Announcement, input.TeacherId, input.Media, 1
+	post := models.Post{
+		Description: input.Announcement,
+		Owner:       input.TeacherId,
+		Media:       input.Media,
+	}
+	msg := &models.Message{
+		Post: post,
+		Type: 1,
+	}
 
 	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
 

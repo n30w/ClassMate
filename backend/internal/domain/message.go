@@ -5,7 +5,7 @@ import "github.com/n30w/Darkspace/internal/models"
 // announcement and discussion services
 type MessageStore interface {
 	InsertMessage(m *models.Message) error
-	GetMessageById(messageid int64) (*models.Message, error)
+	GetMessageById(messageid int) (*models.Message, error)
 	DeleteMessage(m *models.Message) error
 	ChangeMessage(m *models.Message) (*models.Message, error)
 }
@@ -16,7 +16,7 @@ type MessageService struct {
 
 func NewMessageService(m MessageStore) *MessageService { return &MessageService{store: m} }
 
-func (ms *MessageService) CreateMessage(m *models.Message) (*models.Message, error) {
+func (ms *MessageService) CreateMessage(m *models.Message, courseid int) (*models.Message, error) {
 	// create id here
 	err := ms.store.InsertMessage(m)
 	if err != nil {
@@ -53,7 +53,7 @@ func (ms *MessageService) UpdateMessage(messageid int64, action string, updatedF
 	return msg, nil
 }
 
-func (ms *MessageService) DeleteMessage(msgid int64) error {
+func (ms *MessageService) DeleteMessage(msgid int) error {
 
 	msg, err := ms.store.GetMessageById(msgid)
 	if err != nil {

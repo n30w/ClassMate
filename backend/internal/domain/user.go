@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -79,9 +80,10 @@ func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, e
 	fieldValue := model.FieldByName(field)
 
 	if fieldValue == reflect.ValueOf(nil) {
-		return nil, error // need to change
+		return nil, fmt.Errorf("field %s does not exist or is uninitialized", field)
 	}
 	return fieldValue, nil
+
 }
 
 func (us *UserService) NewUsername(s string) Username {

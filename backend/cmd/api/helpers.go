@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/n30w/Darkspace/internal/models"
 )
 
 // jsonWrap wraps a json message response before it gets sent out.
@@ -173,4 +176,14 @@ func openDB(cfg config) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+// Parser helper
+
+func ParseStringToCustomId(id string) (models.CustomId, error) {
+	uuidValue, err := uuid.Parse(id)
+	if err != nil {
+		return models.CustomId(uuid.Nil), fmt.Errorf("invalid CustomId format: %s", id)
+	}
+	return models.CustomId(uuidValue), nil
 }
