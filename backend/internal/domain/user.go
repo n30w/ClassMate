@@ -42,14 +42,14 @@ func (us *UserService) CreateUser(um *models.User) error {
 	// Check if email is already in use.
 	_, err = us.store.GetUserByEmail(um.Email.String())
 	if err == nil {
-		return errors.New("email already taken")
+		return err
 	}
 
 	// Check if username is already in use.
-	_, err = us.store.GetByUsername(um.Username.String())
+	_, err = us.store.GetUserByUsername(um.Username.String())
 	// Notice that err IS EQUAL TO nil and not NOT EQUAL TO.
 	if err == nil {
-		return errors.New("username already taken")
+		return err
 	}
 
 	// If all is well...

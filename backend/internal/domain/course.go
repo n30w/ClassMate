@@ -104,6 +104,8 @@ func (cs *CourseService) UpdateCourseName(courseid models.CourseId, name string)
 	if err != nil {
 		return nil, err
 	}
+	return c, nil
+}
 
 	err = cs.store.ChangeCourseName(c, name)
 	if err != nil {

@@ -8,14 +8,20 @@ import (
 	"os"
 	"time"
 
+	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
 
-	"github.com/n30w/Darkspace/internal/dal"
+	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	var cfg config
 
@@ -27,9 +33,31 @@ func main() {
 		"Environment (development|staging|production)",
 	)
 
+	// Database driver.
+	flag.StringVar(&cfg.db.Dsn, "db-dsn", os.Getenv("DB_DSN"), "PostgreSQL DSN")
+
+	// Database configuration for connection settings.
+	flag.IntVar(
+		&cfg.db.MaxOpenConns, "db-max-open-conns", 25,
+		"PostgreSQL max open connections",
+	)
+	flag.IntVar(
+		&cfg.db.MaxIdleConns, "db-max-idle-conns", 25,
+		"PostgreSQL max idle connections",
+	)
+	flag.StringVar(
+		&cfg.db.MaxIdleTime, "db-max-idle-time", "15m",
+		"PostgreSQL max connection idle time",
+	)
+
 	flag.Parse()
 
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := log.New(os.Stdout, "[DKSE] ", log.Ldate|log.Ltime)
+
+	cfg.db.Driver = "postgres"
+
+	// Set config database parameters via environment variables.
+	cfg.SetFromEnv()
 
 	db, err := openDB(cfg)
 	if err != nil {

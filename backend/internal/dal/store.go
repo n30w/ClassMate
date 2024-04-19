@@ -12,6 +12,8 @@ type Store struct {
 	db *sql.DB
 }
 
+var err error
+
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		db: db,
@@ -19,19 +21,14 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) InsertUser(u *models.User) error {
-
-	query := `INSERT INTO users ... VALUES ($1, $2) RETURNING`
-
-	err := s.db.QueryRow(query).Scan(
-		&u.ID, &u.Username, &u.Password, &u.Email,
-		&u.CreatedAt,
-	)
-
-	if err != nil {
+	stmt, err := s.db.Prepare("INSERT INTO users (username, password, email, created_at) VALUES ($1, $2, $3, $4) RETURNING id, created_at")
+	if err != nil {return err}
+	defer stmt.Close()
+	row := stmt.QueryRow(u.Username, u.Password, u.Email, u.CreatedAt)
+	if err := row.Scan(&u.ID, &u.CreatedAt); err != nil {
 		return err
 	}
-
-	return nil
+    return nil
 }
 
 func (s *Store) GetUserByID(userid string) (*models.User, error) {
@@ -58,8 +55,10 @@ func (s *Store) GetUserByEmail(email string) (*models.User, error) {
 	u := &models.User{}
 
 	query := `SELECT id, email, full_name FROM users WHERE email = $1`
-
-	err := s.db.QueryRow(query, email).Scan(u.ID, u.Email, u.FullName)
+	row := s.db.QueryRow(query, email)
+	if err := row.Scan(&u.ID, &u.Email, &u.FullName); err != nil {
+		return u, err
+	}
 
 	if err != nil {
 		switch {
@@ -73,13 +72,15 @@ func (s *Store) GetUserByEmail(email string) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) GetByUsername(username string) (*models.User, error) {
+func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 
 	u := &models.User{}
 
 	query := `SELECT id, email, full_name FROM users WHERE username = $1`
-
-	err := s.db.QueryRow(query, username).Scan(u.ID, u.Email, u.FullName)
+	row := s.db.QueryRow(query, username)
+	if err := row.Scan(&u.ID, &u.Email, &u.FullName); err != nil {
+		return u, err
+	}
 
 	if err != nil {
 		switch {

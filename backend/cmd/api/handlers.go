@@ -53,15 +53,15 @@ func (app *application) courseHomepageHandler(
 
 // createCourseHandler creates a course.
 //
-// REQUEST: course title, username
+// REQUEST: course title, user id
 // RESPONSE: course id, name, teacher, assignments
 func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		Title       string `json:"title"`
-		TeacherName string `json:"username"`
+		Title     string           `json:"title"`
+		TeacherID models.TeacherId `json:"teacherid"`
 	}
 
 	err := app.readJSON(w, r, &input)
