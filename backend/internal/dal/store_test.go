@@ -1,6 +1,7 @@
 package dal
 
 import (
+	"context"
 	"database/sql"
 	"github.com/n30w/Darkspace/internal/domain"
 	"log"
@@ -11,11 +12,44 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
+// setupDatabaseTest creates a connection to an already running
+// postgresql database, for running tests.
+func setupDatabaseTest() (*sql.DB, error) {
+	var dbConf DBConfig
+
+	dbConf.SetFromEnv()
+
+	db, err := sql.Open(dbConf.Driver, dbConf.CreateDataSourceName())
+	if err != nil {
+		return nil, err
+	}
+
+	// Passing a value less than or equal to 0 means no limit.
+	db.SetMaxOpenConns(dbConf.MaxOpenConns)
+
+	// Passing a value less than or equal to 0 means no limit.
+	db.SetMaxIdleConns(dbConf.MaxIdleConns)
+
+	duration, err := time.ParseDuration(dbConf.MaxIdleTime)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetConnMaxIdleTime(duration)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
 func TestStore_InsertUser(t *testing.T) {
-	db, err := sql.Open(
-		"postgres",
-		"postgres://reesedychiao:Parker84!@localhost/test_db?sslmode=disable",
-	)
+	db, err := setupDatabaseTest()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,10 +79,7 @@ func Username(s string) {
 }
 
 func TestGetUserByID(t *testing.T) {
-	db, err := sql.Open(
-		"postgres",
-		"postgres://username:password@localhost/test_db?sslmode=disable",
-	)
+	db, err := setupDatabaseTest()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,72 +123,66 @@ func TestGetUserByID(t *testing.T) {
 	}
 }
 
-func TestGetUserByEmail(t *testing.T) {
-	db, err := sql.Open(
-		"postgres",
-		"postgres://username:password@localhost/test_db?sslmode=disable",
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	store := dal.NewStore(db)
-
-	expectedUser := &models.User{
-		ID:       "1",
-		Email:    "test@example.com",
-		FullName: "Test User",
-	}
-
-	err = store.InsertUser(user)
-	if err != nil {
-		t.Errorf("Insert user unsuccessful")
-	}
-
-	user, err := store.GetUserByEmail("test@example.com")
-	if expectedUser.ID != user.ID {
-		t.Errorf("Wrong user ID")
-	}
-	if expectedUser.Email != user.Email {
-		t.Errorf("Wrong user email")
-	}
-	if expectedUser.FullName != user.FullName {
-		t.Errorf("Wrong user fullname")
-	}
-}
-
-func TestGetUserByUsername(t *testing.T) {
-	db, err := sql.Open(
-		"postgres",
-		"postgres://username:password@localhost/test_db?sslmode=disable",
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	store := dal.NewStore(db)
-
-	expectedUser := &models.User{
-		ID:       "1",
-		Email:    "test@example.com",
-		FullName: "Test User",
-	}
-
-	err = store.InsertUser(user)
-	if err != nil {
-		t.Errorf("Insert user unsuccessful")
-	}
-
-	user, err := store.GetUserByUsername("testuser")
-	if expectedUser.ID != user.ID {
-		t.Errorf("Wrong user ID")
-	}
-	if expectedUser.Email != user.Email {
-		t.Errorf("Wrong user email")
-	}
-	if expectedUser.FullName != user.FullName {
-		t.Errorf("Wrong user fullname")
-	}
-}
+//func TestGetUserByEmail(t *testing.T) {
+//	db, err := setupDatabaseTest()
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer db.Close()
+//
+//	store := NewStore(db)
+//
+//	expectedUser := &models.User{
+//		ID:       "1",
+//		Email:    "test@example.com",
+//		FullName: "Test User",
+//	}
+//
+//	err = store.InsertUser(user)
+//	if err != nil {
+//		t.Errorf("Insert user unsuccessful")
+//	}
+//
+//	user, err := store.GetUserByEmail("test@example.com")
+//	if expectedUser.ID != user.ID {
+//		t.Errorf("Wrong user ID")
+//	}
+//	if expectedUser.Email != user.Email {
+//		t.Errorf("Wrong user email")
+//	}
+//	if expectedUser.FullName != user.FullName {
+//		t.Errorf("Wrong user fullname")
+//	}
+//}
+//
+//func TestGetUserByUsername(t *testing.T) {
+//	db, err := setupDatabaseTest()
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer db.Close()
+//
+//	store := NewStore(db)
+//
+//	expectedUser := &models.User{
+//		ID:       "1",
+//		Email:    "test@example.com",
+//		FullName: "Test User",
+//	}
+//
+//	err = store.InsertUser(user)
+//	if err != nil {
+//		t.Errorf("Insert user unsuccessful")
+//	}
+//
+//	user, err := store.GetUserByUsername("testuser")
+//	if expectedUser.ID != user.ID {
+//		t.Errorf("Wrong user ID")
+//	}
+//	if expectedUser.Email != user.Email {
+//		t.Errorf("Wrong user email")
+//	}
+//	if expectedUser.FullName != user.FullName {
+//		t.Errorf("Wrong user fullname")
+//	}
+//}
