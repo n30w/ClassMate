@@ -10,9 +10,10 @@ import (
 
 type UserStore interface {
 	InsertUser(u *models.User) error
-	GetUserByID(id string) (*models.User, error)
+	GetUserByID(userid string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	GetByUsername(username string) (*models.User, error)
+	DeleteCourseFromUser(u *models.User, courseid models.CourseId) error
 }
 
 type UserService struct {
@@ -60,8 +61,8 @@ func (us *UserService) CreateUser(um *models.User) error {
 	return nil
 }
 
-func (us *UserService) GetByID(id string) (*models.User, error) {
-	user, err := us.store.GetUserByID(id)
+func (us *UserService) GetByID(userid string) (*models.User, error) {
+	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +71,8 @@ func (us *UserService) GetByID(id string) (*models.User, error) {
 }
 
 // What if we want only some information from Assignments or Courses?
-func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, error) {
-	user, err := us.store.GetUserByID(id)
+func (us *UserService) RetrieveFromUser(userid string, field string) (interface{}, error) {
+	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +84,19 @@ func (us *UserService) RetrieveFromUser(id string, field string) (interface{}, e
 		return nil, fmt.Errorf("field %s does not exist or is uninitialized", field)
 	}
 	return fieldValue, nil
+
+}
+
+func (us *UserService) UnenrollUserFromCourse(userid string, courseid models.CourseId) error {
+	user, err := us.store.GetUserByID(userid)
+	if err != nil {
+		return err
+	}
+	err = us.store.DeleteCourseFromUser(user, courseid)
+	if err != nil {
+		return err
+	}
+	return nil
 
 }
 

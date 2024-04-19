@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -27,10 +28,14 @@ func (app *application) courseHomepageHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-
+	customid, err := ParseStringToCustomId(id)
+	courseid := models.CourseId(customid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 	var course *models.Course
 
-	course, err := app.services.CourseService.RetrieveCourse(id)
+	course, err = app.services.CourseService.RetrieveCourse(courseid)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -95,7 +100,7 @@ func (app *application) courseReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Id string `json:"id"`
+		CourseId models.CourseId `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -103,7 +108,7 @@ func (app *application) courseReadHandler(
 		app.serverError(w, r, err)
 	}
 
-	course, err := app.services.CourseService.RetrieveCourse(input.Id)
+	course, err := app.services.CourseService.RetrieveCourse(input.CourseId)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -122,7 +127,12 @@ func (app *application) courseUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	courseid := r.PathValue("id")
+	id := r.PathValue("id")
+	customid, err := ParseStringToCustomId(id)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	courseid := models.CourseId(customid)
 	action := r.PathValue("action")
 
 	switch action {
@@ -178,7 +188,7 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(w, r, err) //need to format error, input field is not one of the 3 options
+		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -192,8 +202,8 @@ func (app *application) courseDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId string `json:"courseid"`
-		UserId   string `json:"userid"`
+		CourseId models.CourseId `json:"courseid"`
+		UserId   string          `json:"userid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -202,20 +212,20 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.CourseService.DeleteCourse(input.CourseId, input.UserId) // needs work
+	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	// RetrieveUserCourse requires overlapping store functions
-	// Need to implement specific field retrieval for Users, i.e. retrieving courses of a user
+	err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+
 	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	res := jsonWrap{"course": courses}
+	res := jsonWrap{"courses": courses}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -229,7 +239,7 @@ func (app *application) announcementCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string           `json:"courseid"`
+		CourseId     models.CourseId  `json:"courseid"`
 		TeacherId    string           `json:"teacherid"`
 		Announcement string           `json:"announcement"`
 		Media        []models.MediaId `json:"media"`
@@ -240,7 +250,8 @@ func (app *application) announcementCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	post := models.Post{
+
+	post := &models.Post{
 		Description: input.Announcement,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
@@ -271,11 +282,11 @@ func (app *application) announcementUpdateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string `json:"courseid"`
-		TeacherId    string `json:"teacherid"`
-		MsgId        int64  `json:"announcementid"`
-		Action       string `json:"action"`
-		UpdatedField string `json:"updatedfield"`
+		CourseId     models.CourseId  `json:"courseid"`
+		TeacherId    string           `json:"teacherid"`
+		MsgId        models.MessageId `json:"announcementid"`
+		Action       string           `json:"action"`
+		UpdatedField string           `json:"updatedfield"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -301,9 +312,9 @@ func (app *application) announcementDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId  string `json:"courseid"`
-		TeacherId string `json:"teacherid"`
-		MsgId     int64  `json:"announcementid"`
+		CourseId  models.CourseId  `json:"courseid"`
+		TeacherId string           `json:"teacherid"`
+		MsgId     models.MessageId `json:"announcementid"`
 	}
 
 	err := app.readJSON(w, r, &input)

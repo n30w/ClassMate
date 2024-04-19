@@ -15,3 +15,8 @@ func NewServices(s *dal.Store) *Service {
 		MessageService: NewMessageService(s),
 	}
 }
+
+// validates UUID before dal operations
+type Validator interface {
+	ValidateID(id string) bool
+}

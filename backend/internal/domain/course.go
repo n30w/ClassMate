@@ -7,11 +7,6 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
-// validates UUID before dal operations
-type Validator interface {
-	ValidateID(id string) bool
-}
-
 type CourseStore interface {
 	InsertCourse(c *models.Course) error
 	GetCourseByName(name string) (*models.Course, error)
@@ -86,19 +81,19 @@ func (cs *CourseService) AddToRoster(courseid models.CourseId, userid string) (*
 	return c, nil
 }
 
-func (cs *CourseService) RemoveFromRoster(courseid models.CourseId, userid string) (*models.Course, error) {
+func (cs *CourseService) RemoveFromRoster(courseid models.CourseId, userid string) error {
 	if !cs.ValidateID(courseid) {
-		return nil, fmt.Errorf("invalid course ID: %s", courseid)
+		return fmt.Errorf("invalid course ID: %s", courseid)
 	}
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	c, err = cs.store.RemoveStudent(c, userid)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return c, nil
+	return nil
 }
 
 func (cs *CourseService) UpdateCourseName(courseid models.CourseId, name string) (*models.Course, error) {
