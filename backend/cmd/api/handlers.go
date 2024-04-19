@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -28,10 +28,14 @@ func (app *application) courseHomepageHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-
+	customid, err := ParseStringToCustomId(id)
+	courseid := models.CourseId(customid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 	var course *models.Course
 
-	course, err := app.services.CourseService.RetrieveCourse(id)
+	course, err = app.services.CourseService.RetrieveCourse(courseid)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -67,8 +71,11 @@ func (app *application) courseCreateHandler(
 
 	var course *models.Course
 
+	// Might need to reconsider how we store teachers in course model, currently by user struct
+	teacher, err := app.services.UserService.GetByUsername(input.TeacherName)
+
 	course.Name = input.Title
-	course.Teachers = append(course.Teachers, input.TeacherID)
+	course.Teachers = append(course.Teachers, teacher)
 
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
@@ -93,7 +100,7 @@ func (app *application) courseReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Id string `json:"id"`
+		CourseId models.CourseId `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -101,7 +108,7 @@ func (app *application) courseReadHandler(
 		app.serverError(w, r, err)
 	}
 
-	course, err := app.services.CourseService.RetrieveCourse(input.Id)
+	course, err := app.services.CourseService.RetrieveCourse(input.CourseId)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -120,13 +127,16 @@ func (app *application) courseUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	courseid := r.PathValue("id")
+	id := r.PathValue("id")
+	customid, err := ParseStringToCustomId(id)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	courseid := models.CourseId(customid)
 	action := r.PathValue("action")
 
-	var course *models.Course
-	var err error = errors.New("invalid update action")
-
 	switch action {
+
 	case "add", "delete":
 		var input struct {
 			UserId string `json:"userid"`
@@ -136,10 +146,7 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 		if action == "add" {
-			course, err = app.services.CourseService.AddToRoster(
-				courseid,
-				input.UserId,
-			)
+			course, err := app.services.CourseService.AddToRoster(courseid, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -149,15 +156,11 @@ func (app *application) courseUpdateHandler(
 				app.serverError(w, r, err)
 			}
 		} else if action == "delete" {
-			err = app.services.CourseService.RemoveFromRoster(
-				courseid,
-				input.UserId,
-			)
+			course, err := app.services.CourseService.RemoveFromRoster(courseid, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
-			// TODO: Change this
-			res := jsonWrap{"message": "success"}
+			res := jsonWrap{"course": course}
 			err = app.writeJSON(w, http.StatusOK, res, nil)
 			if err != nil {
 				app.serverError(w, r, err)
@@ -173,10 +176,7 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 
-		course, err := app.services.CourseService.UpdateCourseName(
-			courseid,
-			input.Name,
-		)
+		course, err := app.services.CourseService.UpdateCourseName(courseid, input.Name)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -188,11 +188,7 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(
-			w,
-			r,
-			err,
-		)
+		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -206,46 +202,30 @@ func (app *application) courseDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId string `json:"courseid"`
-		UserId   string `json:"userid"`
+		CourseId models.CourseId `json:"courseid"`
+		UserId   string          `json:"userid"`
 	}
-	// include authentication for user to check membership
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	// if teacher, delete course
-	err = app.services.CourseService.DeleteCourse(input.CourseId) // needs work
+
+	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	// if student, unenroll
-	err = app.services.CourseService.RemoveFromRoster(
-		input.CourseId,
-		input.UserId,
-	)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	err = app.services.UserService.RemoveCourseFromUser(
-		input.CourseId,
-		input.UserId,
-	)
-	// RetrieveUserCourse requires overlapping store functions
-	// Need to implement specific field retrieval for Users, i.e. retrieving courses of a user
-	courses, err := app.services.UserService.RetrieveFromUser(
-		input.UserId,
-		"courses",
-	)
+	err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+
+	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	res := jsonWrap{"course": courses}
+	res := jsonWrap{"courses": courses}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -259,7 +239,7 @@ func (app *application) announcementCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string           `json:"courseid"`
+		CourseId     models.CourseId  `json:"courseid"`
 		TeacherId    string           `json:"teacherid"`
 		Announcement string           `json:"announcement"`
 		Media        []models.MediaId `json:"media"`
@@ -271,34 +251,88 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	var anno *models.Message
-	anno.Post.Description, anno.Post.Owner, anno.Post.Media, anno.Type = input.Announcement, input.TeacherId, input.Media, 0
+	post := &models.Post{
+		Description: input.Announcement,
+		Owner:       input.TeacherId,
+		Media:       input.Media,
+	}
+	msg := &models.Message{
+		Post: post,
+		Type: 1,
+	}
 
-	anno, err = app.services.MessageService.CreateMessage(anno)
+	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	res := jsonWrap{"announcement": anno}
+	res := jsonWrap{"announcement": msg}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 }
 
+// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
+// RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId     models.CourseId  `json:"courseid"`
+		TeacherId    string           `json:"teacherid"`
+		MsgId        models.MessageId `json:"announcementid"`
+		Action       string           `json:"action"`
+		UpdatedField string           `json:"updatedfield"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 func (app *application) announcementDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId  models.CourseId  `json:"courseid"`
+		TeacherId string           `json:"teacherid"`
+		MsgId     models.MessageId `json:"announcementid"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.services.MessageService.DeleteMessage(input.MsgId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": nil}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // User handlers, deals with anything user side.
@@ -513,6 +547,18 @@ func (app *application) discussionUpdateHandler(
 // RESPONSE: 200 or 500 response
 func (app *application) discussionDeleteHandler(
 	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+
+// Media handlers
+func (app *application) mediaCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+
+}
+func (app *application) mediaDeleteHandler(w http.ResponseWriter,
 	r *http.Request,
 ) {
 

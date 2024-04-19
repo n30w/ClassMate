@@ -32,13 +32,11 @@ func (s *Store) InsertUser(u *models.User) error {
 }
 
 func (s *Store) GetUserByID(userid string) (*models.User, error) {
+
 	u := &models.User{}
 
 	query := `SELECT id, email, full_name FROM users WHERE id = $1`
-	row := s.db.QueryRow(query, userid)
-	if err := row.Scan(&u.ID, &u.Email, &u.FullName); err != nil {
-		return u, err
-	}
+	err := s.db.QueryRow(query, userid).Scan(u.ID, u.Email, u.FullName)
 
 	if err != nil {
 		switch {
@@ -96,9 +94,9 @@ func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) InsertCourse(c *models.Course) error {
-	return nil
-}
+func (s *Store) DeleteCourseFromUser(u *models.User, courseid models.CourseId) error { return nil }
+
+func (s *Store) InsertCourse(c *models.Course) error { return nil }
 
 func (s *Store) GetCourseByName(name string) (
 	*models.Course,
@@ -107,59 +105,37 @@ func (s *Store) GetCourseByName(name string) (
 	return nil, nil
 }
 
-func (s *Store) GetCourseByID(courseid string) (
+func (s *Store) GetCourseByID(courseid models.CourseId) (
 	*models.Course,
 	error,
 ) {
 	return nil, nil
 }
 
-func (s *Store) GetRoster(courseid string) (
-	[]models.User,
-	error,
-) {
-	return nil, nil
-}
+func (s *Store) GetRoster(courseid models.CourseId) ([]models.User, error) { return nil, nil }
 
-func (s *Store) DeleteUserFromCourse(c *models.Course) error { return nil }
-
-func (s *Store) DeleteCourseFromUser(
-	courseid string,
-	u *models.User,
-) error {
-	return nil
-}
+func (s *Store) DeleteCourse(c *models.Course) error { return nil }
 
 func (s *Store) ChangeCourseName(c *models.Course, name string) error {
 	return nil
 }
 
-func (s *Store) AddStudent(c *models.Course, userid string) error {
-	return nil
+func (s *Store) AddStudent(c *models.Course, userid string) (*models.Course, error) {
+	return nil, nil
 }
-func (s *Store) RemoveStudent(c *models.Course, userid string) error {
-	return nil
-}
-
-func (s *Store) InsertMessage(m *models.Message) (
-	*models.Message,
-	error,
-) {
+func (s *Store) RemoveStudent(c *models.Course, userid string) (*models.Course, error) {
 	return nil, nil
 }
 
-func (s *Store) GetMessageById(id string) (
-	*models.Message,
-	error,
-) {
+func (s *Store) InsertMessage(m *models.Message, courseid models.CourseId) error {
+	return nil
+}
+func (s *Store) GetMessageById(messageid models.MessageId) (*models.Message, error) {
 	return nil, nil
 }
-
-func (s *Store) DeleteMessage(id string) error { return nil }
-
-func (s *Store) EditMessage(id string) (
-	*models.Message,
-	error,
-) {
+func (s *Store) DeleteMessage(m *models.Message) error {
+	return nil
+}
+func (s *Store) ChangeMessage(m *models.Message) (*models.Message, error) {
 	return nil, nil
 }

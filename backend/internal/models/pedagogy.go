@@ -2,16 +2,20 @@ package models
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
+
+type CustomId uuid.UUID
 
 type UserId string
 type TeacherId string
-type CourseId int64
-type AssignmentId int64
-type MediaId int64
-type SubmissionId int64
-type CommentId int64
-type MessageId int64
+type CourseId CustomId
+type AssignmentId CustomId
+type MediaId CustomId
+type SubmissionId CustomId
+type MessageId CustomId
+type CommentId CustomId
 
 type Post struct {
 	Title       string
@@ -41,21 +45,18 @@ type Submission struct {
 type Course struct {
 	Name        string         `json:"name"`
 	ID          CourseId       `json:"id"`
-	Messages    [10]MessageId  `json:"discussions"`
+	Messages    [10]MessageId  `json:"discussions"` //announcements + discussions
 	Teachers    []TeacherId    `json:"teachers"`
 	Roster      []UserId       `json:"roster"`
 	Assignments []AssignmentId `json:"assignments"`
 	Archived    bool           `json:"archived"`
 }
 
-// Discussion contains anything related to communication,
-// such as discussion posts and user messages
-// Announcements have the same structure as Discussions but they are displayed differently in the frontend
 type Message struct {
-	Post     Post
+	Post     *Post
 	ID       MessageId
-	Type     uint8 //0 for announcement, 1 for discussion
 	Comments []CommentId
+	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
 // TODO: Linked lists

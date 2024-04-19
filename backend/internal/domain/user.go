@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -9,10 +10,10 @@ import (
 
 type UserStore interface {
 	InsertUser(u *models.User) error
-	GetUserByID(id string) (*models.User, error)
+	GetUserByID(userid string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
-	GetUserByUsername(username string) (*models.User, error)
-	DeleteCourseFromUser(courseid string, u *models.User) error
+	GetByUsername(username string) (*models.User, error)
+	DeleteCourseFromUser(u *models.User, courseid models.CourseId) error
 }
 
 type UserService struct {
@@ -60,8 +61,8 @@ func (us *UserService) CreateUser(um *models.User) error {
 	return nil
 }
 
-func (us *UserService) GetByID(id string) (*models.User, error) {
-	user, err := us.store.GetUserByID(id)
+func (us *UserService) GetByID(userid string) (*models.User, error) {
+	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +70,9 @@ func (us *UserService) GetByID(id string) (*models.User, error) {
 	return user, nil
 }
 
-// TODO: What if we want only some information from Assignments or Courses?
-func (us *UserService) RetrieveFromUser(id string, field string) (
-	interface{},
-	error,
-) {
-	user, err := us.store.GetUserByID(id)
+// What if we want only some information from Assignments or Courses?
+func (us *UserService) RetrieveFromUser(userid string, field string) (interface{}, error) {
+	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return nil, err
 	}
@@ -83,24 +81,23 @@ func (us *UserService) RetrieveFromUser(id string, field string) (
 	fieldValue := model.FieldByName(field)
 
 	if fieldValue == reflect.ValueOf(nil) {
-		return nil, fmt.Errorf(
-			"can't retrieve %s field",
-			fieldValue,
-		) // need to change
+		return nil, fmt.Errorf("field %s does not exist or is uninitialized", field)
 	}
 	return fieldValue, nil
+
 }
 
-func (us *UserService) RemoveCourseFromUser(
-	courseid string,
-	userid string,
-) error {
+func (us *UserService) UnenrollUserFromCourse(userid string, courseid models.CourseId) error {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return err
 	}
-	err = us.store.DeleteCourseFromUser(courseid, user)
-	return err
+	err = us.store.DeleteCourseFromUser(user, courseid)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }
 
 func (us *UserService) NewUsername(s string) Username {

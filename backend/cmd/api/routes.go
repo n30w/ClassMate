@@ -75,5 +75,9 @@ func (app *application) routes() *http.ServeMux {
 		app.discussionDeleteHandler,
 	)
 
+	// Media operations
+	router.HandleFunc("/v1/course/{post}/media/create", app.mediaCreateHandler)
+	router.HandleFunc("/v1/course/{post}/media/delete", app.mediaDeleteHandler)
+
 	return router
 }
