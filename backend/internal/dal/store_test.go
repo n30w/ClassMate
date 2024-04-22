@@ -71,7 +71,8 @@ func TestDB(t *testing.T) {
 	var dbConf DBConfig
 	dbConf.Driver = "postgres"
 
-	err := godotenv.Load()
+	rootEnvFile := "../../.env"
+	err := godotenv.Load(rootEnvFile)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
