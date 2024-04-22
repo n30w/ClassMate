@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -215,6 +216,10 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
 	if err != nil {
@@ -471,6 +476,41 @@ func (app *application) assignmentCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Title       string           `json:"title"`
+		TeacherId   string           `json:"teacherid"`
+		Description string           `json:"description"`
+		Media       []models.MediaId `json:"media"`
+		DueDate     time.Time        `json:"time"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	post := &models.Post{
+		Title:       input.Title,
+		Description: input.Description,
+		Owner:       input.TeacherId,
+		Media:       input.Media,
+	}
+	assignment := &models.Assignment{
+		Post:    post,
+		DueDate: input.DueDate,
+	}
+
+	assignment, err = app.services.AssignmentService.CreateAssignment(assignment)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{"assignment": assignment}
+
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
 // assignmentReadHandler relays assignment data back to the requester. To read
@@ -482,16 +522,57 @@ func (app *application) assignmentReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Uuid models.AssignmentId `json:"uuid"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	assignment, err := app.services.AssignmentService.ReadAssignment(input.Uuid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{"assignment": assignment}
+
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
 // assignmentUpdateHandler updates the information of an assignment.
 //
-// REQUEST: uuid
+// REQUEST: uuid, updated information, type (title, description, duedate)
 // RESPONSE: assignment
 func (app *application) assignmentUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Uuid         models.AssignmentId `json:"uuid"`
+		UpdatedField interface{}         `json:"updatedfield"`
+		Action       string              `json:"action"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{"assignment": assignment}
+
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // assignmentDeleteHandler deletes an assignment.

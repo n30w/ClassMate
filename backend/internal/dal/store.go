@@ -162,6 +162,24 @@ func (s *Store) GetMessageById(messageid models.MessageId) (
 func (s *Store) DeleteMessage(m *models.Message) error {
 	return nil
 }
-func (s *Store) ChangeMessage(m *models.Message) (*models.Message, error) {
+func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
+	return nil, nil
+}
+func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
+	return nil, nil
+}
+func (s *Store) GetAssignmentById(assignmentid models.AssignmentId) (*models.Assignment, error) {
+	return nil, nil
+}
+func (s *Store) InsertAssignment(a *models.Assignment) error {
+	return nil
+}
+func (s *Store) DeleteAssignment(a *models.Assignment) error {
+	return nil
+}
+func (s *Store) ChangeAssignmentTitle(assignment *models.Assignment, title string) (*models.Assignment, error) {
+	return nil, nil
+}
+func (s *Store) ChangeAssignmentBody(assignment *models.Assignment, body string) (*models.Assignment, error) {
 	return nil, nil
 }
