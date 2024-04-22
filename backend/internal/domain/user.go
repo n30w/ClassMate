@@ -69,6 +69,10 @@ func (us *UserService) GetByID(userid string) (*models.User, error) {
 	return user, nil
 }
 
+func (us *UserService) GetByUsername(username string) (*models.User, error) {
+	return nil, nil
+}
+
 // What if we want only some information from Assignments or Courses?
 func (us *UserService) RetrieveFromUser(
 	userid string,

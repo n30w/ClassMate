@@ -93,19 +93,19 @@ func (cs *CourseService) AddToRoster(
 func (cs *CourseService) RemoveFromRoster(
 	courseid models.CourseId,
 	userid string,
-) error {
+) (*models.Course, error) {
 	if !cs.ValidateID(courseid) {
-		return fmt.Errorf("invalid course ID: %s", courseid)
+		return nil, fmt.Errorf("invalid course ID: %s", courseid)
 	}
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	c, err = cs.store.RemoveStudent(c, userid)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return c, nil
 }
 
 func (cs *CourseService) UpdateCourseName(

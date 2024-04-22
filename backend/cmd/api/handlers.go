@@ -60,8 +60,8 @@ func (app *application) courseCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Title     string           `json:"title"`
-		TeacherID models.TeacherId `json:"teacherid"`
+		Title     string `json:"title"`
+		TeacherID string `json:"teacherid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -71,11 +71,8 @@ func (app *application) courseCreateHandler(
 
 	var course *models.Course
 
-	// Might need to reconsider how we store teachers in course model, currently by user struct
-	teacher, err := app.services.UserService.GetByUsername(input.TeacherName)
-
 	course.Name = input.Title
-	course.Teachers = append(course.Teachers, teacher)
+	course.Teachers = append(course.Teachers, models.TeacherId(input.TeacherID))
 
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
@@ -217,7 +214,7 @@ func (app *application) courseDeleteHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
 
 	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
 	if err != nil {
