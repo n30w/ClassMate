@@ -151,6 +151,7 @@ We must implement endpoint testing.
 
 - [Tuning postgresql for memory](https://www.enterprisedb.com/postgres-tutorials/how-tune-postgresql-memory)
 - [Postgresql tuner webapp](https://pgtune.leopard.in.ua/)
+- [How to Create an identity column in Postgres](https://www.commandprompt.com/education/how-do-i-create-an-identity-column-in-postgresql/)
 
 ### Docker
 
@@ -160,11 +161,13 @@ We must implement endpoint testing.
 - [Custom dockerfile for postgres container](https://forums.docker.com/t/how-to-make-a-docker-file-for-your-own-postgres-container/126526/8)
 - [Docker compose env file](https://www.warp.dev/terminus/docker-compose-env-file)
 
+- [Docker credential desktop - executable not found in PATH](https://blog.saintmalik.me/docs/docker-credential-desktop/)
+
 ## Ideas
 
 - Invite students through link or code
 - Need auth for API routes
-- Need to clarify what specific elements the frontend needs after calling API endpoints 
+- Need to clarify what specific elements the frontend needs after calling API endpoints
 
 ## Glossary
 
