@@ -20,17 +20,21 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
+// InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
 	stmt, err := s.db.Prepare("INSERT INTO users (username, password, email, created_at) VALUES ($1, $2, $3, $4) RETURNING id, created_at")
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	defer stmt.Close()
 	row := stmt.QueryRow(u.Username, u.Password, u.Email, u.CreatedAt)
 	if err := row.Scan(&u.ID, &u.CreatedAt); err != nil {
 		return err
 	}
-    return nil
+	return nil
 }
 
+// GetUserByID retrieve's a user by their Net ID.
 func (s *Store) GetUserByID(userid string) (*models.User, error) {
 
 	u := &models.User{}
@@ -94,7 +98,12 @@ func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) DeleteCourseFromUser(u *models.User, courseid models.CourseId) error { return nil }
+func (s *Store) DeleteCourseFromUser(
+	u *models.User,
+	courseid models.CourseId,
+) error {
+	return nil
+}
 
 func (s *Store) InsertCourse(c *models.Course) error { return nil }
 
@@ -112,7 +121,12 @@ func (s *Store) GetCourseByID(courseid models.CourseId) (
 	return nil, nil
 }
 
-func (s *Store) GetRoster(courseid models.CourseId) ([]models.User, error) { return nil, nil }
+func (s *Store) GetRoster(courseid models.CourseId) (
+	[]models.User,
+	error,
+) {
+	return nil, nil
+}
 
 func (s *Store) DeleteCourse(c *models.Course) error { return nil }
 
@@ -120,17 +134,29 @@ func (s *Store) ChangeCourseName(c *models.Course, name string) error {
 	return nil
 }
 
-func (s *Store) AddStudent(c *models.Course, userid string) (*models.Course, error) {
+func (s *Store) AddStudent(c *models.Course, userid string) (
+	*models.Course,
+	error,
+) {
 	return nil, nil
 }
-func (s *Store) RemoveStudent(c *models.Course, userid string) (*models.Course, error) {
+func (s *Store) RemoveStudent(c *models.Course, userid string) (
+	*models.Course,
+	error,
+) {
 	return nil, nil
 }
 
-func (s *Store) InsertMessage(m *models.Message, courseid models.CourseId) error {
+func (s *Store) InsertMessage(
+	m *models.Message,
+	courseid models.CourseId,
+) error {
 	return nil
 }
-func (s *Store) GetMessageById(messageid models.MessageId) (*models.Message, error) {
+func (s *Store) GetMessageById(messageid models.MessageId) (
+	*models.Message,
+	error,
+) {
 	return nil, nil
 }
 func (s *Store) DeleteMessage(m *models.Message) error {

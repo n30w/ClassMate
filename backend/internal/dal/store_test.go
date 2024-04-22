@@ -48,6 +48,112 @@ func setupDatabaseTest() (*sql.DB, error) {
 	return db, nil
 }
 
+type username string
+type password string
+type email string
+type membership int
+
+func (u username) String() string { return string(u) }
+func (u username) Valid() error   { return nil }
+
+func (p password) String() string { return string(p) }
+func (p password) Valid() error   { return nil }
+
+func (e email) String() string { return string(e) }
+func (e email) Valid() error   { return nil }
+
+func (m membership) String() string { return string(m) }
+func (m membership) Valid() error   { return nil }
+
+func TestDB(t *testing.T) {
+	db, err := setupDatabaseTest()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	defer db.Close()
+
+	store := NewStore(db)
+
+	// This should match the dev-init.sql file's first entry.
+	expected := &models.User{
+		Entity: models.Entity{ID: "abc123"},
+		Credentials: models.Credentials{
+			Username:   username("jcena"),
+			Password:   password("password123"),
+			Email:      email("abc123@nyu.edu"),
+			Membership: membership(0),
+		},
+		FullName:       "John Cena",
+		ProfilePicture: models.Media{},
+		Bio:            "Can you see me?",
+	}
+
+	t.Run(
+		"get user by id", func(t *testing.T) {
+			u, err := store.GetUserByID("abc123")
+			if err != nil {
+				t.Errorf("%s", err)
+			}
+
+			if u.ID != expected.ID {
+				t.Errorf("got %s, want %s", u.ID, expected.ID)
+			}
+
+			if u.Email != expected.Email {
+				t.Errorf("got %s, want %s", u.Email, expected.Email)
+			}
+
+			if u.ID != expected.ID {
+				t.Errorf("got %s, want %s", u.FullName, expected.FullName)
+			}
+		},
+	)
+
+	t.Run(
+		"get user by username", func(t *testing.T) {
+			u, err := store.GetUserByUsername("jcena")
+			if err != nil {
+				t.Errorf("%s", err)
+			}
+
+			if u.ID != expected.ID {
+				t.Errorf("got %s, want %s", u.ID, expected.ID)
+			}
+
+			if u.Email != expected.Email {
+				t.Errorf("got %s, want %s", u.Email, expected.Email)
+			}
+
+			if u.ID != expected.ID {
+				t.Errorf("got %s, want %s", u.FullName, expected.FullName)
+			}
+		},
+	)
+
+	t.Run(
+		"insert user", func(t *testing.T) {
+			cred := models.Credentials{
+				Username:   username("testuser"),
+				Password:   password("testpassword"),
+				Email:      email("test@example.com"),
+				Membership: membership(0),
+			}
+
+			u := &models.User{Credentials: cred}
+
+			err := store.InsertUser(u)
+			if err != nil {
+				t.Errorf("%s", err)
+			}
+
+			_, err = store.GetUserByUsername("testuser")
+			if err != nil {
+				t.Errorf("%s", err)
+			}
+		},
+	)
+}
+
 func TestStore_InsertUser(t *testing.T) {
 	db, err := setupDatabaseTest()
 	if err != nil {
@@ -70,119 +176,6 @@ func TestStore_InsertUser(t *testing.T) {
 
 	err = store.InsertUser(user)
 	if err != nil {
-		t.Errorf("Insert user unsuccessful")
+		t.Errorf("%s", err)
 	}
 }
-
-func Username(s string) {
-	panic("unimplemented")
-}
-
-func TestGetUserByID(t *testing.T) {
-	db, err := setupDatabaseTest()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	store := NewStore(db)
-
-	entity := models.Entity{
-		ID:        "abc1234",
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
-		DeletedAt: sql.NullTime{},
-	}
-
-	cred := models.Credentials{
-		Username:   domain.Username("okay"),
-		Password:   domain.Password("password"),
-		Email:      domain.Email("abc213@nyu.edu"),
-		Membership: domain.Membership(0),
-	}
-
-	expectedUser := &models.User{
-		Entity:      entity,
-		Credentials: cred,
-	}
-
-	err = store.InsertUser(expectedUser)
-	if err != nil {
-		t.Errorf("Insert user unsuccessful")
-	}
-
-	user, err := store.GetUserByID("1")
-	if expectedUser.ID != user.ID {
-		t.Errorf("Wrong user ID")
-	}
-	if expectedUser.Email != user.Email {
-		t.Errorf("Wrong user email")
-	}
-	if expectedUser.FullName != user.FullName {
-		t.Errorf("Wrong user fullname")
-	}
-}
-
-//func TestGetUserByEmail(t *testing.T) {
-//	db, err := setupDatabaseTest()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	defer db.Close()
-//
-//	store := NewStore(db)
-//
-//	expectedUser := &models.User{
-//		ID:       "1",
-//		Email:    "test@example.com",
-//		FullName: "Test User",
-//	}
-//
-//	err = store.InsertUser(user)
-//	if err != nil {
-//		t.Errorf("Insert user unsuccessful")
-//	}
-//
-//	user, err := store.GetUserByEmail("test@example.com")
-//	if expectedUser.ID != user.ID {
-//		t.Errorf("Wrong user ID")
-//	}
-//	if expectedUser.Email != user.Email {
-//		t.Errorf("Wrong user email")
-//	}
-//	if expectedUser.FullName != user.FullName {
-//		t.Errorf("Wrong user fullname")
-//	}
-//}
-//
-//func TestGetUserByUsername(t *testing.T) {
-//	db, err := setupDatabaseTest()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	defer db.Close()
-//
-//	store := NewStore(db)
-//
-//	expectedUser := &models.User{
-//		ID:       "1",
-//		Email:    "test@example.com",
-//		FullName: "Test User",
-//	}
-//
-//	err = store.InsertUser(user)
-//	if err != nil {
-//		t.Errorf("Insert user unsuccessful")
-//	}
-//
-//	user, err := store.GetUserByUsername("testuser")
-//	if expectedUser.ID != user.ID {
-//		t.Errorf("Wrong user ID")
-//	}
-//	if expectedUser.Email != user.Email {
-//		t.Errorf("Wrong user email")
-//	}
-//	if expectedUser.FullName != user.FullName {
-//		t.Errorf("Wrong user fullname")
-//	}
-//}
