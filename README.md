@@ -62,7 +62,6 @@ We are using ```yarn``` and NOT npm.
 Our database for the backend is SQL based.
 
 - Go
-  - Gin
   - pq
 - Postgresql
 - Nginx
@@ -84,6 +83,18 @@ The backend directory is structured in this manner:
 
 ```remote``` contains Docker files and anything needed for deployment purposes, like setup scripts.
 
+#### Understanding the Backend **internal** Package
+
+```internal``` has three packages inside it:
+
+- dal
+- domain
+- models
+
+```dal``` stands for Data Access Layer, and is what directly interfaces with any database implementation. ```domain``` contains services that interface with the ```dal``` package.
+
+#### Authentication vs Authorization
+
 ## Getting Started
 
 This project uses [Taskfile](https://taskfile.dev) as a Makefile replacement. This is used to run tests and synchronize docker containers. Unless specified otherwise, all task commands must be run in the root directory of the project.
@@ -104,6 +115,21 @@ There are several types of tasks, some of which are ```dev```, ```build```, ```t
 
 The frontend exists at http://localhost:3000/ and the backend exists at http://localhost:6789/api/v1/
 
+#### PostgreSQL Docker Database
+
+To connect directly to the database from the command-line, run the command: ```psql postgresql://{username}:{password}@{host}:{port}/{database name}```. The parameters in brackets are for you to set.
+
+A ```compose.yaml``` file exists in backend/remote, which defines a backend docker compose structure for the API and the PostgreSQL database. To run the database, execute ```task back:db-up``` in the root directory.
+
+To access the running container from the command line, do these series of steps:
+
+1. Run ```docker ps``` to see running containers' IDs. Find the entry for the container named ```db-postgres```.
+2. If our container's ID was abcdef1234, run the command ```docker exec -it abdef1234 bash``` to enter the container's shell environment.
+3. In the shell, enter the command ```su postgres``` to change the current user from root to postgres. Postgres cannot be accessed from root.
+4. Now enter ```psql -U postgres```. This lets us into the postgresql command line environment. You can now execute psql commands.
+
+To exit out of this environment, type ```exit```.
+
 ## Testing
 
 We must implement endpoint testing.
@@ -117,6 +143,10 @@ We must implement endpoint testing.
 - [Setting up and using postgresql on Mac](https://www.sqlshack.com/setting-up-a-postgresql-database-on-mac/)
 - [Setting postgresql on Windows](https://www.prisma.io/dataguide/postgresql/setting-up-a-local-postgresql-database#setting-up-postgresql-on-windows)
 
+### Go
+
+- [Connecting to postgresql database](https://www.calhoun.io/connecting-to-a-postgresql-database-with-gos-database-sql-package/)
+
 ### Postgresql
 
 - [Tuning postgresql for memory](https://www.enterprisedb.com/postgres-tutorials/how-tune-postgresql-memory)
@@ -126,11 +156,15 @@ We must implement endpoint testing.
 
 - [Running postgresql in a Docker container](https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/)
 - [Golang-Nginx-Postgres Docker Compose](https://github.com/docker/awesome-compose/tree/master/nginx-golang-postgres)
+- [Init script for docker postgres](https://mkyong.com/docker/how-to-run-an-init-script-for-docker-postgres/)
+- [Custom dockerfile for postgres container](https://forums.docker.com/t/how-to-make-a-docker-file-for-your-own-postgres-container/126526/8)
+- [Docker compose env file](https://www.warp.dev/terminus/docker-compose-env-file)
 
 ## Ideas
 
 - Invite students through link or code
 - Need auth for API routes
+- Need to clarify what specific elements the frontend needs after calling API endpoints 
 
 ## Glossary
 

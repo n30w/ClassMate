@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"time"
+
+	"github.com/google/uuid"
+	"github.com/n30w/Darkspace/internal/models"
 )
 
 // jsonWrap wraps a json message response before it gets sent out.
@@ -135,7 +135,11 @@ func (app *application) writeJSON(
 	// Add headers, then write to the output stream.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(js)
+	_, err = w.Write(js)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -157,20 +161,11 @@ func jsonBuilder(data any) ([]byte, error) {
 
 // Database helpers
 
-// openDB opens a connection to the database using a certain config.
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open(cfg.db.driver, cfg.db.dsn)
+// Parser Helper
+func ParseStringToCustomId(id string) (models.CustomId, error) {
+	uuidValue, err := uuid.Parse(id)
 	if err != nil {
-		return nil, err
+		return models.CustomId(uuid.Nil), fmt.Errorf("invalid CustomId format: %s", id)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err = db.PingContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+	return models.CustomId(uuidValue), nil
 }
