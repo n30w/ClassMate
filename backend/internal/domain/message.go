@@ -12,7 +12,8 @@ type MessageStore interface {
 	InsertMessage(m *models.Message, courseid models.CourseId) error
 	GetMessageById(messageid models.MessageId) (*models.Message, error)
 	DeleteMessage(m *models.Message) error
-	ChangeMessage(m *models.Message) (*models.Message, error)
+	ChangeMessageTitle(m *models.Message) (*models.Message, error)
+	ChangeMessageBody(m *models.Message) (*models.Message, error)
 }
 
 type MessageService struct {
@@ -51,13 +52,13 @@ func (ms *MessageService) UpdateMessage(messageid models.MessageId, action strin
 	}
 	if action == "title" {
 		msg.Post.Title = updatedField
-		msg, err = ms.store.ChangeMessage(msg)
+		msg, err = ms.store.ChangeMessageTitle(msg)
 		if err != nil {
 			return nil, err
 		}
 	} else if action == "body" {
 		msg.Post.Description = updatedField
-		msg, err = ms.store.ChangeMessage(msg)
+		msg, err = ms.store.ChangeMessageBody(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -81,4 +82,16 @@ func (ms *MessageService) DeleteMessage(messageid models.MessageId) error {
 		return err
 	}
 	return nil
+}
+
+func (ms *MessageService) ReadMessage(messageid models.MessageId) (*models.Message, error) {
+	if !ms.ValidateID(messageid) {
+		return nil, fmt.Errorf("invalid message ID: %s", messageid)
+	}
+
+	msg, err := ms.store.GetMessageById(messageid)
+	if err != nil {
+		return nil, err
+	}
+	return msg, err
 }

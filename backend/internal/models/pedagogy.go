@@ -26,7 +26,7 @@ type Post struct {
 }
 
 type Assignment struct {
-	Post       Post
+	Post       *Post
 	ID         AssignmentId
 	Submission []SubmissionId
 	Feedback   string
@@ -62,7 +62,7 @@ type Message struct {
 // TODO: Linked lists
 type Comment struct {
 	ID      CommentId
-	Post    Post
+	Post    *Post
 	Replies []CommentId
 }
 
