@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -67,7 +70,19 @@ func (m membership) Valid() error   { return nil }
 func TestDB(t *testing.T) {
 	var dbConf DBConfig
 	dbConf.Driver = "postgres"
-	dbConf.SetFromEnv()
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	dbConf.Dsn = os.Getenv("DB_DSN")
+	dbConf.Name = os.Getenv("DB_NAME")
+	dbConf.Username = os.Getenv("DB_USERNAME")
+	dbConf.Password = os.Getenv("DB_PASSWORD")
+	dbConf.Host = os.Getenv("DB_HOST")
+	dbConf.Port = os.Getenv("DB_PORT")
+	dbConf.SslMode = os.Getenv("DB_SSL_MODE")
 
 	db, err := sql.Open(dbConf.Driver, dbConf.CreateDataSourceName())
 	if err != nil {

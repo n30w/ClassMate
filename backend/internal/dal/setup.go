@@ -52,7 +52,7 @@ func (d DBConfig) SetFromEnv() {
 	d.SslMode = os.Getenv("DB_SSL_MODE")
 }
 
-// createDataSourceName creates the dataSourceName parameter of the
+// CreateDataSourceName creates the dataSourceName parameter of the
 // sql.Open function.
 func (d DBConfig) CreateDataSourceName() string {
 	return fmt.Sprintf(
