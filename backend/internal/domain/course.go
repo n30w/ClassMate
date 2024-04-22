@@ -44,7 +44,10 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 	return nil
 }
 
-func (cs *CourseService) RetrieveCourse(courseid models.CourseId) (*models.Course, error) {
+func (cs *CourseService) RetrieveCourse(courseid models.CourseId) (
+	*models.Course,
+	error,
+) {
 	if !cs.ValidateID(courseid) {
 		return nil, fmt.Errorf("invalid course ID: %s", courseid)
 	}
@@ -55,7 +58,10 @@ func (cs *CourseService) RetrieveCourse(courseid models.CourseId) (*models.Cours
 	return c, nil
 }
 
-func (cs *CourseService) RetrieveRoster(courseid models.CourseId) ([]models.User, error) {
+func (cs *CourseService) RetrieveRoster(courseid models.CourseId) (
+	[]models.User,
+	error,
+) {
 	if !cs.ValidateID(courseid) {
 		return nil, fmt.Errorf("invalid course ID: %s", courseid)
 	}
@@ -66,7 +72,10 @@ func (cs *CourseService) RetrieveRoster(courseid models.CourseId) ([]models.User
 	return c, nil
 }
 
-func (cs *CourseService) AddToRoster(courseid models.CourseId, userid string) (*models.Course, error) {
+func (cs *CourseService) AddToRoster(
+	courseid models.CourseId,
+	userid string,
+) (*models.Course, error) {
 	if !cs.ValidateID(courseid) {
 		return nil, fmt.Errorf("invalid course ID: %s", courseid)
 	}
@@ -81,7 +90,10 @@ func (cs *CourseService) AddToRoster(courseid models.CourseId, userid string) (*
 	return c, nil
 }
 
-func (cs *CourseService) RemoveFromRoster(courseid models.CourseId, userid string) error {
+func (cs *CourseService) RemoveFromRoster(
+	courseid models.CourseId,
+	userid string,
+) error {
 	if !cs.ValidateID(courseid) {
 		return fmt.Errorf("invalid course ID: %s", courseid)
 	}
@@ -96,7 +108,10 @@ func (cs *CourseService) RemoveFromRoster(courseid models.CourseId, userid strin
 	return nil
 }
 
-func (cs *CourseService) UpdateCourseName(courseid models.CourseId, name string) (*models.Course, error) {
+func (cs *CourseService) UpdateCourseName(
+	courseid models.CourseId,
+	name string,
+) (*models.Course, error) {
 	if !cs.ValidateID(courseid) {
 		return nil, fmt.Errorf("invalid course ID: %s", courseid)
 	}
@@ -104,8 +119,6 @@ func (cs *CourseService) UpdateCourseName(courseid models.CourseId, name string)
 	if err != nil {
 		return nil, err
 	}
-	return c, nil
-}
 
 	err = cs.store.ChangeCourseName(c, name)
 	if err != nil {
