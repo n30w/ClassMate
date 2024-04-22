@@ -1,0 +1,33 @@
+name: Frontend
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
+      - name: enable corepack
+        run: corepack enable
+      - name: set yarn version
+        run: corepack use yarn@stable
+      - name: install dependencies
+        run: yarn
+      - name: run eslint
+        run: yarn lint
+      - name: format with prettier
+        run: yarn format:fix

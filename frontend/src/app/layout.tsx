@@ -1,8 +1,27 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
+import localFont from "next/font/local";
 
-const inter = Inter({ subsets: ["latin"] });
+const neue = localFont({
+  src: [
+    {
+      path: "/fonts/NeueMontreal-Regular.woff2",
+      style: "regular",
+    },
+    {
+      path: "/fonts/NeueMontreal-Bold.woff2",
+      style: "bold",
+    },
+    {
+      path: "/fonts/NeueMontreal-Light.woff2",
+      style: "light",
+    },
+    {
+      path: "/fonts/NeueMontreal-Medium.woff2",
+      style: "medium",
+    },
+  ],
+});
 
 export const metadata: Metadata = {
   title: "Darkspace",
@@ -16,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={neue.className}>{children}</body>
     </html>
   );
 }

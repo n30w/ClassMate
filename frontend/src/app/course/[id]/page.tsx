@@ -1,40 +1,48 @@
-import Image from "next/image";
-import Announcements from "@/components/Announcements";
-import Assignments from "@/components/Assignments";
+import Announcements from "@/components/coursepage/Announcements";
+import Assignments from "@/components/coursepage/Assignments";
 import Discussions from "@/components/Discussions";
+import { Announcement, Assignment, Discussion } from "@/lib/types";
+import Navbar from "@/components/Navbar";
+import apiPath from "@/lib/helpers/apiPath";
 
-export default function Page() {
+// These data names must match what the API returns.
+interface HomepageData {
+  name: string;
+  teacher_name: string;
+  assignments: Assignment[];
+  discussions: Discussion[];
+  announcements: Announcement[];
+}
+
+// This function is adapted from:
+// https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#fetching-data-on-the-server-with-fetch
+async function getData(of: string): Promise<HomepageData> {
+  const path = apiPath(`/v1/course/homepage/${of}`);
+  console.log(path);
+
+  const res = await fetch(path, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    // This will activate the closest `error.js` Error Boundary
+    throw new Error("Failed to fetch data");
+  }
+
+  return res.json();
+}
+
+// Dynamic route example found here:
+// https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#example
+export default async function Page({ params }: { params: { slug: string } }) {
+  const data = await getData(params.slug);
+
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
-      <nav
-        style={{
-          backgroundImage: `url('/backgrounds/dashboard-bg.jpeg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="relative">
-          <div className="absolute inset-0 bg-black opacity-70"></div>
-          <div className="py-8 px-32">
-            <div className="flex items-center gap-4">
-              <Image
-                src="/backgrounds/NYU-logo.png"
-                width="150"
-                height="39"
-                alt="NYU Logo"
-                className="z-10"
-              />
-              <Image
-                src="/backgrounds/darkspace.png"
-                width="200"
-                height="39"
-                alt="Darkspace Logo"
-                className="z-10"
-              />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
       <div
         style={{
           backgroundImage: `url('/backgrounds/course-bg.jpg')`,
@@ -47,10 +55,10 @@ export default function Page() {
         <div className="relative">
           <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute bg-black bg-opacity-70 flex flex-col justify-center">
             <h1 className="text-white text-3xl font-bold pb-2 block text-opacity-100">
-              Software Engineering
+              {data.name}
             </h1>
             <h2 className="text-white text-2xl block text-opacity-100">
-              with, Xu Lihua
+              with, {data.teacher_name}
             </h2>
           </div>
           <div className="flex justify-end">
@@ -60,10 +68,10 @@ export default function Page() {
       </div>
       <div className="flex justify-around p-16">
         <div className="flex flex-col w-96">
-          <Announcements />
+          <Announcements entries={data.announcements} />
         </div>
         <div className="flex flex-col">
-          <Assignments />
+          <Assignments entries={data.assignments} />
         </div>
       </div>
     </div>

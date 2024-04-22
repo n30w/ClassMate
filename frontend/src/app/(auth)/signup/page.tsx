@@ -1,45 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import validatePassword from "@/lib/passwordValidator";
+import React, { useState } from "react";
+import validatePassword from "@/lib/helpers/passwordValidator";
+import FormInput from "./FormInput.tsx";
 
-export default function Page() {
-  //   const [isBlurred, setIsBlurred] = useState(false);
+const SignUpForm = () => {
+  const [userData, setUserData] = useState({
+    email: "",
+    password: "",
+    netid: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [reenteredPassword, setReenteredPassword] = useState("");
+  const [reenteredPasswordError, setReenteredPasswordError] = useState("");
 
-  //   const handleFormClick = (): void => {
-  //     setIsBlurred(true);
-  //   };
-
-  const [password, setPassword] = useState<string>("");
-  const [reenteredPassword, setReenteredPassword] = useState<string>("");
-  const [passwordError, setPasswordError] = useState<string>("");
-  const [reenteredPasswordError, setReenteredPasswordError] =
-    useState<string>("");
-
-  const handlePasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    setPasswordError("");
-    if (passwordError) setPasswordError("");
-  };
-
-  const handleReenteredPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const newReenteredPassword = e.target.value;
-    setReenteredPassword(newReenteredPassword);
-    setReenteredPasswordError("");
-    if (reenteredPasswordError) setReenteredPasswordError("");
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const isValidPassword = validatePassword(password);
-    const doPasswordsMatch = password === reenteredPassword;
+    const isValidPassword = validatePassword(userData.password);
+    const doPasswordsMatch = userData.password === reenteredPassword;
 
     if (!isValidPassword) {
       setPasswordError(
@@ -52,8 +32,18 @@ export default function Page() {
       setReenteredPasswordError("Passwords do not match.");
       return;
     }
+    // Call the function to post new user data
+  };
 
-    console.log("Form submitted");
+  const handleChange = (e: { target: { name: any; value: any } }) => {
+    const { name, value } = e.target;
+    setUserData({
+      ...userData,
+      [name]: value,
+    });
+    setPasswordError("");
+    setReenteredPassword(value);
+    setReenteredPasswordError("");
   };
 
   return (
@@ -84,57 +74,46 @@ export default function Page() {
             // onClick={handleFormClick}
             onSubmit={handleSubmit}
           >
-            <label htmlFor="email" className="text-white font-light py-2">
-              Email<span className="text-red-500">*</span>
-            </label>
-            <input
+            <FormInput
+              label="NetId"
               type="text"
-              id="email"
+              name="netid"
+              placeholder="abc123"
+              value={userData.netid}
+              onChange={handleChange}
+            />
+            <FormInput
+              label="Email"
+              type="text"
               name="email"
               placeholder="abc123@nyu.edu"
-              required
-              className="w-80 h-10 px-4 mb-8"
+              value={userData.email}
+              onChange={handleChange}
             />
-            <label htmlFor="password" className="text-white font-light py-2">
-              Password<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="password"
+            <FormInput
+              label="Password"
+              type="password"
               name="password"
-              placeholder="••••••••••"
-              required
-              value={password}
-              onChange={handlePasswordChange}
-              className={`w-80 h-10 px-4 mb-8 ${
-                passwordError && "border-red-500"
-              }`}
+              placeholder="Enter password"
+              value={userData.password}
+              onChange={handleChange}
+              errorMessage={passwordError}
             />
-            {passwordError && (
-              <p className="text-red-500 pb-2">{passwordError}</p>
-            )}
-            <label
-              htmlFor="reentered-password"
-              className="text-white font-ligh py-2"
-            >
-              Re-enter Password<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="reentered-password"
-              name="reentered-password"
-              placeholder="••••••••••"
-              required
-              className={`w-80 h-10 px-4 mb-8 ${
-                reenteredPasswordError && "border-red-500"
-              }`}
+            <FormInput
+              label="Re-enter Password"
+              type="password"
+              name="reenteredPassword"
+              placeholder="Re-enter password"
+              value={reenteredPassword}
+              onChange={(e: {
+                target: { value: React.SetStateAction<string> };
+              }) => setReenteredPassword(e.target.value)}
+              errorMessage={reenteredPasswordError}
             />
-            {reenteredPasswordError && (
-              <p className="text-red-500 pb-2">{reenteredPasswordError}</p>
-            )}
             <input
               type="submit"
               className="text-white font-bold w-40 h-10 px-4 border border-white my-16 hover:bg-gray-400 active:bg-white active:text-black"
+              data-testid="submitButton"
             />
           </form>
           <h3 className="text-white font-light text-sm text-center">
@@ -160,4 +139,6 @@ export default function Page() {
       ></div>
     </div>
   );
-}
+};
+
+export default SignUpForm;

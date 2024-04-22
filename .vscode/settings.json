@@ -52,6 +52,8 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "cmds",
+        "coursepage",
+        "corepack",
     "Darkspace",
     "dbname",
     "healthcheck",

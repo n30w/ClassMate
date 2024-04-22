@@ -12,8 +12,14 @@ tasks:
   test:
     dir: frontend
     cmds:
-      - echo "nothing yet"
+      - yarn test
   install:
     dir: frontend
     cmds:
-      - yarn install
+      - corepack enable
+      - corepack use yarn@stable
+      - yarn
+  update:
+    dir: frontend
+    cmds:
+      - yarn upgrade
