@@ -2,7 +2,10 @@ package dal
 
 import (
 	"fmt"
+	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // Set up a connection to a database.
@@ -35,6 +38,11 @@ type DBConfig struct {
 }
 
 func (d DBConfig) SetFromEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	d.Dsn = os.Getenv("DB_DSN")
 	d.Name = os.Getenv("DB_NAME")
 	d.Username = os.Getenv("DB_USERNAME")

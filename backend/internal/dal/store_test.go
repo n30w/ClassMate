@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 // postgresql database, for running tests.
 func setupDatabaseTest() (*sql.DB, error) {
 	var dbConf DBConfig
-
+	dbConf.Driver = "postgres"
 	dbConf.SetFromEnv()
 
 	db, err := sql.Open(dbConf.Driver, dbConf.CreateDataSourceName())
@@ -23,12 +24,12 @@ func setupDatabaseTest() (*sql.DB, error) {
 	}
 
 	// Passing a value less than or equal to 0 means no limit.
-	db.SetMaxOpenConns(dbConf.MaxOpenConns)
+	db.SetMaxOpenConns(25)
 
 	// Passing a value less than or equal to 0 means no limit.
-	db.SetMaxIdleConns(dbConf.MaxIdleConns)
+	db.SetMaxIdleConns(25)
 
-	duration, err := time.ParseDuration(dbConf.MaxIdleTime)
+	duration, err := time.ParseDuration("15m")
 	if err != nil {
 		return nil, err
 	}
@@ -60,14 +61,43 @@ func (p password) Valid() error   { return nil }
 func (e email) String() string { return string(e) }
 func (e email) Valid() error   { return nil }
 
-func (m membership) String() string { return string(m) }
+func (m membership) String() string { return fmt.Sprintf("%d", m) }
 func (m membership) Valid() error   { return nil }
 
 func TestDB(t *testing.T) {
-	db, err := setupDatabaseTest()
+	var dbConf DBConfig
+	dbConf.Driver = "postgres"
+	dbConf.SetFromEnv()
+
+	db, err := sql.Open(dbConf.Driver, dbConf.CreateDataSourceName())
 	if err != nil {
 		t.Errorf("%s", err)
 	}
+
+	// Passing a value less than or equal to 0 means no limit.
+	db.SetMaxOpenConns(25)
+
+	// Passing a value less than or equal to 0 means no limit.
+	db.SetMaxIdleConns(25)
+
+	duration, err := time.ParseDuration("15m")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	db.SetConnMaxIdleTime(duration)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	// db, err := setupDatabaseTest()
+	// if err != nil {
+	// 	t.Errorf("%s", err)
+	// }
 	defer db.Close()
 
 	store := NewStore(db)

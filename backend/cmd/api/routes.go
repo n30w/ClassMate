@@ -76,8 +76,8 @@ func (app *application) routes() *http.ServeMux {
 	)
 
 	// Media operations
-	router.HandleFunc("/v1/course/{post}/media/create", app.mediaCreateHandler)
-	router.HandleFunc("/v1/course/{post}/media/delete", app.mediaDeleteHandler)
+	router.HandleFunc("POST /v1/course/{post}/media/create", app.mediaCreateHandler)
+	router.HandleFunc("POST /v1/course/{post}/media/delete", app.mediaDeleteHandler)
 
 	return router
 }
