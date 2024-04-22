@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
                                      username VARCHAR NOT NULL,
                                      password VARCHAR NOT NULL,
                                      email VARCHAR NOT NULL,
-                                     membership VARCHAR NOT NULL
+                                     membership INT NOT NULL
 );
 
 -- Media Table
@@ -52,3 +52,7 @@ ALTER TABLE users ADD CONSTRAINT fk_profile_picture
     FOREIGN KEY (profile_picture_id)
         REFERENCES media (id)
         ON DELETE SET NULL;
+
+-- Insert test user with membership represented as an integer
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name)
+VALUES ('abc123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jcena', 'password123', 'abc123@nyu.edu', 0, 'John Cena');
