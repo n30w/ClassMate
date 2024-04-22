@@ -82,8 +82,8 @@ func (mus *mockUserStore) GetUserByUsername(username string) (
 }
 
 func (mus *mockUserStore) DeleteCourseFromUser(
-	courseid string,
 	u *models.User,
+	courseid models.CourseId,
 ) error {
 	return nil
 }
