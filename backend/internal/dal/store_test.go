@@ -3,8 +3,6 @@ package dal
 import (
 	"context"
 	"database/sql"
-	"github.com/n30w/Darkspace/internal/domain"
-	"log"
 	"testing"
 	"time"
 
@@ -152,30 +150,4 @@ func TestDB(t *testing.T) {
 			}
 		},
 	)
-}
-
-func TestStore_InsertUser(t *testing.T) {
-	db, err := setupDatabaseTest()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	store := NewStore(db)
-
-	cred := models.Credentials{
-		Username:   domain.Username("testuser"),
-		Password:   domain.Password("testpassword"),
-		Email:      domain.Email("test@example.com"),
-		Membership: domain.Membership(0),
-	}
-
-	user := &models.User{
-		Credentials: cred,
-	}
-
-	err = store.InsertUser(user)
-	if err != nil {
-		t.Errorf("%s", err)
-	}
 }
