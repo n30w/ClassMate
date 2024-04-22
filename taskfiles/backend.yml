@@ -42,3 +42,5 @@ tasks:
     dir: backend/remote
     cmds:
       - docker compose down --volumes
+      # https://forums.docker.com/t/how-to-delete-cache/5753/2
+      - docker rmi $(docker images -a -q)
