@@ -20,15 +20,26 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
+type vEmail string
+
+func (e vEmail) Valid() error {
+	return nil
+}
+
+func (e vEmail) String() string {
+	return string(e)
+}
+
 // InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
-	stmt, err := s.db.Prepare("INSERT INTO users (username, password, email, created_at) VALUES ($1, $2, $3, $4) RETURNING id, created_at")
+	stmt, err := s.db.Prepare("INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id")
+	id := 0
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	row := stmt.QueryRow(u.Username, u.Password, u.Email, u.CreatedAt)
-	if err := row.Scan(&u.ID, &u.CreatedAt); err != nil {
+	row := stmt.QueryRow(u.ID, u.CreatedAt, u.UpdatedAt, u.Username, u.Password, u.Email, u.Membership, u.FullName)
+	if err := row.Scan(&id); err != nil {
 		return err
 	}
 	return nil
@@ -39,17 +50,33 @@ func (s *Store) GetUserByID(userid string) (*models.User, error) {
 
 	u := &models.User{}
 
-	query := `SELECT id, email, full_name FROM users WHERE id = $1`
-	err := s.db.QueryRow(query, userid).Scan(u.ID, u.Email, u.FullName)
+	query := `SELECT net_id, email, full_name FROM users WHERE net_id=$1`
+	rows, err := s.db.Query(query, userid)
 
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, ERR_RECORD_NOT_FOUND
-		default:
-			return nil, err
+		return nil, err
+	}
+
+	var e, f string
+
+	for rows.Next() {
+		if err := rows.Scan(&u.ID, &e, &f); err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return nil, ERR_RECORD_NOT_FOUND
+			default:
+				return nil, err
+			}
 		}
 	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	u.Email = vEmail(e)
+	u.FullName = f
 
 	return u, nil
 }
@@ -80,20 +107,33 @@ func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 
 	u := &models.User{}
 
-	query := `SELECT id, email, full_name FROM users WHERE username = $1`
-	row := s.db.QueryRow(query, username)
-	if err := row.Scan(&u.ID, &u.Email, &u.FullName); err != nil {
-		return u, err
-	}
+	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
+	rows, err := s.db.Query(query, username)
 
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, ERR_RECORD_NOT_FOUND
-		default:
-			return nil, err
+		return nil, err
+	}
+
+	var e, f string
+
+	for rows.Next() {
+		if err := rows.Scan(&u.ID, &e, &f); err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return nil, ERR_RECORD_NOT_FOUND
+			default:
+				return nil, err
+			}
 		}
 	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	u.Email = vEmail(e)
+	u.FullName = f
 
 	return u, nil
 }
