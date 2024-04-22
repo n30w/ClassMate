@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 	"github.com/n30w/Darkspace/internal/models"
@@ -142,7 +143,7 @@ func TestDB(t *testing.T) {
 				t.Errorf("got %s, want %s", u.ID, expected.ID)
 			}
 
-			if u.Email != expected.Email {
+			if u.Email.String() != expected.Email.String() {
 				t.Errorf("got %s, want %s", u.Email, expected.Email)
 			}
 
@@ -163,7 +164,7 @@ func TestDB(t *testing.T) {
 				t.Errorf("got %s, want %s", u.ID, expected.ID)
 			}
 
-			if u.Email != expected.Email {
+			if u.Email.String() != expected.Email.String() {
 				t.Errorf("got %s, want %s", u.Email, expected.Email)
 			}
 
@@ -182,7 +183,12 @@ func TestDB(t *testing.T) {
 				Membership: membership(0),
 			}
 
-			u := &models.User{Credentials: cred}
+			u := &models.User{
+				Entity: models.Entity{
+					ID: "xyz123",
+				},
+				Credentials: cred,
+			}
 
 			err := store.InsertUser(u)
 			if err != nil {
