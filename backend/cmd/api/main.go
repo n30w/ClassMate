@@ -8,21 +8,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
-
-	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 6789, "API server port")
@@ -57,7 +54,15 @@ func main() {
 	cfg.db.Driver = "postgres"
 
 	// Set config database parameters via environment variables.
-	cfg.SetFromEnv()
+	// cfg.SetFromEnv()
+
+	cfg.db.Dsn = os.Getenv("DB_DSN")
+	cfg.db.Name = os.Getenv("DB_NAME")
+	cfg.db.Username = os.Getenv("DB_USERNAME")
+	cfg.db.Password = os.Getenv("DB_PASSWORD")
+	cfg.db.Host = os.Getenv("DB_HOST")
+	cfg.db.Port = os.Getenv("DB_PORT")
+	cfg.db.SslMode = os.Getenv("DB_SSL_MODE")
 
 	db, err := openDB(cfg)
 	if err != nil {
