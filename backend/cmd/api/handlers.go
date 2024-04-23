@@ -29,14 +29,10 @@ func (app *application) courseHomepageHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-	customid, err := ParseStringToCustomId(id)
-	courseid := models.CourseId(customid)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+
 	var course *models.Course
 
-	course, err = app.services.CourseService.RetrieveCourse(courseid)
+	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -69,11 +65,12 @@ func (app *application) courseCreateHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
+	teachers := []string{input.TeacherID}
 
-	var course *models.Course
-
-	course.Name = input.Title
-	course.Teachers = append(course.Teachers, models.TeacherId(input.TeacherID))
+	course := &models.Course{
+		Title:    input.Title,
+		Teachers: teachers,
+	}
 
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
@@ -98,7 +95,7 @@ func (app *application) courseReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId models.CourseId `json:"courseid"`
+		CourseId string `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -126,11 +123,7 @@ func (app *application) courseUpdateHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-	customid, err := ParseStringToCustomId(id)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-	courseid := models.CourseId(customid)
+
 	action := r.PathValue("action")
 
 	switch action {
@@ -144,7 +137,7 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 		if action == "add" {
-			course, err := app.services.CourseService.AddToRoster(courseid, input.UserId)
+			course, err := app.services.CourseService.AddToRoster(id, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -154,7 +147,7 @@ func (app *application) courseUpdateHandler(
 				app.serverError(w, r, err)
 			}
 		} else if action == "delete" {
-			course, err := app.services.CourseService.RemoveFromRoster(courseid, input.UserId)
+			course, err := app.services.CourseService.RemoveFromRoster(id, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -174,7 +167,7 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 
-		course, err := app.services.CourseService.UpdateCourseName(courseid, input.Name)
+		course, err := app.services.CourseService.UpdateCourseName(id, input.Name)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -200,8 +193,8 @@ func (app *application) courseDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId models.CourseId `json:"courseid"`
-		UserId   string          `json:"userid"`
+		CourseId string `json:"courseid"`
+		UserId   string `json:"userid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -241,10 +234,10 @@ func (app *application) announcementCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     models.CourseId  `json:"courseid"`
-		TeacherId    string           `json:"teacherid"`
-		Announcement string           `json:"announcement"`
-		Media        []models.MediaId `json:"media"`
+		CourseId     string   `json:"courseid"`
+		TeacherId    string   `json:"teacherid"`
+		Announcement string   `json:"announcement"`
+		Media        []string `json:"media"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -253,7 +246,7 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	post := &models.Post{
+	post := models.Post{
 		Description: input.Announcement,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
@@ -284,11 +277,11 @@ func (app *application) announcementUpdateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     models.CourseId  `json:"courseid"`
-		TeacherId    string           `json:"teacherid"`
-		MsgId        models.MessageId `json:"announcementid"`
-		Action       string           `json:"action"`
-		UpdatedField string           `json:"updatedfield"`
+		CourseId     string `json:"courseid"`
+		TeacherId    string `json:"teacherid"`
+		MsgId        string `json:"announcementid"`
+		Action       string `json:"action"`
+		UpdatedField string `json:"updatedfield"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -314,9 +307,9 @@ func (app *application) announcementDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId  models.CourseId  `json:"courseid"`
-		TeacherId string           `json:"teacherid"`
-		MsgId     models.MessageId `json:"announcementid"`
+		CourseId  string `json:"courseid"`
+		TeacherId string `json:"teacherid"`
+		MsgId     string `json:"announcementid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -477,18 +470,18 @@ func (app *application) assignmentCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Title       string           `json:"title"`
-		TeacherId   string           `json:"teacherid"`
-		Description string           `json:"description"`
-		Media       []models.MediaId `json:"media"`
-		DueDate     time.Time        `json:"time"`
+		Title       string    `json:"title"`
+		TeacherId   string    `json:"teacherid"`
+		Description string    `json:"description"`
+		Media       []string  `json:"media"`
+		DueDate     time.Time `json:"time"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
-	post := &models.Post{
+	post := models.Post{
 		Title:       input.Title,
 		Description: input.Description,
 		Owner:       input.TeacherId,
@@ -523,7 +516,7 @@ func (app *application) assignmentReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Uuid models.AssignmentId `json:"uuid"`
+		Uuid string `json:"uuid"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {
@@ -553,9 +546,9 @@ func (app *application) assignmentUpdateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Uuid         models.AssignmentId `json:"uuid"`
-		UpdatedField interface{}         `json:"updatedfield"`
-		Action       string              `json:"action"`
+		Uuid         string      `json:"uuid"`
+		UpdatedField interface{} `json:"updatedfield"`
+		Action       string      `json:"action"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {
