@@ -162,6 +162,7 @@ We must implement endpoint testing.
 - [Docker compose env file](https://www.warp.dev/terminus/docker-compose-env-file)
 
 - [Docker credential desktop - executable not found in PATH](https://blog.saintmalik.me/docs/docker-credential-desktop/)
+  - As the article states: just edit your ~/.docker/config.json and remove the "credsStore" : "desktop" and leave the "credStore" : "desktop"
 
 ## Ideas
 
