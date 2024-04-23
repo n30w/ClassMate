@@ -43,4 +43,8 @@ tasks:
     cmds:
       - docker compose down --volumes
       # https://forums.docker.com/t/how-to-delete-cache/5753/2
-      - docker rmi $(docker images -a -q)
+      # The darkspace-backend-database name comes from the
+      # compose.yaml file. It starts with the name,
+      # darkspace-backend, then the name of the service,
+      # in this case it is "database".
+      - docker rmi darkspace-backend-database
