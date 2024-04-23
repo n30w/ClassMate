@@ -57,5 +57,26 @@ ALTER TABLE users ADD CONSTRAINT fk_profile_picture
 -- Insert test user with membership represented as an integer
 INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES 
     ('abc123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jcena', 'password123', 'abc123@nyu.edu', 0, 'John Cena');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
+    ('xyz789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'mmiller', 'mypass789', 'xyz789@example.com', 1, 'Mike Miller');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES 
+    ('def456', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ajackson', 'pass456', 'def456@example.com', 0, 'Alice Jackson');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
+    ('uvw321', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ksmith', 'pass321', 'uvw321@example.com', 1, 'Kevin Smith');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES 
+    ('ghi987', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jdoe', 'mysecretpass', 'ghi987@example.com', 0, 'Jane Doe');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
+    ('efg678', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ppatel', 'passwordabc', 'efg678@example.com', 1, 'Priya Patel');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES 
+    ('mno456', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'wsmith', 'password456', 'mno456@example.com', 0, 'William Smith');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
+    ('qrs789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'cjohnson', 'mysecret789', 'qrs789@example.com', 1, 'Chris Johnson');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES 
+    ('tuv123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'rthompson', 'pass123abc', 'tuv123@example.com', 0, 'Rachel Thompson');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
+    ('nop789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'bbrown', 'passwordnop', 'nop789@example.com', 1, 'Brian Brown');
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES 
+    ('wxy123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'lwilliams', 'passwordwxy', 'wxy123@example.com', 0, 'Laura Williams');
+
 
 SELECT * FROM users;
