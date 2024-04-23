@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Entity defines a database object, in other words,
@@ -13,4 +15,23 @@ type Entity struct {
 	CreatedAt time.Time    `json:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+// ID describes an identifier. This identifier is either a NetID
+// or a Net ID, which would not have a UUID. ID implements stringer
+// interface.
+type ID struct {
+	UUID       *uuid.UUID
+	Serialized string
+}
+
+func (i ID) String() string {
+	if i.UUID != nil {
+		return i.UUID.String()
+	}
+	return i.Serialized
+}
+
+func (i ID) CreateUUID() {
+	*i.UUID = uuid.New()
 }
