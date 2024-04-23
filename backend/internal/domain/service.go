@@ -11,14 +11,16 @@ type Service struct {
 
 func NewServices(s *dal.Store) *Service {
 	return &Service{
-		UserService:       NewUserService(s),
-		CourseService:     NewCourseService(s),
-		MessageService:    NewMessageService(s),
-		AssignmentService: NewAssignmentService(s),
+		UserService:    NewUserService(s),
+		CourseService:  NewCourseService(s),
+		MessageService: NewMessageService(s),
+		//AssignmentService: NewAssignmentService(s),
 	}
 }
 
-// validates UUID before dal operations
-type Validator interface {
-	ValidateID(id string) bool
-}
+type action int
+
+const (
+	Add action = iota
+	Delete
+)

@@ -98,13 +98,13 @@ func (us *UserService) RetrieveFromUser(
 
 func (us *UserService) UnenrollUserFromCourse(
 	userid string,
-	courseid models.ID,
+	courseid string,
 ) error {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return err
 	}
-	err = us.store.DeleteCourseFromUser(user, courseid.String())
+	err = us.store.DeleteCourseFromUser(user, courseid)
 	if err != nil {
 		return err
 	}
