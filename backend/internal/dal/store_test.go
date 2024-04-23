@@ -93,17 +93,16 @@ func TestDB(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s", err)
 	}
-	// db, err := setupDatabaseTest()
-	// if err != nil {
-	// 	t.Errorf("%s", err)
-	// }
+
 	defer db.Close()
 
 	store := NewStore(db)
 
+	var ei models.ID = models.ID{Serialized: "abc123"}
+
 	// This should match the dev-init.sql file's first entry.
 	expected := &models.User{
-		Entity: models.Entity{ID: "abc123"},
+		Entity: models.Entity{ID: ei},
 		Credentials: models.Credentials{
 			Username:   username("jcena"),
 			Password:   password("password123"),
@@ -114,6 +113,10 @@ func TestDB(t *testing.T) {
 		ProfilePicture: models.Media{},
 		Bio:            "Can you see me?",
 	}
+
+	// #################
+	// 	RETRIEVAL TESTS
+	// #################
 
 	t.Run(
 		"get user by id", func(t *testing.T) {
@@ -130,20 +133,41 @@ func TestDB(t *testing.T) {
 				t.Errorf("got %s, want %s", u.Email, expected.Email)
 			}
 
-			if u.ID != expected.ID {
+			if u.FullName != expected.FullName {
 				t.Errorf("got %s, want %s", u.FullName, expected.FullName)
 			}
 		},
 	)
 
+	t.Run("get user by email", func(t *testing.T) {
+		var e email = "abc123@nyu.edu"
+		u, err := store.GetUserByEmail(e)
+		if err != nil {
+			t.Errorf("%s", err)
+		}
+
+		if u.ID.Serialized != expected.ID.Serialized {
+			t.Errorf("got %s, want %s", u.ID, expected.ID)
+		}
+
+		if u.Email.String() != expected.Email.String() {
+			t.Errorf("got %s, want %s", u.Email, expected.Email)
+		}
+
+		if u.FullName != expected.FullName {
+			t.Errorf("got %s, want %s", u.FullName, expected.FullName)
+		}
+	})
+
 	t.Run(
 		"get user by username", func(t *testing.T) {
-			u, err := store.GetUserByUsername("jcena")
+			var n username = "jcena"
+			u, err := store.GetUserByUsername(n)
 			if err != nil {
 				t.Errorf("%s", err)
 			}
 
-			if u.ID != expected.ID {
+			if u.ID.Serialized != expected.ID.Serialized {
 				t.Errorf("got %s, want %s", u.ID, expected.ID)
 			}
 
@@ -151,16 +175,31 @@ func TestDB(t *testing.T) {
 				t.Errorf("got %s, want %s", u.Email, expected.Email)
 			}
 
-			if u.ID != expected.ID {
+			if u.FullName != expected.FullName {
 				t.Errorf("got %s, want %s", u.FullName, expected.FullName)
 			}
 		},
 	)
 
+	t.Run("get course by id", func(t *testing.T) {
+		c, err := store.GetCourseByID()
+		if err != nil {
+			t.Errorf("%s", err)
+		}
+
+	})
+
+	t.Run("get course by name", func(t *testing.T) {})
+
+	// #################
+	//  INSERTION TESTS
+	// #################
+
 	t.Run(
 		"insert user", func(t *testing.T) {
+			var n username = "testuser"
 			cred := models.Credentials{
-				Username:   username("testuser"),
+				Username:   n,
 				Password:   password("testpassword"),
 				Email:      email("test@example.com"),
 				Membership: membership(0),
@@ -168,7 +207,7 @@ func TestDB(t *testing.T) {
 
 			u := &models.User{
 				Entity: models.Entity{
-					ID: "xyz123",
+					ID: models.ID{Serialized: "xyz123"},
 				},
 				Credentials: cred,
 			}
@@ -178,10 +217,25 @@ func TestDB(t *testing.T) {
 				t.Errorf("%s", err)
 			}
 
-			_, err = store.GetUserByUsername("testuser")
+			_, err = store.GetUserByUsername(n)
 			if err != nil {
 				t.Errorf("%s", err)
 			}
 		},
 	)
+
+	t.Run("insert course", func(t *testing.T) {
+		c := &models.Course{}
+
+		err := store.InsertCourse(c)
+		if err != nil {
+			t.Errorf("%s", err)
+		}
+
+		_, err = store.GetCourseByID(c.ID.String())
+		if err != nil {
+			t.Errorf("%s", err)
+		}
+
+	})
 }
