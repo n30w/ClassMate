@@ -1,9 +1,5 @@
 package models
 
-import (
-	"time"
-)
-
 type filetype int
 
 const (
@@ -17,9 +13,8 @@ const (
 )
 
 type Media struct {
-	Name               string     `json:"name"`
-	MediaId            MediaId    `json:"uuid"`
-	DateUploaded       time.Time  `json:"date_uploaded"`
-	CourseAttributions []CourseId `json:"course_attributions"`
-	FileType           int        `json:"file_type"`
+	Entity
+	Name               string   `json:"name"`
+	CourseAttributions []string `json:"course_attributions"`
+	FileType           int      `json:"file_type"`
 }

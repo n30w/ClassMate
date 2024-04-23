@@ -10,65 +10,61 @@ type CustomId uuid.UUID
 
 type UserId string
 type TeacherId string
-type CourseId CustomId
-type AssignmentId CustomId
-type MediaId CustomId
-type SubmissionId CustomId
-type MessageId CustomId
-type CommentId CustomId
 
 type Post struct {
+	Entity
 	Title       string
 	Description string
-	Media       []MediaId
+	Media       []string
 	Date        time.Time
+	Course      string
 	Owner       string
 }
 
 type Assignment struct {
-	Post       *Post
-	ID         AssignmentId
-	Submission []SubmissionId
+	Post
+	Submission []string
 	Feedback   string
 	Grade      int
 	DueDate    time.Time `json:"due_date"`
 }
 
 type Submission struct {
+	Entity
 	User           User
-	ID             SubmissionId
 	FileType       string
 	SubmissionTime time.Time
 	OnTime         bool
 }
 
 type Course struct {
-	Name        string         `json:"name"`
-	ID          CourseId       `json:"id"`
-	Messages    [10]MessageId  `json:"discussions"` //announcements + discussions
-	Teachers    []TeacherId    `json:"teachers"`
-	Roster      []UserId       `json:"roster"`
-	Assignments []AssignmentId `json:"assignments"`
-	Archived    bool           `json:"archived"`
+	Entity
+	Title       string     `json:"name"`
+	Description string     `json:"description"`
+	Messages    [10]string `json:"discussions"` //announcements + discussions
+	Teachers    []string   `json:"teachers"`
+	Roster      []string   `json:"roster"`
+	Assignments []string   `json:"assignments"`
+	Archived    bool       `json:"archived"`
+	UserNetID   string     `json:"user_net_id"`
 }
 
 type Message struct {
-	Post     *Post
-	ID       MessageId
-	Comments []CommentId
+	Post
+	Comments []string
 	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
 // TODO: Linked lists
 type Comment struct {
-	ID      CommentId
-	Post    *Post
-	Replies []CommentId
+	Entity
+	Post
+	Replies []string
 }
 
 // type Project struct {
 // 	Name            string     `json:"name"`
-// 	ID              string     `json:"id"`
+// 	string              string     `json:"id"`
 // 	Deadline        time.Time  `json:"deadline"`
 // 	MediaReferences []MediaId  `json:"media_references"`
 // 	Members         []User     `json:"members"`
