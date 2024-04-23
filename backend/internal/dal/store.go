@@ -3,9 +3,29 @@ package dal
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
+
+// Credential interface implementations.
+
+type username string
+type password string
+type email string
+type membership int
+
+func (u username) String() string { return string(u) }
+func (u username) Valid() error   { return nil }
+
+func (p password) String() string { return string(p) }
+func (p password) Valid() error   { return nil }
+
+func (e email) String() string { return string(e) }
+func (e email) Valid() error   { return nil }
+
+func (m membership) String() string { return fmt.Sprintf("%d", m) }
+func (m membership) Valid() error   { return nil }
 
 // Store implements interfaces found in respective domain packages.
 type Store struct {
@@ -18,16 +38,6 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{
 		db: db,
 	}
-}
-
-type vEmail string
-
-func (e vEmail) Valid() error {
-	return nil
-}
-
-func (e vEmail) String() string {
-	return string(e)
 }
 
 // InsertUser inserts into the database using a user model.
@@ -57,10 +67,10 @@ func (s *Store) GetUserByID(userid string) (*models.User, error) {
 		return nil, err
 	}
 
-	var e, f string
+	var e string
 
 	for rows.Next() {
-		if err := rows.Scan(&u.ID, &e, &f); err != nil {
+		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 				return nil, ERR_RECORD_NOT_FOUND
@@ -75,18 +85,17 @@ func (s *Store) GetUserByID(userid string) (*models.User, error) {
 		return nil, err
 	}
 
-	u.Email = vEmail(e)
-	u.FullName = f
+	u.Email = email(e)
 
 	return u, nil
 }
 
-func (s *Store) GetUserByEmail(email string) (*models.User, error) {
+func (s *Store) GetUserByEmail(email models.Credential) (*models.User, error) {
 
 	u := &models.User{}
 
 	query := `SELECT id, email, full_name FROM users WHERE email = $1`
-	row := s.db.QueryRow(query, email)
+	row := s.db.QueryRow(query, email.String())
 	if err := row.Scan(&u.ID, &u.Email, &u.FullName); err != nil {
 		return u, err
 	}
@@ -103,21 +112,21 @@ func (s *Store) GetUserByEmail(email string) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) GetUserByUsername(username string) (*models.User, error) {
+func (s *Store) GetUserByUsername(username models.Credential) (*models.User, error) {
 
 	u := &models.User{}
 
 	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
-	rows, err := s.db.Query(query, username)
+	rows, err := s.db.Query(query, username.String())
 
 	if err != nil {
 		return nil, err
 	}
 
-	var e, f string
+	var e string
 
 	for rows.Next() {
-		if err := rows.Scan(&u.ID, &e, &f); err != nil {
+		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 				return nil, ERR_RECORD_NOT_FOUND
@@ -132,8 +141,7 @@ func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 		return nil, err
 	}
 
-	u.Email = vEmail(e)
-	u.FullName = f
+	u.Email = email(e)
 
 	return u, nil
 }

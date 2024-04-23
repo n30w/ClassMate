@@ -3,7 +3,6 @@ package dal
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -50,23 +49,6 @@ func setupDatabaseTest() (*sql.DB, error) {
 
 	return db, nil
 }
-
-type username string
-type password string
-type email string
-type membership int
-
-func (u username) String() string { return string(u) }
-func (u username) Valid() error   { return nil }
-
-func (p password) String() string { return string(p) }
-func (p password) Valid() error   { return nil }
-
-func (e email) String() string { return string(e) }
-func (e email) Valid() error   { return nil }
-
-func (m membership) String() string { return fmt.Sprintf("%d", m) }
-func (m membership) Valid() error   { return nil }
 
 func TestDB(t *testing.T) {
 	var dbConf DBConfig
