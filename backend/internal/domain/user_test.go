@@ -2,9 +2,10 @@ package domain
 
 import (
 	"errors"
-	"github.com/n30w/Darkspace/internal/models"
 	"strconv"
 	"testing"
+
+	"github.com/n30w/Darkspace/internal/models"
 )
 
 func TestUserService_CreateUser(t *testing.T) {
@@ -83,7 +84,7 @@ func (mus *mockUserStore) GetUserByUsername(username string) (
 
 func (mus *mockUserStore) DeleteCourseFromUser(
 	u *models.User,
-	courseid models.CourseId,
+	courseid models.ID,
 ) error {
 	return nil
 }

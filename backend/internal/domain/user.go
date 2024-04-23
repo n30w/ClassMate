@@ -10,9 +10,9 @@ import (
 type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(userid string) (*models.User, error)
-	GetUserByEmail(email string) (*models.User, error)
-	GetUserByUsername(username string) (*models.User, error)
-	DeleteCourseFromUser(u *models.User, courseid models.CourseId) error
+	GetUserByEmail(email models.Credential) (*models.User, error)
+	GetUserByUsername(username models.Credential) (*models.User, error)
+	DeleteCourseFromUser(u *models.User, courseid string) error
 }
 
 type UserService struct {
@@ -39,13 +39,13 @@ func (us *UserService) CreateUser(um *models.User) error {
 	}
 
 	// Check if email is already in use.
-	_, err = us.store.GetUserByEmail(um.Email.String())
+	_, err = us.store.GetUserByEmail(um.Email)
 	if err == nil {
 		return err
 	}
 
 	// Check if username is already in use.
-	_, err = us.store.GetUserByUsername(um.Username.String())
+	_, err = us.store.GetUserByUsername(um.Username)
 	// Notice that err IS EQUAL TO nil and not NOT EQUAL TO.
 	if err == nil {
 		return err
@@ -98,13 +98,13 @@ func (us *UserService) RetrieveFromUser(
 
 func (us *UserService) UnenrollUserFromCourse(
 	userid string,
-	courseid models.CourseId,
+	courseid models.ID,
 ) error {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {
 		return err
 	}
-	err = us.store.DeleteCourseFromUser(user, courseid)
+	err = us.store.DeleteCourseFromUser(user, courseid.String())
 	if err != nil {
 		return err
 	}
