@@ -15,28 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
                                      username VARCHAR NOT NULL,
                                      password VARCHAR NOT NULL,
                                      email VARCHAR NOT NULL,
-                                     membership INT NOT NULL,
-                                     courses_id UUID[] REFERENCES courses(id)
-);
-
--- Media Table
-CREATE TABLE IF NOT EXISTS media (
-                                     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                     type VARCHAR NOT NULL,
-                                     url VARCHAR NOT NULL,
-                                     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                     user_net_id VARCHAR REFERENCES users(net_id)
-);
-
--- Projects Table
-CREATE TABLE IF NOT EXISTS projects (
-                                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                        name VARCHAR NOT NULL,
-                                        description TEXT,
-                                        created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                        updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                        user_net_id VARCHAR REFERENCES users(net_id)
+                                     membership INT NOT NULL
 );
 
 -- Courses Table
@@ -46,50 +25,112 @@ CREATE TABLE IF NOT EXISTS courses (
                                        description TEXT,
                                        created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
                                        updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                       archived BOOLEAN NOT NULL DEFAULT FALSE,
-                                       user_net_id VARCHAR REFERENCES users(net_id),
-                                       messages_id UUID[] REFERENCES messages(id),
-                                       teachers_id UUID[] REFERENCES users(id),
-                                       roster UUID[] REFERENCES users(id),
-                                       assignments_id UUID[] REFERENCES assignments(id)
+                                       archived BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- Media Table
+CREATE TABLE IF NOT EXISTS media (
+                                     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                     type VARCHAR NOT NULL,
+                                     url VARCHAR NOT NULL,
+                                     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                                     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+);
+
+-- Projects Table
+CREATE TABLE IF NOT EXISTS projects (
+                                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                        name VARCHAR NOT NULL,
+                                        description TEXT,
+                                        created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                                        updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
 -- Messages Table
 CREATE TABLE IF NOT EXISTS messages (
-                                       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                       title VARCHAR NOT NULL,
-                                       description TEXT,
-                                       media_id UUID[] REFERENCES media(id),
-                                       date TIMESTAMP WITHOUT TIME ZONE,
-                                       courses_id UUID[] REFERENCES courses(id),
-                                       owner UUID REFERENCES users(id),
-                                       type BOOLEAN
+                                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                        title VARCHAR NOT NULL,
+                                        description TEXT,
+                                        date TIMESTAMP WITHOUT TIME ZONE,
+                                        type BOOLEAN
 );
 
 -- Assignments Table
 CREATE TABLE IF NOT EXISTS assignments (
-                                       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                       title VARCHAR NOT NULL,
-                                       description TEXT,
-                                       media UUID[] REFERENCES media(id),
-                                       date TIMESTAMP WITHOUT TIME ZONE,
-                                       course_id UUID[] REFERENCES courses(id),
-                                       owner UUID REFERENCES user(id),
-                                       submissions_id UUID[] REFERENCES submissions(id),
-                                       due_date TIMESTAMP WITHOUT TIME ZONE
+                                           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                           title VARCHAR NOT NULL,
+                                           description TEXT,
+                                           date TIMESTAMP WITHOUT TIME ZONE,
+                                           due_date TIMESTAMP WITHOUT TIME ZONE
 );
 
 -- Submissions Table
 CREATE TABLE IF NOT EXISTS submissions (
-                                       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                       user_id UUID REFERENCES users(id),
-                                       file_type VARCHAR,
-                                       submission_time TIMESTAMP WITHOUT TIME ZONE,
-                                       on_time BOOLEAN,
-                                       grade INT,
-                                       feedback VARCHAR
-
+                                           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                           file_type VARCHAR,
+                                           submission_time TIMESTAMP WITHOUT TIME ZONE,
+                                           on_time BOOLEAN,
+                                           grade INT,
+                                           feedback VARCHAR
 );
+
+-- Junction Table for Users and Courses (Many-to-Many)
+CREATE TABLE IF NOT EXISTS user_courses (
+                                            user_id INT REFERENCES users(id),
+                                            course_id UUID REFERENCES courses(id),
+                                            PRIMARY KEY (user_id, course_id)
+);
+
+-- Junction Table for Courses and Messages (Many-to-Many)
+CREATE TABLE IF NOT EXISTS course_messages (
+                                               course_id UUID REFERENCES courses(id),
+                                               message_id UUID REFERENCES messages(id),
+                                               PRIMARY KEY (course_id, message_id)
+);
+
+-- Junction Table for Courses and Teachers (Many-to-Many)
+CREATE TABLE IF NOT EXISTS course_teachers (
+                                               course_id UUID REFERENCES courses(id),
+                                               teacher_id INT REFERENCES users(id),
+                                               PRIMARY KEY (course_id, teacher_id)
+);
+
+-- Junction Table for Courses and Roster (Students) (Many-to-Many)
+CREATE TABLE IF NOT EXISTS course_roster (
+                                             course_id UUID REFERENCES courses(id),
+                                             student_id INT REFERENCES users(id),
+                                             PRIMARY KEY (course_id, student_id)
+);
+
+-- Junction Table for Courses and Assignments (Many-to-Many)
+CREATE TABLE IF NOT EXISTS course_assignments (
+                                                  course_id UUID REFERENCES courses(id),
+                                                  assignment_id UUID REFERENCES assignments(id),
+                                                  PRIMARY KEY (course_id, assignment_id)
+);
+
+-- Junction Table for Assignments and Submissions (Many-to-Many)
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+                                                      assignment_id UUID REFERENCES assignments(id),
+                                                      submission_id UUID REFERENCES submissions(id),
+                                                      PRIMARY KEY (assignment_id, submission_id)
+);
+
+-- Junction Table for Messages and Media (Many-to-Many)
+CREATE TABLE IF NOT EXISTS message_media (
+                                             message_id UUID REFERENCES messages(id),
+                                             media_id UUID REFERENCES media(id),
+                                             PRIMARY KEY (message_id, media_id)
+);
+
+
+-- Adding foreign key constraints after all tables are established and maintain direct single relationships
+-- Use a cascade deletion.
+ALTER TABLE projects ADD COLUMN user_net_id VARCHAR REFERENCES users(net_id) ON DELETE CASCADE;
+ALTER TABLE assignments ADD COLUMN media_id UUID REFERENCES media(id);
+ALTER TABLE assignments ADD COLUMN course_id UUID REFERENCES courses(id);
+ALTER TABLE assignments ADD COLUMN owner_id INT REFERENCES users(id);
+ALTER TABLE submissions ADD COLUMN user_id INT REFERENCES users(id) ON DELETE CASCADE;
 
 -- Foreign key for profile picture which relates to the Media table
 ALTER TABLE users ADD CONSTRAINT fk_profile_picture
@@ -97,71 +138,61 @@ ALTER TABLE users ADD CONSTRAINT fk_profile_picture
         REFERENCES media (id)
         ON DELETE SET NULL;
 
+-- Insert dummy users
+-- Note: Insert users before courses since courses might reference users' net_id if needed
+INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
+   ('abc123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jcena', 'password123', 'abc123@nyu.edu', 0, 'John Cena'),
+   ('xyz789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'mmiller', 'mypass789', 'xyz789@example.com', 1, 'Mike Miller'),
+   ('def456', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ajackson', 'pass456', 'def456@example.com', 0, 'Alice Jackson'),
+   ('uvw321', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ksmith', 'pass321', 'uvw321@example.com', 1, 'Kevin Smith'),
+   ('ghi987', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jdoe', 'mysecretpass', 'ghi987@example.com', 0, 'Jane Doe');
 
 -- Insert dummy courses
-INSERT INTO courses (title, description, created_at, updated_at, user_net_id) VALUES
-    ('Introduction to Computer Science', 'Basic concepts of computer programming', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'abc123'),
-    ('Advanced Mathematics', 'In-depth coverage of calculus and linear algebra', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'xyz789'),
-    ('Modern Art History', 'Exploration of art from the 19th century to present', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'def456'),
-    ('Environmental Science', 'Study of climate change and environmental impact', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'uvw321'),
-    ('Business Management', 'Principles and practices in managing modern businesses', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ghi987');
+-- Removed the net_id column since it's now intended to be managed through a junction table or direct reference in projects, not stored directly in courses
+INSERT INTO courses (title, description, created_at, updated_at) VALUES
+   ('Introduction to Computer Science', 'Basic concepts of computer programming', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+   ('Advanced Mathematics', 'In-depth coverage of calculus and linear algebra', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+   ('Modern Art History', 'Exploration of art from the 19th century to present', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+   ('Environmental Science', 'Study of climate change and environmental impact', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+   ('Business Management', 'Principles and practices in managing modern businesses', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Insert dummy assignments
-INSERT INTO assignments (title, description, date, due_date, course_id, owner) VALUES
-    ('Quiz 1', 'Quiz on basic programming concepts', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '7 days', (SELECT id FROM courses WHERE title = 'Introduction to Computer Science'), (SELECT id FROM users WHERE username = 'jcena')),
-    ('Calculus Exam', 'Midterm exam on calculus topics', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '14 days', (SELECT id FROM courses WHERE title = 'Advanced Mathematics'), (SELECT id FROM users WHERE username = 'mmiller')),
-    ('Art Essay', 'Essay on modern art movements', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '10 days', (SELECT id FROM courses WHERE title = 'Modern Art History'), (SELECT id FROM users WHERE username = 'ajackson')),
-    ('Climate Report', 'Group report on climate change effects', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '20 days', (SELECT id FROM courses WHERE title = 'Environmental Science'), (SELECT id FROM users WHERE username = 'ksmith')),
-    ('Management Case Study', 'Analysis of a business case study', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '12 days', (SELECT id FROM courses WHERE title = 'Business Management'), (SELECT id FROM users WHERE username = 'jdoe'));
+-- Using the new structure without course_id in the initial insert. Instead, use the junction table to link courses and assignments if needed
+INSERT INTO assignments (title, description, date, due_date) VALUES
+   ('Quiz 1', 'Quiz on basic programming concepts', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '7 days'),
+   ('Calculus Exam', 'Midterm exam on calculus topics', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '14 days'),
+   ('Art Essay', 'Essay on modern art movements', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '10 days'),
+   ('Climate Report', 'Group report on climate change effects', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '20 days'),
+   ('Management Case Study', 'Analysis of a business case study', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '12 days');
 
 -- Insert dummy messages
-INSERT INTO messages (title, description, date, courses_id, owner, type) VALUES
-    ('Welcome!', 'Welcome to the course on Computer Science', CURRENT_TIMESTAMP, ARRAY[(SELECT id FROM courses WHERE title = 'Introduction to Computer Science')], (SELECT id FROM users WHERE username = 'jcena'), TRUE),
-    ('Assignment Reminder', 'Remember to submit the calculus exam by Friday', CURRENT_TIMESTAMP, ARRAY[(SELECT id FROM courses WHERE title = 'Advanced Mathematics')], (SELECT id FROM users WHERE username = 'mmiller'), FALSE),
-    ('Field Trip', 'Field trip to modern art museum next week', CURRENT_TIMESTAMP, ARRAY[(SELECT id FROM courses WHERE title = 'Modern Art History')], (SELECT id FROM users WHERE username = 'ajackson'), TRUE),
-    ('Guest Lecture', 'Upcoming guest lecture on renewable energy', CURRENT_TIMESTAMP, ARRAY[(SELECT id FROM courses WHERE title = 'Environmental Science')], (SELECT id FROM users WHERE username = 'ksmith'), TRUE),
-    ('Project Groups', 'Project groups for the case study have been assigned', CURRENT_TIMESTAMP, ARRAY[(SELECT id FROM courses WHERE title = 'Business Management')], (SELECT id FROM users WHERE username = 'jdoe'), FALSE);
+-- Updated to avoid using ARRAY and using the junction table instead
+INSERT INTO messages (title, description, date, type) VALUES
+   ('Welcome!', 'Welcome to the course on Computer Science', CURRENT_TIMESTAMP, TRUE),
+   ('Assignment Reminder', 'Remember to submit the calculus exam by Friday', CURRENT_TIMESTAMP, FALSE),
+   ('Field Trip', 'Field trip to modern art museum next week', CURRENT_TIMESTAMP, TRUE),
+   ('Guest Lecture', 'Upcoming guest lecture on renewable energy', CURRENT_TIMESTAMP, TRUE),
+   ('Project Groups', 'Project groups for the case study have been assigned', CURRENT_TIMESTAMP, FALSE);
 
 -- Insert dummy projects
+-- Note: Assuming that user_net_id refers to a single user managing the project
 INSERT INTO projects (name, description, created_at, updated_at, user_net_id) VALUES
-    ('Database Design', 'Project focusing on designing efficient databases', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'abc123'),
-    ('Statistics Software', 'Develop statistical software using Python', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'xyz789'),
-    ('Art Exhibition', 'Organize a virtual art exhibition', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'def456'),
-    ('Water Quality', 'Study on water quality in urban areas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'uvw321'),
-    ('Startup Plan', 'Create a business plan for a new startup', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ghi987');
+   ('Database Design', 'Project focusing on designing efficient databases', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'abc123'),
+   ('Statistics Software', 'Develop statistical software using Python', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'xyz789'),
+   ('Art Exhibition', 'Organize a virtual art exhibition', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'def456'),
+   ('Water Quality', 'Study on water quality in urban areas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'uvw321'),
+   ('Startup Plan', 'Create a business plan for a new startup', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ghi987');
 
 -- Insert dummy submissions
+-- Note: Assuming each submission is linked to a single user
 INSERT INTO submissions (user_id, file_type, submission_time, on_time, grade, feedback) VALUES
-    ((SELECT id FROM users WHERE username = 'jcena'), 'PDF', CURRENT_TIMESTAMP, TRUE, 85, 'Good effort, but watch out for syntax errors'),
-    ((SELECT id FROM users WHERE username = 'mmiller'), 'DOCX', CURRENT_TIMESTAMP, FALSE, 78, 'Late submission, but well-written content'),
-    ((SELECT id FROM users WHERE username = 'ajackson'), 'PDF', CURRENT_TIMESTAMP, TRUE, 92, 'Excellent analysis and creativity'),
-    ((SELECT id FROM users WHERE username = 'ksmith'), 'ZIP', CURRENT_TIMESTAMP, TRUE, 88, 'Good collaboration, impressive research'),
-    ((SELECT id FROM users WHERE username = 'jdoe'), 'PDF', CURRENT_TIMESTAMP, TRUE, 90, 'Very thorough and well-structured report');
+   ((SELECT id FROM users WHERE username = 'jcena'), 'PDF', CURRENT_TIMESTAMP, TRUE, 85, 'Good effort, but watch out for syntax errors'),
+   ((SELECT id FROM users WHERE username = 'mmiller'), 'DOCX', CURRENT_TIMESTAMP, FALSE, 78, 'Late submission, but well-written content'),
+   ((SELECT id FROM users WHERE username = 'ajackson'), 'PDF', CURRENT_TIMESTAMP, TRUE, 92, 'Excellent analysis and creativity'),
+   ((SELECT id FROM users WHERE username = 'ksmith'), 'ZIP', CURRENT_TIMESTAMP, TRUE, 88, 'Good collaboration, impressive research'),
+   ((SELECT id FROM users WHERE username = 'jdoe'), 'PDF', CURRENT_TIMESTAMP, TRUE, 90, 'Very thorough and well-structured report');
 
--- Insert dummy users
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('abc123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jcena', 'password123', 'abc123@nyu.edu', 0, 'John Cena');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('xyz789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'mmiller', 'mypass789', 'xyz789@example.com', 1, 'Mike Miller');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('def456', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ajackson', 'pass456', 'def456@example.com', 0, 'Alice Jackson');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('uvw321', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ksmith', 'pass321', 'uvw321@example.com', 1, 'Kevin Smith');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('ghi987', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'jdoe', 'mysecretpass', 'ghi987@example.com', 0, 'Jane Doe');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('efg678', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'ppatel', 'passwordabc', 'efg678@example.com', 1, 'Priya Patel');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('mno456', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'wsmith', 'password456', 'mno456@example.com', 0, 'William Smith');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('qrs789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'cjohnson', 'mysecret789', 'qrs789@example.com', 1, 'Chris Johnson');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('tuv123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'rthompson', 'pass123abc', 'tuv123@example.com', 0, 'Rachel Thompson');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('nop789', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'bbrown', 'passwordnop', 'nop789@example.com', 1, 'Brian Brown');
-INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES
-    ('wxy123', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'lwilliams', 'passwordwxy', 'wxy123@example.com', 0, 'Laura Williams');
-
+-- Further junction table entries to link data as per new structure need to be added here, for example linking courses to users, messages to courses, etc.
 
 SELECT * FROM courses;
 SELECT * FROM assignments;
