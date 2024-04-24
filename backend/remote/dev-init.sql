@@ -74,52 +74,56 @@ CREATE TABLE IF NOT EXISTS submissions (
                                            feedback VARCHAR
 );
 
+-----------------
+--- JUNCTIONS ---
+-----------------
+
 -- Junction Table for Users and Courses (Many-to-Many)
 CREATE TABLE IF NOT EXISTS user_courses (
-                                            user_id INT REFERENCES users(id),
-                                            course_id UUID REFERENCES courses(id),
-                                            PRIMARY KEY (user_id, course_id)
+                                            user_net_id VARCHAR REFERENCES users(net_id) ON DELETE CASCADE,
+                                            course_id UUID REFERENCES courses(id) ON DELETE CASCADE ,
+                                            PRIMARY KEY (user_net_id, course_id)
 );
 
 -- Junction Table for Courses and Messages (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_messages (
-                                               course_id UUID REFERENCES courses(id),
-                                               message_id UUID REFERENCES messages(id),
+                                               course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+                                               message_id UUID REFERENCES messages(id) ON DELETE CASCADE ,
                                                PRIMARY KEY (course_id, message_id)
 );
 
 -- Junction Table for Courses and Teachers (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_teachers (
-                                               course_id UUID REFERENCES courses(id),
-                                               teacher_id INT REFERENCES users(id),
+                                               course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+                                               teacher_id INT REFERENCES users(id) ON DELETE CASCADE,
                                                PRIMARY KEY (course_id, teacher_id)
 );
 
 -- Junction Table for Courses and Roster (Students) (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_roster (
-                                             course_id UUID REFERENCES courses(id),
-                                             student_id INT REFERENCES users(id),
+                                             course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+                                             student_id INT REFERENCES users(id) ON DELETE CASCADE,
                                              PRIMARY KEY (course_id, student_id)
 );
 
 -- Junction Table for Courses and Assignments (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_assignments (
-                                                  course_id UUID REFERENCES courses(id),
-                                                  assignment_id UUID REFERENCES assignments(id),
+                                                  course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+                                                  assignment_id UUID REFERENCES assignments(id) ON DELETE CASCADE,
                                                   PRIMARY KEY (course_id, assignment_id)
 );
 
 -- Junction Table for Assignments and Submissions (Many-to-Many)
 CREATE TABLE IF NOT EXISTS assignment_submissions (
-                                                      assignment_id UUID REFERENCES assignments(id),
-                                                      submission_id UUID REFERENCES submissions(id),
+                                                      assignment_id UUID REFERENCES assignments(id) ON DELETE CASCADE,
+                                                      submission_id UUID REFERENCES submissions(id) ON DELETE CASCADE,
                                                       PRIMARY KEY (assignment_id, submission_id)
 );
 
 -- Junction Table for Messages and Media (Many-to-Many)
 CREATE TABLE IF NOT EXISTS message_media (
-                                             message_id UUID REFERENCES messages(id),
-                                             media_id UUID REFERENCES media(id),
+                                             message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
+                                             media_id UUID REFERENCES media(id) ON DELETE CASCADE,
                                              PRIMARY KEY (message_id, media_id)
 );
 
@@ -127,9 +131,9 @@ CREATE TABLE IF NOT EXISTS message_media (
 -- Adding foreign key constraints after all tables are established and maintain direct single relationships
 -- Use a cascade deletion.
 ALTER TABLE projects ADD COLUMN user_net_id VARCHAR REFERENCES users(net_id) ON DELETE CASCADE;
-ALTER TABLE assignments ADD COLUMN media_id UUID REFERENCES media(id);
-ALTER TABLE assignments ADD COLUMN course_id UUID REFERENCES courses(id);
-ALTER TABLE assignments ADD COLUMN owner_id INT REFERENCES users(id);
+ALTER TABLE assignments ADD COLUMN media_id UUID REFERENCES media(id) ON DELETE SET NULL;
+ALTER TABLE assignments ADD COLUMN course_id UUID REFERENCES courses(id) ON DELETE SET NULL;
+ALTER TABLE assignments ADD COLUMN owner_id INT REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE submissions ADD COLUMN user_id INT REFERENCES users(id) ON DELETE CASCADE;
 
 -- Foreign key for profile picture which relates to the Media table
