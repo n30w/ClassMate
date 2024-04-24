@@ -6,13 +6,14 @@ import (
 )
 
 type CourseStore interface {
-	InsertCourse(c *models.Course) error
+	InsertCourse(c *models.Course) (string, error)
 	GetCourseByName(name string) (*models.Course, error)
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
 	DeleteCourse(c *models.Course) error
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
+	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 }
 
@@ -22,6 +23,8 @@ type CourseService struct {
 
 func NewCourseService(c CourseStore) *CourseService { return &CourseService{store: c} }
 
+// CreateCourse creates a new course in the database,
+// then assigns a UUID to it. This is not an idempotent method!
 func (cs *CourseService) CreateCourse(c *models.Course) error {
 	// Check if course already exists. Can also try and do fuzzy name matching.
 	_, err := cs.store.GetCourseByName(c.Title)
@@ -32,10 +35,13 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 	c.ID = uuid.New().String()
 
 	// Create the course.
-	err = cs.store.InsertCourse(c)
+	courseId, err := cs.store.InsertCourse(c)
 	if err != nil {
 		return err
 	}
+
+	// Set the course's ID.
+	c.ID = courseId
 
 	return nil
 }
