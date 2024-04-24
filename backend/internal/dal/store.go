@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
-// Credential interface implementations.
+// Credential interface implementations. These implementations may seem
+// somewhat redundant, but they are helpful, because it lets us test and
+// validate the input once more to verify data integrity across boundaries.
 
 type username string
 type password string
@@ -44,13 +45,22 @@ func NewStore(db *sql.DB) *Store {
 
 // InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
-	stmt, err := s.db.Prepare("INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id")
 	id := 0
+	stmt, err := s.db.Prepare("INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	row := stmt.QueryRow(u.ID, u.CreatedAt, u.UpdatedAt, u.Username, u.Password, u.Email, u.Membership, u.FullName)
+	row := stmt.QueryRow(
+		u.ID,
+		u.CreatedAt,
+		u.UpdatedAt,
+		u.Username,
+		u.Password,
+		u.Email,
+		u.Membership,
+		u.FullName,
+	)
 	if err := row.Scan(&id); err != nil {
 		return err
 	}
@@ -59,7 +69,6 @@ func (s *Store) InsertUser(u *models.User) error {
 
 // GetUserByID retrieve's a user by their Net ID.
 func (s *Store) GetUserByID(userid string) (*models.User, error) {
-
 	u := &models.User{}
 
 	query := `SELECT net_id, email, full_name FROM users WHERE net_id=$1`
@@ -92,14 +101,16 @@ func (s *Store) GetUserByID(userid string) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) GetUserByEmail(email models.Credential) (*models.User, error) {
-
+// GetUserByEmail retrieves a user using a credential, returning
+// a user model and error.
+func (s *Store) GetUserByEmail(c models.Credential) (*models.User, error) {
 	u := &models.User{}
+	var e string
 
-	query := `SELECT id, email, full_name FROM users WHERE email = $1`
-	row := s.db.QueryRow(query, email.String())
-	if err := row.Scan(&u.ID, &u.Email, &u.FullName); err != nil {
-		return u, err
+	query := `SELECT net_id, email, full_name FROM users WHERE email = $1`
+	row := s.db.QueryRow(query, c.String())
+	if err := row.Scan(&u.ID, &e, &u.FullName); err != nil {
+		return nil, err
 	}
 
 	if err != nil {
@@ -111,11 +122,15 @@ func (s *Store) GetUserByEmail(email models.Credential) (*models.User, error) {
 		}
 	}
 
+	u.Email = email(e)
+
 	return u, nil
 }
 
-func (s *Store) GetUserByUsername(username models.Credential) (*models.User, error) {
-
+func (s *Store) GetUserByUsername(username models.Credential) (
+	*models.User,
+	error,
+) {
 	u := &models.User{}
 
 	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
@@ -148,6 +163,145 @@ func (s *Store) GetUserByUsername(username models.Credential) (*models.User, err
 	return u, nil
 }
 
+func (s *Store) DeleteUserByNetID(netId string) (int64, error) {
+	query := `DELETE FROM users WHERE net_id = $1`
+	var result sql.Result
+	var err error
+
+	result, err = s.db.Exec(query, netId)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, ERR_RECORD_NOT_FOUND
+		default:
+			return 0, err
+		}
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
+func (s *Store) DeleteCourseByID(id string) (int64, error) {
+	query := `DELETE FROM courses WHERE id = $1`
+	var result sql.Result
+	var err error
+
+	result, err = s.db.Exec(query, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, ERR_RECORD_NOT_FOUND
+		default:
+			return 0, err
+		}
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
+func (s *Store) DeleteCourseByTitle(title string) (int64, error) {
+	query := `DELETE FROM courses WHERE title = $1`
+	var result sql.Result
+	var err error
+
+	result, err = s.db.Exec(query, title)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, ERR_RECORD_NOT_FOUND
+		default:
+			return 0, err
+		}
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
+func (s *Store) DeleteMediaByID(id string) (int64, error) {
+	query := `DELETE FROM media WHERE id = $1`
+	var result sql.Result
+	var err error
+
+	result, err = s.db.Exec(query, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, ERR_RECORD_NOT_FOUND
+		default:
+			return 0, err
+		}
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
+func (s *Store) DeleteAssignmentByID(id string) (int64, error) {
+	query := `DELETE FROM assignments WHERE id = $1`
+	var result sql.Result
+	var err error
+
+	result, err = s.db.Exec(query, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, ERR_RECORD_NOT_FOUND
+		default:
+			return 0, err
+		}
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
+func (s *Store) DeleteSubmissionByID(id string) (int64, error) {
+	query := `DELETE FROM submissions WHERE id = $1`
+	var result sql.Result
+	var err error
+
+	result, err = s.db.Exec(query, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, ERR_RECORD_NOT_FOUND
+		default:
+			return 0, err
+		}
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
 func (s *Store) DeleteCourseFromUser(
 	u *models.User,
 	courseid string,
@@ -164,23 +318,33 @@ func (s *Store) DeleteCourseFromUser(
 		return errors.New("course not found in user's list")
 	}
 
-	u.Courses = append(u.Courses[:indexToRemove], u.Courses[indexToRemove+1:]...)
+	u.Courses = append(
+		u.Courses[:indexToRemove],
+		u.Courses[indexToRemove+1:]...,
+	)
 
 	return nil
 }
 
-func (s *Store) InsertCourse(c *models.Course) error {
-	stmt, err := s.db.Prepare("INSERT INTO courses (id, title, description, created_at, updated_at, user_net_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id")
-	id := 0
+// InsertCourse inserts a course into the database based on a model,
+// then returns a string value that is the UUID.
+func (s *Store) InsertCourse(c *models.Course) (string, error) {
+	query := `INSERT INTO courses (title, description, created_at, updated_at
+) VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+	var err error
+	var id string
+
+	err = s.db.QueryRow(query, c.Title, c.Description).Scan(&id)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return id, ERR_RECORD_NOT_FOUND
+		default:
+			return "", err
+		}
 	}
-	defer stmt.Close()
-	row := stmt.QueryRow(c.ID, c.Title, c.Description, c.CreatedAt, c.UpdatedAt, c.UserNetID)
-	if err := row.Scan(&id); err != nil {
-		return err
-	}
-	return nil
+
+	return id, nil
 }
 
 func (s *Store) GetCourseByName(name string) (
@@ -229,7 +393,11 @@ func (s *Store) GetCourseByID(courseid string) (
 	}
 
 	for rows.Next() {
-		if err := rows.Scan(&c.Title, &c.Description, &c.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&c.Title,
+			&c.Description,
+			&c.CreatedAt,
+		); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 				return nil, ERR_RECORD_NOT_FOUND
@@ -302,48 +470,27 @@ func (s *Store) ChangeCourseName(c *models.Course, name string) error {
 	return nil
 }
 
-func (s *Store) AddStudent(c *models.Course, userid string) (
-	*models.Course,
-	error,
-) {
-	query := `UPDATE courses SET roster = array_append(roster, $1) WHERE id = $2`
-
-	_, err := s.db.Exec(query, userid, c.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-func (s *Store) RemoveStudent(c *models.Course, userid string) (
-	*models.Course,
-	error,
-) {
-	query := `UPDATE courses SET roster = array_remove(roster, $1) WHERE id = $2`
-
-	_, err := s.db.Exec(query, userid, c.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
 func (s *Store) InsertMessage(
 	m *models.Message,
 	courseid string,
 ) error {
-	messageID := uuid.New()
-
 	query := `INSERT INTO messages (id, title, description, media, date, course, owner) VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := s.db.Exec(query, messageID, m.Title, m.Description, m.Media, time.Now(), courseid, m.Owner)
+	_, err := s.db.Exec(
+		query,
+		m.ID,
+		m.Title,
+		m.Description,
+		m.Media,
+		time.Now(),
+		courseid,
+		m.Owner,
+	)
 	if err != nil {
 		return err
 	}
 
 	courseQuery := `UPDATE courses SET messages = array_append(messages, $1) WHERE id = $2`
-	_, err = s.db.Exec(courseQuery, messageID, courseid)
+	_, err = s.db.Exec(courseQuery, m.ID, courseid)
 	if err != nil {
 		return err
 	}
@@ -359,7 +506,15 @@ func (s *Store) GetMessageById(messageid string) (
 	query := `SELECT id, title, description, media, date, course, owner FROM messages WHERE id = $1`
 	row := s.db.QueryRow(query, messageid)
 
-	err := row.Scan(&message.ID, &message.Title, &message.Description, &message.Media, &message.Date, &message.Course, &message.Owner)
+	err := row.Scan(
+		&message.ID,
+		&message.Title,
+		&message.Description,
+		&message.Media,
+		&message.Date,
+		&message.Course,
+		&message.Owner,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ERR_RECORD_NOT_FOUND
@@ -390,7 +545,15 @@ func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 	row := s.db.QueryRow(query, m.Title, m.ID)
 
 	updatedMessage := &models.Message{}
-	err := row.Scan(&updatedMessage.ID, &updatedMessage.Title, &updatedMessage.Description, &updatedMessage.Media, &updatedMessage.Date, &updatedMessage.Course, &updatedMessage.Owner)
+	err := row.Scan(
+		&updatedMessage.ID,
+		&updatedMessage.Title,
+		&updatedMessage.Description,
+		&updatedMessage.Media,
+		&updatedMessage.Date,
+		&updatedMessage.Course,
+		&updatedMessage.Owner,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +567,15 @@ func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 	row := s.db.QueryRow(query, m.Description, m.ID)
 
 	updatedMessage := &models.Message{}
-	err := row.Scan(&updatedMessage.ID, &updatedMessage.Title, &updatedMessage.Description, &updatedMessage.Media, &updatedMessage.Date, &updatedMessage.Course, &updatedMessage.Owner)
+	err := row.Scan(
+		&updatedMessage.ID,
+		&updatedMessage.Title,
+		&updatedMessage.Description,
+		&updatedMessage.Media,
+		&updatedMessage.Date,
+		&updatedMessage.Course,
+		&updatedMessage.Owner,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -412,13 +583,22 @@ func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 	return updatedMessage, nil
 }
 
-func (s *Store) GetAssignmentById(assignmentid string) (*models.Assignment, error) {
+func (s *Store) GetAssignmentById(assignmentid string) (
+	*models.Assignment,
+	error,
+) {
 	assignment := &models.Assignment{}
 
 	query := `SELECT id, title, description, due_date, course_id FROM assignments WHERE id = $1`
 	row := s.db.QueryRow(query, assignmentid)
 
-	err := row.Scan(&assignment.ID, &assignment.Title, &assignment.Description, &assignment.DueDate, &assignment.Course)
+	err := row.Scan(
+		&assignment.ID,
+		&assignment.Title,
+		&assignment.Description,
+		&assignment.DueDate,
+		&assignment.Course,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ERR_RECORD_NOT_FOUND
@@ -432,7 +612,14 @@ func (s *Store) GetAssignmentById(assignmentid string) (*models.Assignment, erro
 func (s *Store) InsertAssignment(a *models.Assignment) error {
 	query := `INSERT INTO assignments (id, title, description, due_date, course_id) VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := s.db.Exec(query, a.ID, a.Title, a.Description, a.DueDate, a.Course)
+	_, err := s.db.Exec(
+		query,
+		a.ID,
+		a.Title,
+		a.Description,
+		a.DueDate,
+		a.Course,
+	)
 	if err != nil {
 		return err
 	}
@@ -451,13 +638,22 @@ func (s *Store) DeleteAssignment(a *models.Assignment) error {
 	return nil
 }
 
-func (s *Store) ChangeAssignmentTitle(assignment *models.Assignment, title string) (*models.Assignment, error) {
+func (s *Store) ChangeAssignmentTitle(
+	assignment *models.Assignment,
+	title string,
+) (*models.Assignment, error) {
 	query := `UPDATE assignments SET title = $1 WHERE id = $2 RETURNING id, title, description, due_date, course_id`
 
 	row := s.db.QueryRow(query, title, assignment.ID)
 
 	updatedAssignment := &models.Assignment{}
-	err := row.Scan(&updatedAssignment.ID, &updatedAssignment.Title, &updatedAssignment.Description, &updatedAssignment.DueDate, &updatedAssignment.Course)
+	err := row.Scan(
+		&updatedAssignment.ID,
+		&updatedAssignment.Title,
+		&updatedAssignment.Description,
+		&updatedAssignment.DueDate,
+		&updatedAssignment.Course,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -465,16 +661,125 @@ func (s *Store) ChangeAssignmentTitle(assignment *models.Assignment, title strin
 	return updatedAssignment, nil
 }
 
-func (s *Store) ChangeAssignmentBody(assignment *models.Assignment, body string) (*models.Assignment, error) {
+func (s *Store) ChangeAssignmentBody(
+	assignment *models.Assignment,
+	body string,
+) (*models.Assignment, error) {
 	query := `UPDATE assignments SET description = $1 WHERE id = $2 RETURNING id, title, description, due_date, course_id`
 
 	row := s.db.QueryRow(query, body, assignment.ID)
 
 	updatedAssignment := &models.Assignment{}
-	err := row.Scan(&updatedAssignment.ID, &updatedAssignment.Title, &updatedAssignment.Description, &updatedAssignment.DueDate, &updatedAssignment.Course)
+	err := row.Scan(
+		&updatedAssignment.ID,
+		&updatedAssignment.Title,
+		&updatedAssignment.Description,
+		&updatedAssignment.DueDate,
+		&updatedAssignment.Course,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return updatedAssignment, nil
+}
+
+// ##################
+//  JUNCTION METHODS
+// ##################
+//
+// Junction methods function upon junction tables. They change
+// the relationships between database objects.
+
+// AddTeacher adds a teacher to a specified course, using the teacher's
+// userId. This method uses junction tables to assign relationships.
+func (s *Store) AddTeacher(courseId string, userId string) error {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %v", err)
+	}
+
+	// Check if the course exists
+	var exists bool
+	err = tx.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1)",
+		courseId,
+	).Scan(&exists)
+
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error checking course existence: %v", err)
+	}
+
+	if !exists {
+		tx.Rollback()
+		return fmt.Errorf("course with ID %s does not exist", courseId)
+	}
+
+	// Check if the teacher exists
+	err = tx.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM users WHERE net_id = $1)",
+		userId,
+	).Scan(&exists)
+
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error checking teacher existence: %v", err)
+	}
+
+	if !exists {
+		tx.Rollback()
+		return fmt.Errorf("teacher with ID %s does not exist", userId)
+	}
+
+	// Insert the new relationship into the junction table
+	_, err = tx.Exec(
+		"INSERT INTO course_teachers (course_id, teacher_id) VALUES ($1, $2)",
+		courseId,
+		userId,
+	)
+
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error inserting into course_teachers: %v", err)
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return nil
+}
+
+// AddStudent uses junction tables to insert a new student
+// into a course.
+func (s *Store) AddStudent(c *models.Course, userid string) (
+	*models.Course,
+	error,
+) {
+	query := `UPDATE courses SET roster = array_append(roster, $1) WHERE id = $2`
+
+	_, err := s.db.Exec(query, userid, c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func (s *Store) RemoveStudent(c *models.Course, userid string) (
+	*models.Course,
+	error,
+) {
+	query := `UPDATE courses SET roster = array_remove(roster, $1) WHERE id = $2`
+
+	_, err := s.db.Exec(query, userid, c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
