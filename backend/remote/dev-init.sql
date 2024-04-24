@@ -95,14 +95,14 @@ CREATE TABLE IF NOT EXISTS course_messages (
 -- Junction Table for Courses and Teachers (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_teachers (
                                                course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
-                                               teacher_id INT REFERENCES users(id) ON DELETE CASCADE,
+                                               teacher_id VARCHAR REFERENCES users(net_id) ON DELETE CASCADE,
                                                PRIMARY KEY (course_id, teacher_id)
 );
 
 -- Junction Table for Courses and Roster (Students) (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_roster (
                                              course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
-                                             student_id INT REFERENCES users(id) ON DELETE CASCADE,
+                                             student_id VARCHAR REFERENCES users(net_id) ON DELETE CASCADE,
                                              PRIMARY KEY (course_id, student_id)
 );
 
@@ -159,6 +159,12 @@ INSERT INTO courses (title, description, created_at, updated_at) VALUES
    ('Modern Art History', 'Exploration of art from the 19th century to present', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
    ('Environmental Science', 'Study of climate change and environmental impact', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
    ('Business Management', 'Principles and practices in managing modern businesses', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Courses with preset ID for test operations.
+INSERT INTO courses(id, title, description, created_at, updated_at) VALUES
+   ('c3b34a9f-8f59-4818-a684-9cda56f42d02', 'Clown Foundations', 'Learn how to be a clown', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+   ('98e64e88-b989-49a0-bbfd-76e158bac634', 'Delete This Course', 'In testing, this course should be deleted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 
 -- Insert dummy assignments
 -- Using the new structure without course_id in the initial insert. Instead, use the junction table to link courses and assignments if needed
