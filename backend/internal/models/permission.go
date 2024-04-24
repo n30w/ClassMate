@@ -30,7 +30,7 @@ const (
 
 	// Object specific and contextual scopes.
 	COMMENT
-	MEDIA
+	MEDIAS // MEDIAS has an "s", in order to differentiate between MEDIA
 	SUBMIT
 )
 
