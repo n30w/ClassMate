@@ -10,7 +10,7 @@ import (
 type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(userid string) (*models.User, error)
-	GetUserByEmail(email models.Credential) (*models.User, error)
+	GetUserByEmail(c models.Credential) (*models.User, error)
 	GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
 }
