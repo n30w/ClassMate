@@ -79,5 +79,9 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("POST /v1/course/{post}/media/create", app.mediaCreateHandler)
 	router.HandleFunc("POST /v1/course/{post}/media/delete", app.mediaDeleteHandler)
 
+	// Comment operations
+	router.HandleFunc("POST /v1/course/{post}/comment/create", app.commentCreateHandler)
+	router.HandleFunc("POST /v1/course/{post}/comment/delete", app.commentDeleteHandler)
+
 	return router
 }

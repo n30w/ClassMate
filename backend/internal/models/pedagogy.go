@@ -2,21 +2,13 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
-
-type CustomId uuid.UUID
-
-type UserId string
-type TeacherId string
 
 type Post struct {
 	Entity
 	Title       string
 	Description string
 	Media       []string
-	Date        time.Time
 	Course      string
 	Owner       string
 }
