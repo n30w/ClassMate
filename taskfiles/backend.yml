@@ -8,6 +8,8 @@ tasks:
   test:
     dir: backend
     cmds:
+      - task back:db-test-up
+      - defer: task back:db-test-down
       - go test -v ./internal/**
   tidy:
     dir: backend
@@ -29,6 +31,7 @@ tasks:
         
       # Then run compose
       - docker compose --env-file ../.env  up -d
+
   # db-stop stops running containers, does not delete them.
   db-stop:
     dir: backend/remote
@@ -57,3 +60,21 @@ tasks:
       # darkspace-backend, then the name of the service,
       # in this case it is "database".
       - docker rmi darkspace-backend-database
+
+  # db-test-up does a docker compose on the test database.
+  db-test-up:
+    dir: backend/remote/test
+    cmds:
+      - |
+          if ! docker info > /dev/null 2>&1; then
+            echo "This script uses docker, and it isn't running - please start docker and try again."
+            exit 1
+          fi
+      - docker compose -f compose.yaml --env-file ../../.env up -d
+
+  # db-test-down does a db-down-clean operation on the test compose file.
+  db-test-down:
+    dir: backend/remote/test
+    cmds:
+      - docker compose down --volumes
+      - docker rmi darkspace-test-database
