@@ -8,8 +8,8 @@ tasks:
   test:
     dir: backend
     cmds:
-      - task back:db-test-up
-      - defer: task back:db-test-down
+      - task back:db-test-up -s
+      - defer: task back:db-test-down -s
       - go test -v ./internal/**
   tidy:
     dir: backend
@@ -76,5 +76,5 @@ tasks:
   db-test-down:
     dir: backend/remote/test
     cmds:
-      - docker compose down --volumes
+      - docker compose down --volumes --remove-orphans
       - docker rmi darkspace-test-database
