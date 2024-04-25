@@ -18,6 +18,24 @@ const Announcements: React.FC<props> = (props: props) => {
     setAnnouncements([...announcements, announcementData]);
   };
 
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await fetch("/api/announcements");
+      if (response.ok) {
+        const data = await response.json();
+        setAnnouncements(data);
+      } else {
+        console.error("Failed to fetch announcements:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
