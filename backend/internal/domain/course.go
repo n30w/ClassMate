@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -10,8 +8,8 @@ import (
 type CourseStore interface {
 	InsertCourse(c *models.Course) error
 	GetCourseByName(name string) (*models.Course, error)
-	GetCourseByID(courseid models.CourseId) (*models.Course, error)
-	GetRoster(courseid models.CourseId) ([]models.User, error)
+	GetCourseByID(courseid string) (*models.Course, error)
+	GetRoster(c string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
 	DeleteCourse(c *models.Course) error
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
@@ -24,33 +22,25 @@ type CourseService struct {
 
 func NewCourseService(c CourseStore) *CourseService { return &CourseService{store: c} }
 
-func (cs *CourseService) ValidateID(id models.CourseId) bool {
-	return true
-}
-
 func (cs *CourseService) CreateCourse(c *models.Course) error {
 	// Check if course already exists. Can also try and do fuzzy name matching.
-	_, err := cs.store.GetCourseByName(c.Name)
+	_, err := cs.store.GetCourseByName(c.Title)
 	if err != nil {
 		return err
 	}
-	newUUID := uuid.New()
-	c.ID = models.CourseId(newUUID)
+
+	c.ID = uuid.New().String()
+
 	// Create the course.
 	err = cs.store.InsertCourse(c)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (cs *CourseService) RetrieveCourse(courseid models.CourseId) (
-	*models.Course,
-	error,
-) {
-	if !cs.ValidateID(courseid) {
-		return nil, fmt.Errorf("invalid course ID: %s", courseid)
-	}
+func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -58,13 +48,7 @@ func (cs *CourseService) RetrieveCourse(courseid models.CourseId) (
 	return c, nil
 }
 
-func (cs *CourseService) RetrieveRoster(courseid models.CourseId) (
-	[]models.User,
-	error,
-) {
-	if !cs.ValidateID(courseid) {
-		return nil, fmt.Errorf("invalid course ID: %s", courseid)
-	}
+func (cs *CourseService) RetrieveRoster(courseid string) ([]models.User, error) {
 	c, err := cs.store.GetRoster(courseid)
 	if err != nil {
 		return nil, err
@@ -72,13 +56,7 @@ func (cs *CourseService) RetrieveRoster(courseid models.CourseId) (
 	return c, nil
 }
 
-func (cs *CourseService) AddToRoster(
-	courseid models.CourseId,
-	userid string,
-) (*models.Course, error) {
-	if !cs.ValidateID(courseid) {
-		return nil, fmt.Errorf("invalid course ID: %s", courseid)
-	}
+func (cs *CourseService) AddToRoster(courseid string, userid string) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -90,13 +68,7 @@ func (cs *CourseService) AddToRoster(
 	return c, nil
 }
 
-func (cs *CourseService) RemoveFromRoster(
-	courseid models.CourseId,
-	userid string,
-) (*models.Course, error) {
-	if !cs.ValidateID(courseid) {
-		return nil, fmt.Errorf("invalid course ID: %s", courseid)
-	}
+func (cs *CourseService) RemoveFromRoster(courseid string, userid string) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -108,13 +80,7 @@ func (cs *CourseService) RemoveFromRoster(
 	return c, nil
 }
 
-func (cs *CourseService) UpdateCourseName(
-	courseid models.CourseId,
-	name string,
-) (*models.Course, error) {
-	if !cs.ValidateID(courseid) {
-		return nil, fmt.Errorf("invalid course ID: %s", courseid)
-	}
+func (cs *CourseService) UpdateCourseName(courseid string, name string) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -127,10 +93,7 @@ func (cs *CourseService) UpdateCourseName(
 	return c, nil
 }
 
-func (cs *CourseService) DeleteCourse(courseid models.CourseId) error {
-	if !cs.ValidateID(courseid) {
-		return fmt.Errorf("invalid course ID: %s", courseid)
-	}
+func (cs *CourseService) DeleteCourse(courseid string) error {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return err

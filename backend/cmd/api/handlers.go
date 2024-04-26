@@ -8,6 +8,25 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
+func downloadExcelHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		CourseId string `json:"courseid"`
+	}
+	// Get the Excel file with the user input data
+	file, err := app.services.ExcelService.CreateExcel(input.CourseId)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// Set the headers necessary to get browsers to interpret the downloadable file
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, file.GetFileName()))
+	w.Header().Set("File-Name", fmt.Sprintf("%s"))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	err = file.Write(w)
+}
+
 // An input struct is used for ushering in data because it makes it explicit
 // as to what we are getting from the incoming request.
 

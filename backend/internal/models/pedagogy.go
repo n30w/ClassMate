@@ -29,14 +29,14 @@ type Assignment struct {
 	Post       *Post
 	ID         AssignmentId
 	Submission []SubmissionId
-	Feedback   string
-	Grade      int
 	DueDate    time.Time `json:"due_date"`
 }
 
 type Submission struct {
 	User           User
 	ID             SubmissionId
+	Feedback       string
+	Grade          int
 	FileType       string
 	SubmissionTime time.Time
 	OnTime         bool

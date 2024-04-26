@@ -7,6 +7,8 @@ type Service struct {
 	CourseService     *CourseService
 	MessageService    *MessageService
 	AssignmentService *AssignmentService
+	SubmissionService *SubmissionService
+	ExcelService      *ExcelService
 }
 
 func NewServices(s *dal.Store) *Service {
@@ -15,10 +17,7 @@ func NewServices(s *dal.Store) *Service {
 		CourseService:     NewCourseService(s),
 		MessageService:    NewMessageService(s),
 		AssignmentService: NewAssignmentService(s),
+		SubmissionService: NewSubmissionService(s),
+		ExcelService:      NewExcelService(s),
 	}
-}
-
-// validates UUID before dal operations
-type Validator interface {
-	ValidateID(id string) bool
 }
