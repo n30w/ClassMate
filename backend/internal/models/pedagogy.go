@@ -61,7 +61,6 @@ type Message struct {
 	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
-// TODO: Linked lists
 type Comment struct {
 	ID      CommentId
 	Post    *Post
