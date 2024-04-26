@@ -23,14 +23,7 @@ type AssignmentService struct {
 
 func NewAssignmentService(a AssignmentStore) *AssignmentService { return &AssignmentService{store: a} }
 
-func (as *AssignmentService) ValidateID(assignmentid string) bool {
-	return true
-}
-
 func (as *AssignmentService) ReadAssignment(assignmentid string) (*models.Assignment, error) {
-	if !as.ValidateID(assignmentid) {
-		return nil, fmt.Errorf("invalid assignment ID: %s", assignmentid)
-	}
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return nil, err
@@ -49,9 +42,7 @@ func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*m
 }
 
 func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield interface{}, action string) (*models.Assignment, error) {
-	if !as.ValidateID(assignmentid) {
-		return nil, fmt.Errorf("invalid assignment ID: %s", assignmentid)
-	}
+
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return nil, err
@@ -86,4 +77,16 @@ func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield 
 	} else {
 		return nil, fmt.Errorf("%s is an invalid action", action)
 	}
+}
+
+func (as *AssignmentService) DeleteAssignment(assignmentid string, action string) error {
+	assignment, err := as.store.GetAssignmentById(assignmentid)
+	if err != nil {
+		return err
+	}
+	err = as.store.DeleteAssignment(assignment)
+	if err != nil {
+		return err
+	}
+	return nil
 }

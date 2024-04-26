@@ -1,0 +1,25 @@
+name: darkspace-test
+
+services:
+  database:
+    build:
+      context: ..
+      dockerfile: ./db.Dockerfile
+    container_name: db-postgres
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - db-data:/data/postgres
+    networks:
+      - dksp
+
+networks:
+  dksp:
+    driver: bridge
+
+volumes:
+  db-data:
