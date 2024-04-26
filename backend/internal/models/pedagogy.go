@@ -30,7 +30,7 @@ type Assignment struct {
 	ID         AssignmentId
 	Submission []SubmissionId
 	Feedback   string
-	Grade      int
+	Grade      float64
 	DueDate    time.Time `json:"due_date"`
 }
 
@@ -39,7 +39,9 @@ type Submission struct {
 	ID             SubmissionId
 	FileType       string
 	SubmissionTime time.Time
-	OnTime         bool
+
+	// TODO write on time calculation method.
+	OnTime bool
 }
 
 type Course struct {
