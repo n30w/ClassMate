@@ -1,4 +1,4 @@
-name: darkspace-backend
+name: darkspace-prod
 
 services:
   database:

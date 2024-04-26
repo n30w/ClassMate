@@ -3,4 +3,4 @@ LABEL authors="Neo"
 
 # Uses dev-init.sql to initialize the database for development,
 # with appropriate tables and data.
-COPY dev-init.sql /docker-entrypoint-initdb.d/
+COPY development/dev-init.sql /docker-entrypoint-initdb.d/
