@@ -30,7 +30,7 @@ tasks:
         fi
         
       # Then run compose
-      - docker compose --env-file ../.env  up -d
+      - docker compose --env-file ../../.env  up -d
 
   # db-stop stops running containers, does not delete them.
   db-stop:
