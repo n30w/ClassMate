@@ -484,6 +484,30 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		NetId    string `json:"netId"`
+	}
+
+	// Validate the data
+
+	// Check if user exists
+
+	// Generate new token
+	token, err := app.services.AuthenticationService.NewToken()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(
+		w, http.StatusCreated,
+		jsonWrap{"authentication_token": token}, nil,
+	)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 
 }
 
