@@ -8,7 +8,7 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
-func downloadExcelHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		CourseId string `json:"courseid"`
 	}
@@ -256,6 +256,7 @@ func (app *application) announcementCreateHandler(
 		CourseId    string   `json:"courseid"`
 		TeacherId   string   `json:"teacherid"`
 		Title       string   `json:"title"`
+		Date        string   `json:"date"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
