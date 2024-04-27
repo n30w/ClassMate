@@ -23,6 +23,8 @@ type Token struct {
 	Scope     string    `json:"-"`
 }
 
+// generateToken generates a new user token.
+// This token will be stored in the database.
 func generateToken(userID int64, ttl time.Duration, scope string) (
 	*Token,
 	error,
