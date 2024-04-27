@@ -2,15 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"time"
-
 	"github.com/joho/godotenv"
 	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
+	"log"
+	"os"
 )
 
 const version = "1.0.0"
@@ -98,28 +94,7 @@ func main() {
 		logger:   logger,
 		services: domain.NewServices(store),
 	}
-
-	// handler is the serve mux, wrapped with appropriate middleware.
-	var handler http.Handler = app.recoverPanic(
-		app.enableCORS(
-			app.rateLimit(
-				app.
-					routes(),
-			),
-		),
-	)
-
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      handler,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-
-	logger.Printf("starting %s server on %s", cfg.env, server.Addr)
-
-	err = server.ListenAndServe()
+	err = app.server()
 
 	logger.Fatal(err)
 }
