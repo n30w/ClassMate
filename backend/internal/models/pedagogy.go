@@ -1,9 +1,5 @@
 package models
 
-import (
-	"time"
-)
-
 type Post struct {
 	Entity
 	Title       string
@@ -18,14 +14,14 @@ type Assignment struct {
 	Submission []string
 	Feedback   string
 	Grade      int
-	DueDate    time.Time `json:"due_date"`
+	DueDate    string
 }
 
 type Submission struct {
 	Entity
 	User           User
 	FileType       string
-	SubmissionTime time.Time
+	SubmissionTime string
 	OnTime         bool
 }
 
@@ -49,7 +45,6 @@ type Message struct {
 
 // TODO: Linked lists
 type Comment struct {
-	Entity
 	Post
 	Replies []string
 }
