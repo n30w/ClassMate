@@ -144,7 +144,10 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 		if action == "add" {
-			course, err := app.services.CourseService.AddToRoster(courseid, input.UserId)
+			course, err := app.services.CourseService.AddToRoster(
+				courseid,
+				input.UserId,
+			)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -154,7 +157,10 @@ func (app *application) courseUpdateHandler(
 				app.serverError(w, r, err)
 			}
 		} else if action == "delete" {
-			course, err := app.services.CourseService.RemoveFromRoster(courseid, input.UserId)
+			course, err := app.services.CourseService.RemoveFromRoster(
+				courseid,
+				input.UserId,
+			)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -174,7 +180,10 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 
-		course, err := app.services.CourseService.UpdateCourseName(courseid, input.Name)
+		course, err := app.services.CourseService.UpdateCourseName(
+			courseid,
+			input.Name,
+		)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -186,7 +195,11 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
+		app.serverError(
+			w,
+			r,
+			fmt.Errorf("%s is an invalid action", action),
+		) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -210,18 +223,27 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
+	err = app.services.UserService.UnenrollUserFromCourse(
+		input.UserId,
+		input.CourseId,
+	) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(
+		input.CourseId,
+		input.UserId,
+	) // delete user from course
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
+	courses, err := app.services.UserService.RetrieveFromUser(
+		input.UserId,
+		"courses",
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -297,7 +319,11 @@ func (app *application) announcementUpdateHandler(
 		return
 	}
 
-	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
+	msg, err := app.services.MessageService.UpdateMessage(
+		input.MsgId,
+		input.Action,
+		input.UpdatedField,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -483,6 +509,7 @@ func (app *application) assignmentCreateHandler(
 		Media       []models.MediaId `json:"media"`
 		DueDate     time.Time        `json:"time"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -510,7 +537,6 @@ func (app *application) assignmentCreateHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-
 }
 
 // assignmentReadHandler relays assignment data back to the requester. To read
@@ -562,7 +588,11 @@ func (app *application) assignmentUpdateHandler(
 		app.serverError(w, r, err)
 	}
 
-	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
+	assignment, err := app.services.AssignmentService.UpdateAssignment(
+		input.Uuid,
+		input.UpdatedField,
+		input.Action,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -631,13 +661,27 @@ func (app *application) discussionDeleteHandler(
 }
 
 // Media handlers
-func (app *application) mediaCreateHandler(w http.ResponseWriter,
+func (app *application) mediaCreateHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 
 }
-func (app *application) mediaDeleteHandler(w http.ResponseWriter,
+func (app *application) mediaDeleteHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
+}
+
+func (app *application) createAuthenticationTokenHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		NetId    string `json:"netId"`
+	}
 
 }

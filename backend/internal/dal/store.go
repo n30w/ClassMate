@@ -3,6 +3,7 @@ package dal
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -38,7 +39,16 @@ func (s *Store) InsertUser(u *models.User) error {
 		return err
 	}
 	defer stmt.Close()
-	row := stmt.QueryRow(u.ID, u.CreatedAt, u.UpdatedAt, u.Username, u.Password, u.Email, u.Membership, u.FullName)
+	row := stmt.QueryRow(
+		u.ID,
+		u.CreatedAt,
+		u.UpdatedAt,
+		u.Username,
+		u.Password,
+		u.Email,
+		u.Membership,
+		u.FullName,
+	)
 	if err := row.Scan(&id); err != nil {
 		return err
 	}
@@ -208,7 +218,10 @@ func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 	return nil, nil
 }
-func (s *Store) GetAssignmentById(assignmentid models.AssignmentId) (*models.Assignment, error) {
+func (s *Store) GetAssignmentById(assignmentid models.AssignmentId) (
+	*models.Assignment,
+	error,
+) {
 	return nil, nil
 }
 func (s *Store) InsertAssignment(a *models.Assignment) error {
@@ -217,9 +230,22 @@ func (s *Store) InsertAssignment(a *models.Assignment) error {
 func (s *Store) DeleteAssignment(a *models.Assignment) error {
 	return nil
 }
-func (s *Store) ChangeAssignmentTitle(assignment *models.Assignment, title string) (*models.Assignment, error) {
+func (s *Store) ChangeAssignmentTitle(
+	assignment *models.Assignment,
+	title string,
+) (*models.Assignment, error) {
 	return nil, nil
 }
-func (s *Store) ChangeAssignmentBody(assignment *models.Assignment, body string) (*models.Assignment, error) {
+func (s *Store) ChangeAssignmentBody(
+	assignment *models.Assignment,
+	body string,
+) (*models.Assignment, error) {
+	return nil, nil
+}
+
+func (s *Store) ChangeAssignmentDueDate(
+	assignment *models.Assignment,
+	duedate time.Time,
+) (*models.Assignment, error) {
 	return nil, nil
 }
