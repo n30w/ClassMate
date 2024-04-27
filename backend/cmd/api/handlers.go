@@ -272,6 +272,7 @@ func (app *application) announcementCreateHandler(
 		Description: input.Description,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
+		Date:        input.Date,
 	}
 	msg := &models.Message{
 		Post: post,
@@ -292,15 +293,41 @@ func (app *application) announcementCreateHandler(
 	}
 }
 
-// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
+// REQUEST: announcement ID
+// RESPONSE: announcement
+func (app *application) announcementReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		MsgId string `json:"announcementid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	msg, err := app.services.MessageService.ReadMessage(input.MsgId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+}
+
+// REQUEST: announcement ID, action (title, body), updated field
 // RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string `json:"courseid"`
-		TeacherId    string `json:"teacherid"`
 		MsgId        string `json:"announcementid"`
 		Action       string `json:"action"`
 		UpdatedField string `json:"updatedfield"`
@@ -407,11 +434,8 @@ func (app *application) userReadHandler(
 ) {
 	id := r.PathValue("id")
 
-	var err error
-	var user *models.User
-
 	// Perform a database lookup of user.
-	user, err = app.services.UserService.GetByID(id)
+	user, err := app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -433,6 +457,12 @@ func (app *application) userUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	// id := r.PathValue("id")
+
+	// var input struct {
+
+	// }
+
 }
 
 // userDeleteHandler deletes a user. A request must come from
@@ -444,6 +474,7 @@ func (app *application) userDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
 }
 
 // userPostHandler handles post requests. When a user posts
@@ -598,6 +629,24 @@ func (app *application) assignmentDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Uuid string `json:"uuid"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	err = app.services.AssignmentService.DeleteAssignment(input.Uuid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
 // discussionCreateHandler creates a discussion.
@@ -608,7 +657,41 @@ func (app *application) discussionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId   string   `json:"courseid"`
+		PosterId   string   `json:"posterid"`
+		Discussion string   `json:"discussion"`
+		Media      []string `json:"media"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	post := models.Post{
+		Description: input.Discussion,
+		Owner:       input.PosterId,
+		Media:       input.Media,
+	}
+	msg := &models.Message{
+		Post: post,
+		Type: 0,
+	}
+
+	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"discussion": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // discussionReadHandler reads a discussion.
@@ -655,4 +738,88 @@ func (app *application) mediaDeleteHandler(w http.ResponseWriter,
 	r *http.Request,
 ) {
 
+}
+
+// Comment handlers
+//
+// REQUEST: discussion/announcement uuid + comment + author netid
+// RESPONSE: comment
+func (app *application) commentCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		MessageId string `json:"messageid"`
+		Comment   string `json:"comment"`
+		Netid     string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+}
+func (app *application) commentDeleteHandler(w http.ResponseWriter,
+	r *http.Request) {
+	var input struct {
+		Uuid  string `json:"uuid"`
+		Netid string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+}
+
+// Submission handlers
+//
+// REQUEST: assignmentid + userid + filetype + submissiontime
+// RESPONSE: submission
+func (app *application) submissionCreateHandler(w http.ResponseWriter,
+	r *http.Request) {
+
+	r.ParseMultipartForm(10 << 20)
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	defer file.Close()
+	media := &models.Media{
+		FileName:           header.Filename,
+		CreatedAt:          r.FormValue("submissiontime"),
+		AttributionsByType: make(map[string]string),
+		FileType:           r.FormValue("filetype"),
+	}
+
+	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
+	media.AttributionsByType["user"] = r.FormValue("userid")
+
+	submission := &models.Submission{
+		AssignmentId:   r.FormValue("assignmentid"),
+		UserId:         r.FormValue("userid"),
+		SubmissionTime: r.FormValue("submissiontime"),
+		Media:          media,
+	}
+
+	submission, err = app.services.SubmissionService.CreateSubmission(submission)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	media, err = app.services.MediaService.UploadMedia(file, submission.ID) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	_, err = app.services.AssignmentService.UpdateAssignment(submission.AssignmentId, true, "submit") // assignment is now completed
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{"submission": submission}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }

@@ -7,6 +7,7 @@ import (
 type CustomId uuid.UUID
 
 type Post struct {
+	Entity
 	Title       string
 	Description string
 	Media       []string
@@ -21,14 +22,17 @@ type Assignment struct {
 	Feedback   string
 	Grade      int
 	DueDate    string `json:"due_date"`
+	Submit     bool
 }
 
 type Submission struct {
-	User           User
-	ID             string
-	Feedback       string
-	Grade          int
-	FileType       string
+	Entity
+	AssignmentId string
+	UserId       string
+	Feedback     string
+	Grade        int
+	Media        *Media
+
 	SubmissionTime string
 	OnTime         bool
 }

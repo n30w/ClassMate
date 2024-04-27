@@ -34,11 +34,7 @@ func (ms *MessageService) CreateMessage(m *models.Message, courseid models.Cours
 	if err != nil {
 		return nil, err
 	}
-	msg, err := ms.store.GetMessageById(m.ID)
-	if err != nil {
-		return nil, err
-	}
-	return msg, nil
+	return m, nil
 }
 
 func (ms *MessageService) UpdateMessage(messageid models.MessageId, action string, updatedField string) (*models.Message, error) {

@@ -18,10 +18,15 @@ func NewSubmissionService(s SubmissionService) *SubmissionService {
 	return &SubmissionService{store: s}
 }
 
-func (ss *SubmissionService) CreateSubmission(s *models.Submission) error {
-
+func (ss *SubmissionService) CreateSubmission(s *models.Submission) (*models.Submission, error) {
 	s.ID = uuid.New().String()
-
+	submission, err := ss.store.InsertSubmission(s)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
-func (ss *SubmissionService) UpdateSubmission(submissionid string, *)
+func (ss *SubmissionService) UpdateSubmission(id string, *) (*models.Submission, error){
+
+}
