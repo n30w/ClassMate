@@ -253,10 +253,11 @@ func (app *application) announcementCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string   `json:"courseid"`
-		TeacherId    string   `json:"teacherid"`
-		Announcement string   `json:"announcement"`
-		Media        []string `json:"media"`
+		CourseId    string   `json:"courseid"`
+		TeacherId   string   `json:"teacherid"`
+		Title       string   `json:"title"`
+		Description string   `json:"description"`
+		Media       []string `json:"media"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -266,7 +267,8 @@ func (app *application) announcementCreateHandler(
 	}
 
 	post := models.Post{
-		Description: input.Announcement,
+		Title:       input.Title,
+		Description: input.Description,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
 	}
