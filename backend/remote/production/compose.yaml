@@ -1,12 +1,10 @@
-name: darkspace-backend
+name: darkspace-prod
 
 services:
   database:
     build:
-      context: .
-      dockerfile: db.Dockerfile
-    # env_file:
-    #   - ./../.env
+      context: ..
+      dockerfile: ../db.Dockerfile
     container_name: db-postgres
     restart: always
     environment:
@@ -31,7 +29,7 @@ volumes:
   # api:
   #   build:
   #     context: .
-  #     dockerfile: api.Dockerfile
+  #     dockerfile: api.db.Dockerfile
   #   ports:
   #     - 6789:6789
   #   environment:

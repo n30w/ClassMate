@@ -29,14 +29,10 @@ func (app *application) courseHomepageHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-	customid, err := ParseStringToCustomId(id)
-	courseid := models.CourseId(customid)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+
 	var course *models.Course
 
-	course, err = app.services.CourseService.RetrieveCourse(courseid)
+	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -69,11 +65,12 @@ func (app *application) courseCreateHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
+	teachers := []string{input.TeacherID}
 
-	var course *models.Course
-
-	course.Name = input.Title
-	course.Teachers = append(course.Teachers, models.TeacherId(input.TeacherID))
+	course := &models.Course{
+		Title:    input.Title,
+		Teachers: teachers,
+	}
 
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
@@ -98,7 +95,7 @@ func (app *application) courseReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId models.CourseId `json:"courseid"`
+		CourseId string `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -126,11 +123,7 @@ func (app *application) courseUpdateHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-	customid, err := ParseStringToCustomId(id)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-	courseid := models.CourseId(customid)
+
 	action := r.PathValue("action")
 
 	switch action {
@@ -144,10 +137,7 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 		if action == "add" {
-			course, err := app.services.CourseService.AddToRoster(
-				courseid,
-				input.UserId,
-			)
+			course, err := app.services.CourseService.AddToRoster(id, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -157,10 +147,7 @@ func (app *application) courseUpdateHandler(
 				app.serverError(w, r, err)
 			}
 		} else if action == "delete" {
-			course, err := app.services.CourseService.RemoveFromRoster(
-				courseid,
-				input.UserId,
-			)
+			course, err := app.services.CourseService.RemoveFromRoster(id, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -180,10 +167,7 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 
-		course, err := app.services.CourseService.UpdateCourseName(
-			courseid,
-			input.Name,
-		)
+		course, err := app.services.CourseService.UpdateCourseName(id, input.Name)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -213,8 +197,8 @@ func (app *application) courseDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId models.CourseId `json:"courseid"`
-		UserId   string          `json:"userid"`
+		CourseId string `json:"courseid"`
+		UserId   string `json:"userid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -263,10 +247,10 @@ func (app *application) announcementCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     models.CourseId  `json:"courseid"`
-		TeacherId    string           `json:"teacherid"`
-		Announcement string           `json:"announcement"`
-		Media        []models.MediaId `json:"media"`
+		CourseId     string   `json:"courseid"`
+		TeacherId    string   `json:"teacherid"`
+		Announcement string   `json:"announcement"`
+		Media        []string `json:"media"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -275,7 +259,7 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	post := &models.Post{
+	post := models.Post{
 		Description: input.Announcement,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
@@ -299,18 +283,44 @@ func (app *application) announcementCreateHandler(
 	}
 }
 
-// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
+// REQUEST: announcement ID
+// RESPONSE: announcement
+func (app *application) announcementReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		MsgId string `json:"announcementid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	msg, err := app.services.MessageService.ReadMessage(input.MsgId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+}
+
+// REQUEST: announcement ID, action (title, body), updated field
 // RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     models.CourseId  `json:"courseid"`
-		TeacherId    string           `json:"teacherid"`
-		MsgId        models.MessageId `json:"announcementid"`
-		Action       string           `json:"action"`
-		UpdatedField string           `json:"updatedfield"`
+		MsgId        string `json:"announcementid"`
+		Action       string `json:"action"`
+		UpdatedField string `json:"updatedfield"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -340,9 +350,9 @@ func (app *application) announcementDeleteHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId  models.CourseId  `json:"courseid"`
-		TeacherId string           `json:"teacherid"`
-		MsgId     models.MessageId `json:"announcementid"`
+		CourseId  string `json:"courseid"`
+		TeacherId string `json:"teacherid"`
+		MsgId     string `json:"announcementid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -418,11 +428,8 @@ func (app *application) userReadHandler(
 ) {
 	id := r.PathValue("id")
 
-	var err error
-	var user *models.User
-
 	// Perform a database lookup of user.
-	user, err = app.services.UserService.GetByID(id)
+	user, err := app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -444,6 +451,8 @@ func (app *application) userUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	id := r.PathValue("id")
+
 }
 
 // userDeleteHandler deletes a user. A request must come from
@@ -527,11 +536,11 @@ func (app *application) assignmentCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Title       string           `json:"title"`
-		TeacherId   string           `json:"teacherid"`
-		Description string           `json:"description"`
-		Media       []models.MediaId `json:"media"`
-		DueDate     time.Time        `json:"time"`
+		Title       string    `json:"title"`
+		TeacherId   string    `json:"teacherid"`
+		Description string    `json:"description"`
+		Media       []string  `json:"media"`
+		DueDate     time.Time `json:"time"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -539,7 +548,7 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 	}
 
-	post := &models.Post{
+	post := models.Post{
 		Title:       input.Title,
 		Description: input.Description,
 		Owner:       input.TeacherId,
@@ -573,7 +582,7 @@ func (app *application) assignmentReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Uuid models.AssignmentId `json:"uuid"`
+		Uuid string `json:"uuid"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {
@@ -603,9 +612,9 @@ func (app *application) assignmentUpdateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Uuid         models.AssignmentId `json:"uuid"`
-		UpdatedField interface{}         `json:"updatedfield"`
-		Action       string              `json:"action"`
+		Uuid         string      `json:"uuid"`
+		UpdatedField interface{} `json:"updatedfield"`
+		Action       string      `json:"action"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {
@@ -637,6 +646,24 @@ func (app *application) assignmentDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Uuid string `json:"uuid"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	err = app.services.AssignmentService.DeleteAssignment(input.Uuid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
 // discussionCreateHandler creates a discussion.
@@ -647,7 +674,41 @@ func (app *application) discussionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId   string   `json:"courseid"`
+		PosterId   string   `json:"posterid"`
+		Discussion string   `json:"discussion"`
+		Media      []string `json:"media"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	post := models.Post{
+		Description: input.Discussion,
+		Owner:       input.PosterId,
+		Media:       input.Media,
+	}
+	msg := &models.Message{
+		Post: post,
+		Type: 0,
+	}
+
+	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"discussion": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // discussionReadHandler reads a discussion.
@@ -708,4 +769,37 @@ func (app *application) createAuthenticationTokenHandler(
 		NetId    string `json:"netId"`
 	}
 
+}
+
+// Comment handlers
+//
+// REQUEST: discussion/announcement uuid + comment + author netid
+// RESPONSE: comment
+func (app *application) commentCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Uuid    string `json:"uuid"`
+		Comment string `json:"comment"`
+		Netid   string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+}
+func (app *application) commentDeleteHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Uuid  string `json:"uuid"`
+		Netid string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }

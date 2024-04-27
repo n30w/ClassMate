@@ -20,7 +20,9 @@ func NewServices(s *dal.Store) *Service {
 	}
 }
 
-// validates UUID before dal operations
-type Validator interface {
-	ValidateID(id string) bool
-}
+type action int
+
+const (
+	Add action = iota
+	Delete
+)

@@ -9,7 +9,7 @@ import (
 )
 
 type AssignmentStore interface {
-	GetAssignmentById(assignmentid models.AssignmentId) (*models.Assignment, error)
+	GetAssignmentById(assignmentid string) (*models.Assignment, error)
 	InsertAssignment(assignment *models.Assignment) error
 	DeleteAssignment(assignment *models.Assignment) error
 	ChangeAssignmentDueDate(assignment *models.Assignment, duedate time.Time) (*models.Assignment, error)
@@ -23,14 +23,7 @@ type AssignmentService struct {
 
 func NewAssignmentService(a AssignmentStore) *AssignmentService { return &AssignmentService{store: a} }
 
-func (as *AssignmentService) ValidateID(assignmentid models.AssignmentId) bool {
-	return true
-}
-
-func (as *AssignmentService) ReadAssignment(assignmentid models.AssignmentId) (*models.Assignment, error) {
-	if !as.ValidateID(assignmentid) {
-		return nil, fmt.Errorf("invalid assignment ID: %s", assignmentid)
-	}
+func (as *AssignmentService) ReadAssignment(assignmentid string) (*models.Assignment, error) {
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return nil, err
@@ -39,8 +32,7 @@ func (as *AssignmentService) ReadAssignment(assignmentid models.AssignmentId) (*
 }
 
 func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*models.Assignment, error) {
-	newUUID := uuid.New()
-	assignment.ID = models.AssignmentId(newUUID)
+	assignment.ID = uuid.New().String()
 	err := as.store.InsertAssignment(assignment)
 	if err != nil {
 		return nil, err
@@ -49,10 +41,8 @@ func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*m
 	return assignment, nil
 }
 
-func (as *AssignmentService) UpdateAssignment(assignmentid models.AssignmentId, updatedfield interface{}, action string) (*models.Assignment, error) {
-	if !as.ValidateID(assignmentid) {
-		return nil, fmt.Errorf("invalid assignment ID: %s", assignmentid)
-	}
+func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield interface{}, action string) (*models.Assignment, error) {
+
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return nil, err
@@ -87,4 +77,16 @@ func (as *AssignmentService) UpdateAssignment(assignmentid models.AssignmentId, 
 	} else {
 		return nil, fmt.Errorf("%s is an invalid action", action)
 	}
+}
+
+func (as *AssignmentService) DeleteAssignment(assignmentid string) error {
+	assignment, err := as.store.GetAssignmentById(assignmentid)
+	if err != nil {
+		return err
+	}
+	err = as.store.DeleteAssignment(assignment)
+	if err != nil {
+		return err
+	}
+	return nil
 }
