@@ -100,7 +100,14 @@ func main() {
 	}
 
 	// handler is the serve mux, wrapped with appropriate middleware.
-	var handler http.Handler = app.recoverPanic(app.rateLimit(app.routes()))
+	var handler http.Handler = app.recoverPanic(
+		app.enableCORS(
+			app.rateLimit(
+				app.
+					routes(),
+			),
+		),
+	)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
