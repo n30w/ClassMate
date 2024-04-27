@@ -19,7 +19,7 @@ tasks:
   # Docker commands
 
   db-up:
-    dir: backend/remote
+    dir: backend/remote/development
     cmds:
       # First check if docker engine is running.
       # Retrieved from: https://stackoverflow.com/a/55283209/20087581
@@ -30,28 +30,28 @@ tasks:
         fi
         
       # Then run compose
-      - docker compose --env-file ../.env  up -d
+      - docker compose --env-file ../../.env  up -d
 
   # db-stop stops running containers, does not delete them.
   db-stop:
-    dir: backend/remote
+    dir: backend/remote/development
     cmds:
       - docker compose stop
   db-down:
-    dir: backend/remote
+    dir: backend/remote/development
     cmds:
       - docker compose down
 
   # Rebuild the container(s) due to adjusted settings.
   db-build:
-    dir: backend/remote
+    dir: backend/remote/development
     cmds:
       - docker compose build
 
   # db-down-clean deletes volumes and their data! See:
   # https://docs.docker.com/compose/gettingstarted/#step-8-experiment-with-some-other-commands
   db-down-clean:
-    dir: backend/remote
+    dir: backend/remote/development
     cmds:
       - docker compose down --volumes
       # https://forums.docker.com/t/how-to-delete-cache/5753/2
