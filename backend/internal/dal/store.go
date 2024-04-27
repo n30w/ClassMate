@@ -750,18 +750,6 @@ func (s *Store) AddTeacher(courseId string, userId string) error {
 
 	return nil
 }
-func (s *Store) ChangeAssignmentTitle(
-	assignment *models.Assignment,
-	title string,
-) (*models.Assignment, error) {
-	return nil, nil
-}
-func (s *Store) ChangeAssignmentBody(
-	assignment *models.Assignment,
-	body string,
-) (*models.Assignment, error) {
-	return nil, nil
-}
 
 func (s *Store) ChangeAssignmentDueDate(
 	assignment *models.Assignment,
