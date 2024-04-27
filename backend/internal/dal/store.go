@@ -750,6 +750,24 @@ func (s *Store) AddTeacher(courseId string, userId string) error {
 
 	return nil
 }
+func (s *Store) ChangeAssignmentTitle(
+	assignment *models.Assignment,
+	title string,
+) (*models.Assignment, error) {
+	return nil, nil
+}
+func (s *Store) ChangeAssignmentBody(
+	assignment *models.Assignment,
+	body string,
+) (*models.Assignment, error) {
+	return nil, nil
+}
+
+func (s *Store) ChangeAssignmentDueDate(
+	assignment *models.Assignment,
+	duedate time.Time,
+) (*models.Assignment, error) {
+	return nil, nil
 
 // AddStudent uses junction tables to insert a new student
 // into a course.

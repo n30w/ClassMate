@@ -3,18 +3,20 @@ package domain
 import "github.com/n30w/Darkspace/internal/dal"
 
 type Service struct {
-	UserService       *UserService
-	CourseService     *CourseService
-	MessageService    *MessageService
-	AssignmentService *AssignmentService
+	UserService           *UserService
+	CourseService         *CourseService
+	MessageService        *MessageService
+	AssignmentService     *AssignmentService
+	AuthenticationService *AuthenticationService
 }
 
 func NewServices(s *dal.Store) *Service {
 	return &Service{
-		UserService:    NewUserService(s),
-		CourseService:  NewCourseService(s),
-		MessageService: NewMessageService(s),
-		//AssignmentService: NewAssignmentService(s),
+		UserService:           NewUserService(s),
+		CourseService:         NewCourseService(s),
+		MessageService:        NewMessageService(s),
+		AssignmentService:     NewAssignmentService(s),
+		AuthenticationService: NewAuthenticationService(s),
 	}
 }
 

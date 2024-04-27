@@ -22,6 +22,16 @@ type config struct {
 
 	// Database configurations
 	db dal.DBConfig
+
+	// limiter is limiter information for rate limiting.
+	limiter struct {
+		// rps is requests per second.
+		rps   float64
+		burst int
+
+		// enabled either disables or enables rate limiting altogether.
+		enabled bool
+	}
 }
 
 // openDB opens a connection to the database using a certain config.

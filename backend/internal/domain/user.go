@@ -92,8 +92,8 @@ func (us *UserService) RetrieveFromUser(
 			field,
 		)
 	}
-	return fieldValue, nil
 
+	return fieldValue, nil
 }
 
 func (us *UserService) UnenrollUserFromCourse(
@@ -108,8 +108,8 @@ func (us *UserService) UnenrollUserFromCourse(
 	if err != nil {
 		return err
 	}
-	return nil
 
+	return nil
 }
 
 func (us *UserService) NewUsername(s string) Username {
