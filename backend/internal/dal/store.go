@@ -768,6 +768,7 @@ func (s *Store) ChangeAssignmentDueDate(
 	duedate time.Time,
 ) (*models.Assignment, error) {
 	return nil, nil
+}
 
 // AddStudent uses junction tables to insert a new student
 // into a course.
