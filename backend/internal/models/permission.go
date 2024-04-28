@@ -28,6 +28,8 @@ func (m member) String() string {
 		return "TEACHER"
 	case ADMIN:
 		return "ADMIN"
+	default:
+		return ""
 	}
 }
 
