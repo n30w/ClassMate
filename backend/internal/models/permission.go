@@ -1,12 +1,16 @@
 package models
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 // Member defines the affiliation of a user, whether they are a student,
 // a teacher, or an administrator. In other words,
 // it defines what group someone is a part of.
 // The frontend will send either a 0 for STUDENT or a 1 for TEACHER.
 // The affiliation ADMIN is only created server-side.
+// The member type implements the Credential interface.
 type member uint8
 
 const (
@@ -15,13 +19,37 @@ const (
 	ADMIN
 )
 
+// String returns the string representation of the membership type.
+func (m member) String() string {
+	switch m {
+	case STUDENT:
+		return "STUDENT"
+	case TEACHER:
+		return "TEACHER"
+	case ADMIN:
+		return "ADMIN"
+	}
+}
+
+// Valid returns an error, checking whether the membership value
+// provided is even valid.
+func (m member) Valid() error {
+	if m > 2 || m < 0 {
+		return errors.New("invalid membership enumeration")
+	}
+
+	return nil
+}
+
 type scope uint8
 
 const (
 	// Determines what one can do with themselves.
+
 	SELF scope = iota
 
 	// Scopes for general pedagogy.
+
 	COURSE
 	QUIZ
 	ASSIGNMENT
@@ -29,6 +57,7 @@ const (
 	PROJECT
 
 	// Object specific and contextual scopes.
+
 	COMMENT
 	MEDIAS // MEDIAS has an "s", in order to differentiate between MEDIA
 	SUBMIT
@@ -56,6 +85,9 @@ func createPermissions() permissions {
 		ASSIGNMENT: permission{},
 		DISCUSSION: permission{},
 		PROJECT:    permission{},
+		COMMENT:    permission{},
+		MEDIAS:     permission{},
+		SUBMIT:     permission{},
 	}
 }
 
