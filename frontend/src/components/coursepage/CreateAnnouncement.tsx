@@ -23,7 +23,6 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
   })}`;
 
   const [announcementData, setAnnouncementData] = useState({
-    id: "",
     title: "",
     date: formattedDate,
     description: "",
@@ -36,14 +35,16 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(announcementData),
+        body: JSON.stringify({
+          courseid: announcementData.courseid,
+          teacherid: announcementData.teacherid,
+          title: announcementData.title,
+          description: announcementData.description,
+          date: announcementData.date,
+          media: "",
+        }),
       });
       if (res.ok) {
-        const newAnnouncement = await res.json();
-        newAnnouncement.name = announcementData.title;
-        newAnnouncement.id = announcementData.id;
-        newAnnouncement.description = announcementData.description;
-        newAnnouncement.date = announcementData.date;
       } else {
         console.error("Failed to create announcement:", res.statusText);
       }
@@ -62,12 +63,7 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idNum = Date.now().toString();
-    setAnnouncementData({
-      ...announcementData,
-      id: idNum,
-    });
-    props.onAnnouncementCreate({ ...announcementData, id: idNum });
+    props.onAnnouncementCreate({ announcementData });
     postNewAnnouncement(announcementData);
     props.onClose();
   };

@@ -23,7 +23,6 @@ type MessageService struct {
 func NewMessageService(m MessageStore) *MessageService { return &MessageService{store: m} }
 
 func (ms *MessageService) CreateMessage(m *models.Message, courseid string) (*models.Message, error) {
-
 	m.ID = uuid.New().String()
 	err := ms.store.InsertMessage(m, courseid)
 	if err != nil {
@@ -56,6 +55,7 @@ func (ms *MessageService) UpdateMessage(messageid string, action string, updated
 }
 
 func (ms *MessageService) DeleteMessage(messageid string) error {
+
 	msg, err := ms.store.GetMessageById(messageid)
 	if err != nil {
 		return err

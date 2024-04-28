@@ -10,6 +10,11 @@ type Service struct {
 	SubmissionService *SubmissionService
 	ExcelService      *ExcelService
 	MediaService      *MediaService
+	UserService           *UserService
+	CourseService         *CourseService
+	MessageService        *MessageService
+	AssignmentService     *AssignmentService
+	AuthenticationService *AuthenticationService
 }
 
 func NewServices(s *dal.Store) *Service {
@@ -23,3 +28,17 @@ func NewServices(s *dal.Store) *Service {
 		MediaService:      NewMediaService(s),
 	}
 }
+		UserService:           NewUserService(s),
+		CourseService:         NewCourseService(s),
+		MessageService:        NewMessageService(s),
+		AssignmentService:     NewAssignmentService(s),
+		AuthenticationService: NewAuthenticationService(s),
+	}
+}
+
+type action int
+
+const (
+	Add action = iota
+	Delete
+)

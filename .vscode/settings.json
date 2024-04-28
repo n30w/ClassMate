@@ -52,8 +52,9 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "cmds",
-        "coursepage",
-        "corepack",
+    "corepack",
+    "courseid",
+    "coursepage",
     "Darkspace",
     "dbname",
     "healthcheck",
@@ -63,6 +64,7 @@
     "sslmode",
     "Taskfile",
     "taskfiles",
+    "userid",
     "Vercel"
   ]
 }

@@ -9,8 +9,10 @@ import FormInput from "./FormInput.tsx";
 const SignUpForm = () => {
   const [userData, setUserData] = useState({
     email: "",
+    username: "",
     password: "",
     netid: "",
+    membership: 0,
   });
   const [passwordError, setPasswordError] = useState("");
   const [reenteredPassword, setReenteredPassword] = useState("");
@@ -33,6 +35,7 @@ const SignUpForm = () => {
       return;
     }
     // Call the function to post new user data
+    postNewUser(userData);
   };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
@@ -44,6 +47,30 @@ const SignUpForm = () => {
     setPasswordError("");
     setReenteredPassword(value);
     setReenteredPasswordError("");
+  };
+
+  const postNewUser = async (userData: any) => {
+    try {
+      const res: Response = await fetch("/v1/user/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          username: userData.username,
+          password: userData.password,
+          netid: userData.netid,
+          membership: userData.membership,
+        }),
+      });
+      if (res.ok) {
+      } else {
+        console.error("Failed to create course:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
   };
 
   return (
@@ -83,6 +110,14 @@ const SignUpForm = () => {
               onChange={handleChange}
             />
             <FormInput
+              label="Username"
+              type="text"
+              name="username"
+              placeholder="John Smith"
+              value={userData.username}
+              onChange={handleChange}
+            />
+            <FormInput
               label="Email"
               type="text"
               name="email"
@@ -90,6 +125,25 @@ const SignUpForm = () => {
               value={userData.email}
               onChange={handleChange}
             />
+            <div className="flex justify-between items-center">
+              <span className="text-white mr-4">Membership:</span>
+              <div>
+                <button
+                  type="button"
+                  className="bg-white px-4 py-2 rounded focus:outline-none mr-16 mb-8"
+                  onClick={() => setUserData({ ...userData, membership: 1 })}
+                >
+                  Teacher
+                </button>
+                <button
+                  type="button"
+                  className="bg-white px-4 py-2 rounded focus:outline-none"
+                  onClick={() => setUserData({ ...userData, membership: 0 })}
+                >
+                  Student
+                </button>
+              </div>
+            </div>
             <FormInput
               label="Password"
               type="password"

@@ -200,7 +200,11 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
+		app.serverError(
+			w,
+			r,
+			fmt.Errorf("%s is an invalid action", action),
+		) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -224,18 +228,27 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
+	err = app.services.UserService.UnenrollUserFromCourse(
+		input.UserId,
+		input.CourseId,
+	) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(
+		input.CourseId,
+		input.UserId,
+	) // delete user from course
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
+	courses, err := app.services.UserService.RetrieveFromUser(
+		input.UserId,
+		"courses",
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -270,6 +283,7 @@ func (app *application) announcementCreateHandler(
 	}
 
 	post := models.Post{
+		Date:        input.Date,
 		Title:       input.Title,
 		Description: input.Description,
 		Owner:       input.TeacherId,
@@ -341,7 +355,11 @@ func (app *application) announcementUpdateHandler(
 		return
 	}
 
-	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
+	msg, err := app.services.MessageService.UpdateMessage(
+		input.MsgId,
+		input.Action,
+		input.UpdatedField,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -506,6 +524,30 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		NetId    string `json:"netId"`
+	}
+
+	// Validate the data
+
+	// Check if user exists
+
+	// Generate new token
+	token, err := app.services.AuthenticationService.NewToken()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(
+		w, http.StatusCreated,
+		jsonWrap{"authentication_token": token}, nil,
+	)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 
 }
 
@@ -525,12 +567,13 @@ func (app *application) assignmentCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Title       string    `json:"title"`
-		TeacherId   string    `json:"teacherid"`
-		Description string    `json:"description"`
-		Media       []string  `json:"media"`
-		DueDate     time.Time `json:"time"`
+		Title       string   `json:"title"`
+		TeacherId   string   `json:"teacherid"`
+		Description string   `json:"description"`
+		Media       []string `json:"media"`
+		DueDate     string   `json:"duedate"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -558,7 +601,6 @@ func (app *application) assignmentCreateHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-
 }
 
 // assignmentReadHandler relays assignment data back to the requester. To read
@@ -610,7 +652,11 @@ func (app *application) assignmentUpdateHandler(
 		app.serverError(w, r, err)
 	}
 
-	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
+	assignment, err := app.services.AssignmentService.UpdateAssignment(
+		input.Uuid,
+		input.UpdatedField,
+		input.Action,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -731,15 +777,62 @@ func (app *application) discussionDeleteHandler(
 }
 
 // Media handlers
-func (app *application) mediaCreateHandler(w http.ResponseWriter,
+func (app *application) mediaCreateHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 
 }
-func (app *application) mediaDeleteHandler(w http.ResponseWriter,
+func (app *application) mediaDeleteHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 
+}
+
+func (app *application) createAuthenticationTokenHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		NetId    string `json:"netId"`
+	}
+
+}
+
+// Comment handlers
+//
+// REQUEST: discussion/announcement uuid + comment + author netid
+// RESPONSE: comment
+func (app *application) commentCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Uuid    string `json:"uuid"`
+		Comment string `json:"comment"`
+		Netid   string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+}
+func (app *application) commentDeleteHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Uuid  string `json:"uuid"`
+		Netid string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // Comment handlers

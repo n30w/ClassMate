@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import CreateAssignment from "./CreateAssignment";
 import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 
@@ -13,10 +12,23 @@ const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
 
-  const handleCreateAssignment = (assignmentData: any) => {
-    setAssignments([...assignments, assignmentData]);
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
+  const fetchAssignments = async () => {
+    try {
+      const response = await fetch("/v1/assignment");
+      if (response.ok) {
+        const data = await response.json();
+        setAssignments(data);
+      } else {
+        console.error("Failed to fetch assignments:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+    }
   };
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -91,14 +103,6 @@ const Assignments: React.FC<props> = (props: props) => {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
-        <h1 className="text-white font-bold text-2xl">Assignments</h1>
-        <AddButton
-          onClick={() => {
-            setIsCreatingAssignment(true);
-          }}
-        />
-      </div>
       <select value={selectedAssignment} onChange={handleSelectChange}>
         <option value="">Choose an assignment</option>
         {assignments.map((assignment, index) => (
@@ -164,14 +168,12 @@ const Assignments: React.FC<props> = (props: props) => {
           ))}
         </ul>
       </div>
-      {isCreatingAssignment && (
-        <CreateAssignment
-          onClose={() => {
-            setIsCreatingAssignment(false);
-          }}
-          onCourseCreate={handleCreateAssignment}
-        />
-      )}
+      <button
+        className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
+        onClick={handleFileUpload}
+      >
+        Submit
+      </button>
     </div>
   );
 };

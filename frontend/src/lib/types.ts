@@ -22,3 +22,9 @@ export interface Course {
 export interface Discussion {
   name: string;
 }
+
+export interface User {
+  id: string;
+  username: string;
+  fullname: string;
+}

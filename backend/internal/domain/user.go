@@ -10,8 +10,8 @@ import (
 type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(userid string) (*models.User, error)
-	GetUserByEmail(email string) (*models.User, error)
-	GetUserByUsername(username string) (*models.User, error)
+	GetUserByEmail(c models.Credential) (*models.User, error)
+	GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
 }
 
@@ -39,13 +39,13 @@ func (us *UserService) CreateUser(um *models.User) error {
 	}
 
 	// Check if email is already in use.
-	_, err = us.store.GetUserByEmail(um.Email.String())
+	_, err = us.store.GetUserByEmail(um.Email)
 	if err == nil {
 		return err
 	}
 
 	// Check if username is already in use.
-	_, err = us.store.GetUserByUsername(um.Username.String())
+	_, err = us.store.GetUserByUsername(um.Username)
 	// Notice that err IS EQUAL TO nil and not NOT EQUAL TO.
 	if err == nil {
 		return err
@@ -92,8 +92,8 @@ func (us *UserService) RetrieveFromUser(
 			field,
 		)
 	}
-	return fieldValue, nil
 
+	return fieldValue, nil
 }
 
 func (us *UserService) UnenrollUserFromCourse(
@@ -108,8 +108,8 @@ func (us *UserService) UnenrollUserFromCourse(
 	if err != nil {
 		return err
 	}
-	return nil
 
+	return nil
 }
 
 func (us *UserService) NewUsername(s string) Username {

@@ -6,13 +6,14 @@ import (
 )
 
 type CourseStore interface {
-	InsertCourse(c *models.Course) error
+	InsertCourse(c *models.Course) (string, error)
 	GetCourseByName(name string) (*models.Course, error)
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
 	DeleteCourse(c *models.Course) error
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
+	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 }
 
@@ -22,9 +23,11 @@ type CourseService struct {
 
 func NewCourseService(c CourseStore) *CourseService { return &CourseService{store: c} }
 
+// CreateCourse creates a new course in the database,
+// then assigns a UUID to it. This is not an idempotent method!
 func (cs *CourseService) CreateCourse(c *models.Course) error {
 	// Check if course already exists. Can also try and do fuzzy name matching.
-	_, err := cs.store.GetCourseByName(c.Name)
+	_, err := cs.store.GetCourseByName(c.Title)
 	if err != nil {
 		return err
 	}
@@ -32,7 +35,7 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 	c.ID = uuid.New().String()
 
 	// Create the course.
-	err = cs.store.InsertCourse(c)
+	courseId, err := cs.store.InsertCourse(c)
 	if err != nil {
 		return err
 	}
@@ -41,6 +44,16 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 }
 
 func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error) {
+	// Set the course's ID.
+	c.ID = courseId
+
+	return nil
+}
+
+func (cs *CourseService) RetrieveCourse(courseid string) (
+	*models.Course,
+	error,
+) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -48,7 +61,10 @@ func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error)
 	return c, nil
 }
 
-func (cs *CourseService) RetrieveRoster(courseid string) ([]models.User, error) {
+func (cs *CourseService) RetrieveRoster(courseid string) (
+	[]models.User,
+	error,
+) {
 	c, err := cs.store.GetRoster(courseid)
 	if err != nil {
 		return nil, err
@@ -56,7 +72,10 @@ func (cs *CourseService) RetrieveRoster(courseid string) ([]models.User, error) 
 	return c, nil
 }
 
-func (cs *CourseService) AddToRoster(courseid string, userid string) (*models.Course, error) {
+func (cs *CourseService) AddToRoster(
+	courseid string,
+	userid string,
+) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -68,7 +87,10 @@ func (cs *CourseService) AddToRoster(courseid string, userid string) (*models.Co
 	return c, nil
 }
 
-func (cs *CourseService) RemoveFromRoster(courseid string, userid string) (*models.Course, error) {
+func (cs *CourseService) RemoveFromRoster(
+	courseid string,
+	userid string,
+) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
@@ -80,7 +102,10 @@ func (cs *CourseService) RemoveFromRoster(courseid string, userid string) (*mode
 	return c, nil
 }
 
-func (cs *CourseService) UpdateCourseName(courseid string, name string) (*models.Course, error) {
+func (cs *CourseService) UpdateCourseName(
+	courseid string,
+	name string,
+) (*models.Course, error) {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err

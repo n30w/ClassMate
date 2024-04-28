@@ -5,6 +5,7 @@ import (
 )
 
 type CustomId uuid.UUID
+import "time"
 
 type Post struct {
 	Entity
@@ -20,9 +21,8 @@ type Assignment struct {
 	Post
 	Submission []string
 	Feedback   string
-	Grade      int
-	DueDate    string `json:"due_date"`
-	Submit     bool
+	Grade      float64
+	DueDate    time.Time `json:"due_date"`
 }
 
 type Submission struct {
@@ -40,11 +40,24 @@ type Submission struct {
 type Course struct {
 	Name        string     `json:"name"`
 	ID          string     `json:"id"`
+	User           User
+	FileType       string
+	SubmissionTime time.Time
+
+	// TODO write on time calculation method.
+	OnTime bool
+}
+
+type Course struct {
+	Entity
+	Title       string     `json:"name"`
+	Description string     `json:"description"`
 	Messages    [10]string `json:"discussions"` //announcements + discussions
 	Teachers    []string   `json:"teachers"`
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
+	UserNetID   string     `json:"user_net_id"`
 }
 
 type Message struct {
@@ -54,7 +67,6 @@ type Message struct {
 	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
-// TODO: Linked lists
 type Comment struct {
 	Post
 	ID      string
@@ -63,7 +75,7 @@ type Comment struct {
 
 // type Project struct {
 // 	Name            string     `json:"name"`
-// 	ID              string     `json:"id"`
+// 	string              string     `json:"id"`
 // 	Deadline        time.Time  `json:"deadline"`
 // 	MediaReferences []MediaId  `json:"media_references"`
 // 	Members         []User     `json:"members"`

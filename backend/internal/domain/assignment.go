@@ -40,6 +40,7 @@ func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*m
 }
 
 func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield interface{}, action string) (*models.Assignment, error) {
+
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return nil, err
@@ -65,4 +66,16 @@ func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield 
 	} else {
 		return nil, fmt.Errorf("%s is an invalid action", action)
 	}
+}
+
+func (as *AssignmentService) DeleteAssignment(assignmentid string) error {
+	assignment, err := as.store.GetAssignmentById(assignmentid)
+	if err != nil {
+		return err
+	}
+	err = as.store.DeleteAssignment(assignment)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -29,3 +29,14 @@ tasks:
     cmds:
       - task front:install
       - task back:tidy
+      
+  # DB up
+  dbu:
+    cmds:
+      - task back:db-up -s
+  dbd:
+    cmds:
+      - task back:db-down 
+  dbdc:
+    cmds:
+      - task back:db-down-clean
