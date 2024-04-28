@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { userAgentFromString } from "next/server";
 
 export default function Page() {
   // const [isBlurred, setIsBlurred] = useState(false);

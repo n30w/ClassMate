@@ -26,7 +26,7 @@ func (ss *SubmissionService) CreateSubmission(s *models.Submission) (
 	error,
 ) {
 	s.ID = uuid.New().String()
-	_, err := ss.store.InsertSubmission(s, s)
+	_, err := ss.store.InsertSubmission(s, "")
 	if err != nil {
 		return nil, err
 	}

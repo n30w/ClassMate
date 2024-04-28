@@ -5,11 +5,12 @@ import Link from "next/link";
 import React, { useState } from "react";
 import validatePassword from "@/lib/helpers/passwordValidator";
 import FormInput from "./FormInput.tsx";
+import { useRouter } from "next/navigation";
 
 const SignUpForm = () => {
   const [userData, setUserData] = useState({
     email: "",
-    username: "",
+    fullname: "",
     password: "",
     netid: "",
     membership: 0,
@@ -18,10 +19,15 @@ const SignUpForm = () => {
   const [reenteredPassword, setReenteredPassword] = useState("");
   const [reenteredPasswordError, setReenteredPasswordError] = useState("");
 
+  const router = useRouter();
+
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     const isValidPassword = validatePassword(userData.password);
-    const doPasswordsMatch = userData.password === reenteredPassword;
+    // const doPasswordsMatch = userData.password === reenteredPassword;
+
+    // console.log(userData.password);
+    // console.log(reenteredPassword);
 
     if (!isValidPassword) {
       setPasswordError(
@@ -30,12 +36,13 @@ const SignUpForm = () => {
       return;
     }
 
-    if (!doPasswordsMatch) {
-      setReenteredPasswordError("Passwords do not match.");
-      return;
-    }
+    // if (!doPasswordsMatch) {
+    //   setReenteredPasswordError("Passwords do not match.");
+    //   return;
+    // }
     // Call the function to post new user data
     postNewUser(userData);
+    router.push("/login");
   };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
@@ -51,25 +58,25 @@ const SignUpForm = () => {
 
   const postNewUser = async (userData: any) => {
     try {
-      const res: Response = await fetch("/v1/user/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          username: userData.username,
-          password: userData.password,
-          netid: userData.netid,
-          membership: userData.membership,
-        }),
-      });
-      if (res.ok) {
+      const res: Response = await fetch(
+        "http://localhost:6789/v1/user/create",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: userData.email,
+            fullname: userData.fullname,
+            password: userData.password,
+            netid: userData.netid,
+            membership: userData.membership,
+          }),
+        }
+      );
+      if (res.status !== 400) {
       } else {
-        console.error("Failed to create course:", res.statusText);
+        console.error("Failed to create user:", res.statusText);
       }
     } catch (error) {
-      console.error("Error creating course:", error);
+      console.error("Error creating user:", error);
     }
   };
 
@@ -110,11 +117,11 @@ const SignUpForm = () => {
               onChange={handleChange}
             />
             <FormInput
-              label="Username"
+              label="Fullname"
               type="text"
-              name="username"
+              name="fullname"
               placeholder="John Smith"
-              value={userData.username}
+              value={userData.fullname}
               onChange={handleChange}
             />
             <FormInput
@@ -153,7 +160,7 @@ const SignUpForm = () => {
               onChange={handleChange}
               errorMessage={passwordError}
             />
-            <FormInput
+            {/* <FormInput
               label="Re-enter Password"
               type="password"
               name="reenteredPassword"
@@ -163,7 +170,7 @@ const SignUpForm = () => {
                 target: { value: React.SetStateAction<string> };
               }) => setReenteredPassword(e.target.value)}
               errorMessage={reenteredPasswordError}
-            />
+            />*/}
             <input
               type="submit"
               className="text-white font-bold w-40 h-10 px-4 border border-white my-16 hover:bg-gray-400 active:bg-white active:text-black"

@@ -36,17 +36,37 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 		}
 		headers := []string{"NetID", "#SID", "Numeric Grade", "Feedback"}
 		for i, header := range headers {
-			f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(65+i)), 1), header) // Set headers
+			f.SetCellValue(
+				courseId,
+				fmt.Sprintf("%s%d", string(rune(65+i)), 1),
+				header,
+			) // Set headers
 		}
 		for index, userid := range course.Roster {
-			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(65)), index), userid)                       // Add user in column A
-			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(66)), index), assignment.Submission[index]) // Add submission id in column B
+			err = f.SetCellValue(
+				courseId,
+				fmt.Sprintf("%s%d", string(rune(65)), index),
+				userid,
+			) // Add user in column A
+			err = f.SetCellValue(
+				courseId,
+				fmt.Sprintf("%s%d", string(rune(66)), index),
+				assignment.Submission[index],
+			) // Add submission id in column B
 			submission, err := es.store.GetSubmissionById(assignment.Submission[index])
 			if err != nil {
 				return nil, err
 			}
-			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(67)), index), submission.Grade)    // Add submission grade in column C
-			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(68)), index), submission.Feedback) // Add submission feedback in column D
+			err = f.SetCellValue(
+				courseId,
+				fmt.Sprintf("%s%d", string(rune(67)), index),
+				submission.Grade,
+			) // Add submission grade in column C
+			err = f.SetCellValue(
+				courseId,
+				fmt.Sprintf("%s%d", string(rune(68)), index),
+				submission.Feedback,
+			) // Add submission feedback in column D
 		}
 	}
 
@@ -57,4 +77,4 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 	return f, nil
 }
 
-func (cs *ExcelService) DownloadExcel()
+//func (cs *ExcelService) DownloadExcel()

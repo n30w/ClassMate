@@ -34,7 +34,7 @@ type User struct {
 // NewUser creates a new user based on provided parameter
 // information. It also sets the default access permissions
 // and membership.
-func NewUser(netId string, c Credentials) (*User, error) {
+func NewUser(netId string, c Credentials, fullName string) (*User, error) {
 	var err error
 
 	err = c.Username.Valid()
@@ -65,5 +65,6 @@ func NewUser(netId string, c Credentials) (*User, error) {
 			DeletedAt: sql.NullTime{},
 		},
 		Credentials: c,
+		FullName:    fullName,
 	}, nil
 }

@@ -444,7 +444,7 @@ func (app *application) userCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Username   string `json:"username"`
+		FullName   string `json:"fullname"`
 		Password   string `json:"password"`
 		Email      string `json:"email"`
 		Netid      string `json:"netid"`
@@ -459,13 +459,13 @@ func (app *application) userCreateHandler(
 
 	// Map the input fields to the appropriate credentials fields.
 	c := models.Credentials{
-		Username:   app.services.UserService.NewUsername(input.Username),
+		Username:   app.services.UserService.NewUsername(input.Netid),
 		Password:   app.services.UserService.NewPassword(input.Password),
 		Email:      app.services.UserService.NewEmail(input.Email),
 		Membership: app.services.UserService.NewMembership(input.Membership),
 	}
 
-	user, err := models.NewUser(input.Netid, c)
+	user, err := models.NewUser(input.Netid, c, input.FullName)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -476,6 +476,8 @@ func (app *application) userCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
+	app.logger.Printf("received %s :: user %s created", r.Method, user.ID)
 
 	// Here we would generate a session token, but not now.
 

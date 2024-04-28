@@ -171,41 +171,41 @@ func (s *Store) GetUserByEmail(c models.Credential) (*models.User, error) {
 	return u, nil
 }
 
-func (s *Store) GetUserByUsername(username models.Credential) (
-	*models.User,
-	error,
-) {
-	u := &models.User{}
+// func (s *Store) GetUserByUsername(username models.Credential) (
+// 	*models.User,
+// 	error,
+// ) {
+// 	u := &models.User{}
 
-	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
-	rows, err := s.db.Query(query, username.String())
+// 	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
+// 	rows, err := s.db.Query(query, username.String())
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var e string
+// 	var e string
 
-	for rows.Next() {
-		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ERR_RECORD_NOT_FOUND
-			default:
-				return nil, err
-			}
-		}
-	}
+// 	for rows.Next() {
+// 		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
+// 			switch {
+// 			case errors.Is(err, sql.ErrNoRows):
+// 				return nil, ERR_RECORD_NOT_FOUND
+// 			default:
+// 				return nil, err
+// 			}
+// 		}
+// 	}
 
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
+// 	err = rows.Err()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	u.Email = email(e)
+// 	u.Email = email(e)
 
-	return u, nil
-}
+// 	return u, nil
+// }
 
 func (s *Store) DeleteUserByNetID(netId string) (int64, error) {
 	query := `DELETE FROM users WHERE net_id = $1`

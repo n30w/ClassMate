@@ -11,7 +11,7 @@ type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(userid string) (*models.User, error)
 	GetUserByEmail(c models.Credential) (*models.User, error)
-	GetUserByUsername(username models.Credential) (*models.User, error)
+	// GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
 }
 
@@ -41,15 +41,15 @@ func (us *UserService) CreateUser(um *models.User) error {
 	// Check if email is already in use.
 	_, err = us.store.GetUserByEmail(um.Email)
 	if err == nil {
-		return err
+		return fmt.Errorf("email already in use")
 	}
 
-	// Check if username is already in use.
-	_, err = us.store.GetUserByUsername(um.Username)
-	// Notice that err IS EQUAL TO nil and not NOT EQUAL TO.
-	if err == nil {
-		return err
-	}
+	// // Check if username is already in use.
+	// _, err = us.store.GetUserByUsername(um.Username)
+	// // Notice that err IS EQUAL TO nil and not NOT EQUAL TO.
+	// if err == nil {
+	// 	return fmt.Errorf("username already in use")
+	// }
 
 	// If all is well...
 	err = us.store.InsertUser(um)
@@ -67,10 +67,6 @@ func (us *UserService) GetByID(userid string) (*models.User, error) {
 	}
 
 	return user, nil
-}
-
-func (us *UserService) GetByUsername(username string) (*models.User, error) {
-	return nil, nil
 }
 
 // What if we want only some information from Assignments or Courses?
