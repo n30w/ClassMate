@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -234,10 +233,12 @@ func (app *application) announcementCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string   `json:"courseid"`
-		TeacherId    string   `json:"teacherid"`
-		Announcement string   `json:"announcement"`
-		Media        []string `json:"media"`
+		CourseId    string   `json:"courseid"`
+		TeacherId   string   `json:"teacherid"`
+		Date        string   `json:"date"`
+		Title       string   `json:"title"`
+		Description string   `json:"description"`
+		Media       []string `json:"media"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -247,7 +248,9 @@ func (app *application) announcementCreateHandler(
 	}
 
 	post := models.Post{
-		Description: input.Announcement,
+		Date:        input.Date,
+		Title:       input.Title,
+		Description: input.Description,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
 	}
@@ -470,11 +473,11 @@ func (app *application) assignmentCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Title       string    `json:"title"`
-		TeacherId   string    `json:"teacherid"`
-		Description string    `json:"description"`
-		Media       []string  `json:"media"`
-		DueDate     time.Time `json:"time"`
+		Title       string   `json:"title"`
+		TeacherId   string   `json:"teacherid"`
+		Description string   `json:"description"`
+		Media       []string `json:"media"`
+		DueDate     string   `json:"duedate"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {

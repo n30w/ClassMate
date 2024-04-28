@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -481,7 +480,7 @@ func (s *Store) InsertMessage(
 		m.Title,
 		m.Description,
 		m.Media,
-		time.Now(),
+		m.Date,
 		courseid,
 		m.Owner,
 	)

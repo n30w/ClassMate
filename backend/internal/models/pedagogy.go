@@ -1,22 +1,11 @@
 package models
 
-import (
-	"time"
-
-	"github.com/google/uuid"
-)
-
-type CustomId uuid.UUID
-
-type UserId string
-type TeacherId string
-
 type Post struct {
 	Entity
 	Title       string
 	Description string
 	Media       []string
-	Date        time.Time
+	Date        string
 	Course      string
 	Owner       string
 }
@@ -26,14 +15,14 @@ type Assignment struct {
 	Submission []string
 	Feedback   string
 	Grade      int
-	DueDate    time.Time `json:"due_date"`
+	DueDate    string
 }
 
 type Submission struct {
 	Entity
 	User           User
 	FileType       string
-	SubmissionTime time.Time
+	SubmissionTime string
 	OnTime         bool
 }
 
