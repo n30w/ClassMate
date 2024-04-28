@@ -137,7 +137,10 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 		if action == "add" {
-			course, err := app.services.CourseService.AddToRoster(id, input.UserId)
+			course, err := app.services.CourseService.AddToRoster(
+				id,
+				input.UserId,
+			)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -147,7 +150,10 @@ func (app *application) courseUpdateHandler(
 				app.serverError(w, r, err)
 			}
 		} else if action == "delete" {
-			course, err := app.services.CourseService.RemoveFromRoster(id, input.UserId)
+			course, err := app.services.CourseService.RemoveFromRoster(
+				id,
+				input.UserId,
+			)
 			if err != nil {
 				app.serverError(w, r, err)
 			}
@@ -167,7 +173,10 @@ func (app *application) courseUpdateHandler(
 			app.serverError(w, r, err)
 		}
 
-		course, err := app.services.CourseService.UpdateCourseName(id, input.Name)
+		course, err := app.services.CourseService.UpdateCourseName(
+			id,
+			input.Name,
+		)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -485,7 +494,7 @@ func (app *application) userPostHandler(
 // a username and a password. A login must occur from a genuine domain. This
 // means that the request comes from the frontend server rather than the
 // user's browser. Written to the http response is an authorized
-// login cookie.
+// login token.
 //
 // REQUEST: username/email, password
 // RESPONSE: auth cookie/login session
@@ -504,7 +513,7 @@ func (app *application) userLoginHandler(
 	// Check if user exists
 
 	// Generate new token
-	token, err := app.services.AuthenticationService.NewToken()
+	token, err := app.services.AuthenticationService.NewToken(input.NetId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -517,7 +526,6 @@ func (app *application) userLoginHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -759,23 +767,12 @@ func (app *application) mediaDeleteHandler(
 
 }
 
-func (app *application) createAuthenticationTokenHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		NetId    string `json:"netId"`
-	}
-
-}
-
 // Comment handlers
 //
 // REQUEST: discussion/announcement uuid + comment + author netid
 // RESPONSE: comment
-func (app *application) commentCreateHandler(w http.ResponseWriter,
+func (app *application) commentCreateHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
@@ -790,7 +787,8 @@ func (app *application) commentCreateHandler(w http.ResponseWriter,
 	}
 
 }
-func (app *application) commentDeleteHandler(w http.ResponseWriter,
+func (app *application) commentDeleteHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
