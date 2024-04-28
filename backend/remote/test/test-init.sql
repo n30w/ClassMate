@@ -76,6 +76,14 @@ CREATE TABLE IF NOT EXISTS submissions (
                                            feedback VARCHAR
 );
 
+-- Authentication Table
+CREATE TABLE IF NOT EXISTS tokens (
+    hash bytea PRIMARY KEY,
+    net_id VARCHAR UNIQUE REFERENCES users(net_id) ON DELETE CASCADE,
+    expiry timestamp(0) with time zone NOT NULL,
+    scope text NOT NULL
+);
+
 -----------------
 --- JUNCTIONS ---
 -----------------
@@ -212,3 +220,4 @@ SELECT * FROM messages;
 SELECT * FROM projects;
 SELECT * FROM submissions;
 SELECT * FROM users;
+SELECT * FROM tokens;
