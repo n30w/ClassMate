@@ -14,7 +14,7 @@ const (
 
 type Media struct {
 	Entity
-	Name               string   `json:"name"`
-	CourseAttributions []string `json:"course_attributions"`
-	FileType           int      `json:"file_type"`
+	FileName           string            `json:"name"`
+	AttributionsByType map[string]string `json:"attributions_by_type"`
+	FileType           filetype          `json:"file_type"`
 }

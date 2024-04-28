@@ -3,9 +3,31 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
+
+func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		CourseId string `json:"courseid"`
+	}
+	// Get the Excel file with the user input data
+	file, err := app.services.ExcelService.CreateExcel(input.CourseId)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	// Set the headers necessary to get browsers to interpret the downloadable file
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, file.GetFileName()))
+	w.Header().Set("File-Name", fmt.Sprintf("%s"))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	err = file.Write(w)
+	file.Close()
+}
 
 // An input struct is used for ushering in data because it makes it explicit
 // as to what we are getting from the incoming request.
@@ -248,8 +270,8 @@ func (app *application) announcementCreateHandler(
 	var input struct {
 		CourseId    string   `json:"courseid"`
 		TeacherId   string   `json:"teacherid"`
-		Date        string   `json:"date"`
 		Title       string   `json:"title"`
+		Date        string   `json:"date"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
@@ -266,6 +288,7 @@ func (app *application) announcementCreateHandler(
 		Description: input.Description,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
+		Date:        input.Date,
 	}
 	msg := &models.Message{
 		Post: post,
@@ -454,7 +477,11 @@ func (app *application) userUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	id := r.PathValue("id")
+	// id := r.PathValue("id")
+
+	// var input struct {
+
+	// }
 
 }
 
@@ -467,6 +494,7 @@ func (app *application) userDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
 }
 
 // userPostHandler handles post requests. When a user posts
@@ -805,4 +833,97 @@ func (app *application) commentDeleteHandler(w http.ResponseWriter,
 	if err != nil {
 		app.serverError(w, r, err)
 	}
+}
+
+// Comment handlers
+//
+// REQUEST: discussion/announcement uuid + comment + author netid
+// RESPONSE: comment
+func (app *application) commentCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		MessageId string `json:"messageid"`
+		Comment   string `json:"comment"`
+		Netid     string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+}
+func (app *application) commentDeleteHandler(w http.ResponseWriter,
+	r *http.Request) {
+	var input struct {
+		Uuid  string `json:"uuid"`
+		Netid string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+}
+
+// Submission handlers
+//
+// REQUEST: assignmentid + userid + filetype + submissiontime
+// RESPONSE: submission
+func (app *application) submissionCreateHandler(w http.ResponseWriter,
+	r *http.Request) {
+
+	r.ParseMultipartForm(10 << 20)
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	fileTypeStr := r.FormValue("filetype")
+	fileTypeInt, err := strconv.Atoi(fileTypeStr)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	filetype := models.filetype(fileTypeInt)
+	defer file.Close()
+	media := &models.Media{
+		FileName:           header.Filename,
+		CreatedAt:          r.FormValue("submissiontime"),
+		AttributionsByType: make(map[string]string),
+		FileType:           filetype,
+	}
+
+	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
+	media.AttributionsByType["user"] = r.FormValue("userid")
+
+	submission := &models.Submission{
+		AssignmentId:   r.FormValue("assignmentid"),
+		UserId:         r.FormValue("userid"),
+		SubmissionTime: r.FormValue("submissiontime"),
+		Media:          media,
+	}
+
+	submission, err = app.services.SubmissionService.CreateSubmission(submission)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	media, err = app.services.MediaService.UploadMedia(file, submission.ID) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	_, err = app.services.AssignmentService.UpdateAssignment(submission.AssignmentId, true, "submit") // assignment is now completed
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	res := jsonWrap{"submission": submission}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+}
+
+func (app *application) submissionUpdateHandler(w http.ResponseWriter, r *http.Request) {
+
 }

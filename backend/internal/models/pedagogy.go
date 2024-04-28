@@ -1,5 +1,10 @@
 package models
 
+import (
+	"github.com/google/uuid"
+)
+
+type CustomId uuid.UUID
 import "time"
 
 type Post struct {
@@ -7,6 +12,7 @@ type Post struct {
 	Title       string
 	Description string
 	Media       []string
+	Date        string
 	Course      string
 	Owner       string
 }
@@ -21,6 +27,19 @@ type Assignment struct {
 
 type Submission struct {
 	Entity
+	AssignmentId string
+	UserId       string
+	Feedback     string
+	Grade        int
+	Media        *Media
+
+	SubmissionTime string
+	OnTime         bool
+}
+
+type Course struct {
+	Name        string     `json:"name"`
+	ID          string     `json:"id"`
 	User           User
 	FileType       string
 	SubmissionTime time.Time
@@ -43,12 +62,14 @@ type Course struct {
 
 type Message struct {
 	Post
+	ID       string
 	Comments []string
 	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
 type Comment struct {
 	Post
+	ID      string
 	Replies []string
 }
 

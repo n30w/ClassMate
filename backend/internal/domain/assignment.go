@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
@@ -12,9 +11,8 @@ type AssignmentStore interface {
 	GetAssignmentById(assignmentid string) (*models.Assignment, error)
 	InsertAssignment(assignment *models.Assignment) error
 	DeleteAssignment(assignment *models.Assignment) error
-	ChangeAssignmentDueDate(assignment *models.Assignment, duedate time.Time) (*models.Assignment, error)
-	ChangeAssignmentTitle(assignment *models.Assignment, title string) (*models.Assignment, error)
-	ChangeAssignmentBody(assignment *models.Assignment, body string) (*models.Assignment, error)
+	SubmitAssignment(assignment *models.Assignment) (*models.Assignment, error)
+	ChangeAssignment(assignment *models.Assignment, updatedfield string, action string) (*models.Assignment, error)
 }
 
 type AssignmentService struct {
@@ -47,29 +45,20 @@ func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield 
 	if err != nil {
 		return nil, err
 	}
-	if action == "title" {
-		if _, ok := updatedfield.(string); !ok {
-			return nil, fmt.Errorf("updated field is not of type string, it is of type %T", updatedfield)
+	if action == "submit" {
+		if _, ok := updatedfield.(bool); !ok {
+			return nil, fmt.Errorf("updated field is not of type bool, it is of type %T", updatedfield)
 		}
-		assignment, err := as.store.ChangeAssignmentTitle(assignment, updatedfield.(string))
+		assignment, err := as.store.SubmitAssignment(assignment)
 		if err != nil {
 			return nil, err
 		}
 		return assignment, nil
-	} else if action == "body" {
+	} else if action == "body" || action == "title" || action == "duedate" {
 		if _, ok := updatedfield.(string); !ok {
 			return nil, fmt.Errorf("updated field is not of type string, it is of type %T", updatedfield)
 		}
-		assignment, err := as.store.ChangeAssignmentBody(assignment, updatedfield.(string))
-		if err != nil {
-			return nil, err
-		}
-		return assignment, nil
-	} else if action == "duedate" {
-		if _, ok := updatedfield.(time.Time); !ok {
-			return nil, fmt.Errorf("updated field is not of type string, it is of type %T", updatedfield)
-		}
-		assignment, err := as.store.ChangeAssignmentDueDate(assignment, updatedfield.(time.Time))
+		assignment, err := as.store.ChangeAssignment(assignment, updatedfield.(string), action)
 		if err != nil {
 			return nil, err
 		}

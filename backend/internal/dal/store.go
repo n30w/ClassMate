@@ -756,6 +756,11 @@ func (s *Store) ChangeAssignmentDueDate(
 ) (*models.Assignment, error) {
 	return nil, nil
 }
+func (s *Store) InsertMediaReference(media *models.Media) error {
+	return nil
+}
+func (s *Store) GetMediaReferenceById(media *models.Media) error {
+	return nil
 
 // AddStudent uses junction tables to insert a new student
 // into a course.

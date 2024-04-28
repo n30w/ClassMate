@@ -40,6 +40,10 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 		return err
 	}
 
+	return nil
+}
+
+func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error) {
 	// Set the course's ID.
 	c.ID = courseId
 

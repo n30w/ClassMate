@@ -56,31 +56,49 @@ const Assignments: React.FC<props> = (props: props) => {
     setUploadedFiles(newFiles);
   };
 
-  const handleFileUpload = async () => {
-    if (uploadedFiles.length === 0) {
-      console.error("No files selected for upload.");
-      return;
-    }
-
-    const formData = new FormData();
-    uploadedFiles.forEach((file) => {
-      formData.append("files", file);
-    });
-
+  const postSubmission = async (submissionData: any) => {
     try {
-      const response = await fetch("/v1/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const fileContent = await readFileAsBase64(submissionData.file);
 
-      if (response.ok) {
-        console.log("Files uploaded successfully.");
+      const formData = new FormData() ;
+      formData.append("file", fileContent);
+      formData.append("submissiontime", new Date().toISOString());
+      formData.append("assignmentid", submissionData.assignmentid);
+      formData.append("userid", submissionData.userid);
+      formData.append("filetype", int);      
+
+      const res: Response = await fetch(
+        "/v1/course/assignment/submission/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: formData,
+        }
+      );
+
+      if (res.ok) {
       } else {
-        console.error("Failed to upload files:", response.statusText);
+        console.error("Failed to create submission:", res.statusText);
       }
     } catch (error) {
-      console.error("Error uploading files:", error);
+      console.error("Error creating submission:", error);
     }
+  };
+
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Extract the base64 content from the data URL
+        const base64Content = base64String.split(",")[1];
+        resolve(base64Content);
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
@@ -122,19 +140,14 @@ const Assignments: React.FC<props> = (props: props) => {
         <p className="text-white text-l font-bold">File Upload</p>
         <input
           type="file"
+          id="file"
           onChange={handleFileInputChange}
           multiple
           style={{ display: "none" }}
         />
         <button
           className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-          onClick={() =>
-            (
-              document.querySelector(
-                'input[type="file"]'
-              ) as HTMLInputElement | null
-            )?.click()
-          }
+          onClick={() => postSubmission(uploadedFiles)}
         >
           Upload Files
         </button>
