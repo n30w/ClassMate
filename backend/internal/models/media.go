@@ -1,9 +1,9 @@
 package models
 
-type filetype int
+type FileType int
 
 const (
-	JPG filetype = iota
+	JPG FileType = iota
 	PNG
 	PDF
 	M4A
@@ -15,7 +15,7 @@ const (
 
 type Media struct {
 	Entity
-	Name               string   `json:"name"`
-	CourseAttributions []string `json:"course_attributions"`
-	FileType           int      `json:"file_type"`
+	FileName           string            `json:"name"`
+	AttributionsByType map[string]string `json:"attributions_by_type"`
+	FileType           FileType          `json:"file_type"`
 }

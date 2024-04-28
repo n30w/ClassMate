@@ -7,6 +7,7 @@ type Post struct {
 	Title       string
 	Description string
 	Media       []string
+	Date        string
 	Course      string
 	Owner       string
 }
@@ -41,6 +42,14 @@ func (s *Submission) IsOnTime(due time.Time) bool {
 	// If the duration is less than 0, that means the assignment is
 	// not on time.
 	return dur.Seconds() < 0
+	AssignmentId string
+	UserId       string
+	Feedback     string
+	Grade        int
+	Media        *Media
+
+	SubmissionTime string
+	OnTime         bool
 }
 
 type Course struct {
@@ -52,17 +61,21 @@ type Course struct {
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
-	UserNetID   string     `json:"user_net_id"`
+
+	// TODO write on time calculation method.
+	OnTime bool
 }
 
 type Message struct {
 	Post
+	ID       string
 	Comments []string
 	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
 type Comment struct {
 	Post
+	ID      string
 	Replies []string
 }
 

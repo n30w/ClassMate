@@ -24,6 +24,8 @@ func (app *application) server() error {
 	)
 
 	//handler = app.routes()
+	handler = app.enableCORS(app.rateLimit(app.routes()))
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.config.port),
 		Handler:      handler,

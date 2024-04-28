@@ -98,5 +98,11 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("POST /v1/course/{post}/comment/create", app.commentCreateHandler)
 	router.HandleFunc("POST /v1/course/{post}/comment/delete", app.commentDeleteHandler)
 
+	// Submission operations
+	router.HandleFunc("POST /v1/course/assignment/submission/create", app.submissionCreateHandler)
+	router.HandleFunc("POST /v1/course/assignment/submission/update", app.submissionUpdateHandler)
+	router.HandleFunc("POST /v1/course/assignment/submission/delete", app.submissionUpdateHandler)
+	router.HandleFunc("POST /v1/course/assignment/submission/read", app.submissionUpdateHandler)
+
 	return router
 }

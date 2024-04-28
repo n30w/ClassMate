@@ -7,6 +7,9 @@ type Service struct {
 	CourseService         *CourseService
 	MessageService        *MessageService
 	AssignmentService     *AssignmentService
+	SubmissionService     *SubmissionService
+	ExcelService          *ExcelService
+	MediaService          *MediaService
 	AuthenticationService *AuthenticationService
 }
 
@@ -16,6 +19,9 @@ func NewServices(s *dal.Store) *Service {
 		CourseService:         NewCourseService(s),
 		MessageService:        NewMessageService(s),
 		AssignmentService:     NewAssignmentService(s),
+		SubmissionService:     NewSubmissionService(s),
+		ExcelService:          NewExcelService(s),
+		MediaService:          NewMediaService(s),
 		AuthenticationService: NewAuthenticationService(s),
 	}
 }
