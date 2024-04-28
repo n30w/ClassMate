@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"mime/multipart"
+	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -33,6 +35,48 @@ func (m membership) Valid() error   { return nil }
 // Store implements interfaces found in respective domain packages.
 type Store struct {
 	db *sql.DB
+}
+
+func (s *Store) InsertMediaReference(media *models.Media) error {
+	return nil
+}
+
+func (s *Store) UploadMedia(
+	file multipart.File,
+	submission *models.Submission,
+) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) GetSubmissionById(submissionId string) (
+	*models.Submission,
+	error,
+) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) UpdateSubmission(submission *models.Submission) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) SubmitAssignment(assignment *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) ChangeAssignment(
+	assignment *models.Assignment,
+	updatedfield string,
+	action string,
+) (*models.Assignment, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 var err error
@@ -683,7 +727,7 @@ func (s *Store) ChangeAssignmentBody(
 
 // InsertToken inserts a created token for a user.
 func (s *Store) InsertToken(t models.Token) error {
-	query := `INSERT INTO tokens (hash, net_id, expiry, 
+	query := `INSERT INTO tokens (hash, net_id, expiry,
 scope) VALUES ($1. $2. $3. $4)`
 
 	args := []any{t.Hash, t.NetID, t.Expiry, t.Scope}
@@ -787,11 +831,10 @@ func (s *Store) ChangeAssignmentDueDate(
 ) (*models.Assignment, error) {
 	return nil, nil
 }
-func (s *Store) InsertMediaReference(media *models.Media) error {
-	return nil
-}
+
 func (s *Store) GetMediaReferenceById(media *models.Media) error {
 	return nil
+}
 
 // AddStudent uses junction tables to insert a new student
 // into a course.
@@ -821,4 +864,21 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (
 	}
 
 	return c, nil
+}
+
+func (s *Store) InsertSubmission(
+	sub *models.Submission,
+	file string,
+) (
+	*models.Submission,
+	error,
+) {
+	query := `INSERT INTO submissions (id, file_type, submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4, $5, $6)`
+
+	_, err := s.db.Exec(query, file, sub.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return sub, nil
 }

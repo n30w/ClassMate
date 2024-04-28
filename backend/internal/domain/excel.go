@@ -9,8 +9,8 @@ import (
 
 type ExcelStore interface {
 	GetCourseByID(courseid string) (*models.Course, error)
-	GetAssignmentById(assignmentid string) (*models.Assignment, error)
-	GetSubmissionById(submissionid string) (*models.Submission, error)
+	GetAssignmentById(assignmentId string) (*models.Assignment, error)
+	GetSubmissionById(submissionId string) (*models.Submission, error)
 }
 
 type ExcelService struct {
@@ -19,14 +19,15 @@ type ExcelService struct {
 
 func NewExcelService(e ExcelStore) *ExcelService { return &ExcelService{store: e} }
 
-func (es *ExcelService) CreateExcel(courseid string) (*excelize.File, error) {
+func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 	f := excelize.NewFile()
 	defer f.Close()
 
-	course, err := es.store.GetCourseByID(courseid)
+	course, err := es.store.GetCourseByID(courseId)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, id := range course.Assignments {
 		f.NewSheet(id)
 		assignment, err := es.store.GetAssignmentById(id)
@@ -35,22 +36,24 @@ func (es *ExcelService) CreateExcel(courseid string) (*excelize.File, error) {
 		}
 		headers := []string{"NetID", "#SID", "Numeric Grade", "Feedback"}
 		for i, header := range headers {
-			f.SetCellValue(courseid, fmt.Sprintf("%s%d", string(rune(65+i)), 1), header) // Set headers
+			f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(65+i)), 1), header) // Set headers
 		}
 		for index, userid := range course.Roster {
-			err = f.SetCellValue(courseid, fmt.Sprintf("%s%d", string(rune(65)), index), userid)                       // Add user in column A
-			err = f.SetCellValue(courseid, fmt.Sprintf("%s%d", string(rune(66)), index), assignment.Submission[index]) // Add submission id in column B
+			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(65)), index), userid)                       // Add user in column A
+			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(66)), index), assignment.Submission[index]) // Add submission id in column B
 			submission, err := es.store.GetSubmissionById(assignment.Submission[index])
 			if err != nil {
 				return nil, err
 			}
-			err = f.SetCellValue(courseid, fmt.Sprintf("%s%d", string(rune(67)), index), submission.Grade)    // Add submission grade in column C
-			err = f.SetCellValue(courseid, fmt.Sprintf("%s%d", string(rune(68)), index), submission.Feedback) // Add submission feedback in column D
+			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(67)), index), submission.Grade)    // Add submission grade in column C
+			err = f.SetCellValue(courseId, fmt.Sprintf("%s%d", string(rune(68)), index), submission.Feedback) // Add submission feedback in column D
 		}
 	}
+
 	if err := f.SaveAs(fmt.Sprintf("%s.xlsx", course.Title)); err != nil {
 		return nil, err
 	}
+
 	return f, nil
 }
 

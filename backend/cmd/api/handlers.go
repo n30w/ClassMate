@@ -29,7 +29,7 @@ func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Requ
 
 	// Set the headers necessary to get browsers to interpret the downloadable file
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, file.GetFileName()))
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, "todo")) // TODO FIX ME
 	w.Header().Set("File-Name", fmt.Sprintf("%s"))
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Expires", "0")
@@ -625,9 +625,17 @@ func (app *application) assignmentCreateHandler(
 		Owner:       input.TeacherId,
 		Media:       input.Media,
 	}
+
+	dueDate, err := time.Parse("2006-02-01", input.DueDate)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	assignment := &models.Assignment{
 		Post:    post,
-		DueDate: time.Time{}.AddDate(),
+		DueDate: dueDate,
 	}
 
 	assignment, err = app.services.AssignmentService.CreateAssignment(assignment)
@@ -919,10 +927,21 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
 	media.AttributionsByType["user"] = r.FormValue("userid")
 
+	submissionTime, err := time.Parse("2006-02-01", r.FormValue("submissiontime"))
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	submission := &models.Submission{
-		AssignmentId:   r.FormValue("assignmentid"),
-		UserId:         r.FormValue("userid"),
-		SubmissionTime: r.FormValue("submissiontime"),
+		AssignmentId: r.FormValue("assignmentid"),
+		User: models.User{
+			Entity: models.Entity{
+				ID: r.FormValue("userid"),
+			},
+		},
+		SubmissionTime: submissionTime,
 		Media:          media,
 	}
 
@@ -931,7 +950,7 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 		app.serverError(w, r, err)
 		return
 	}
-	media, err = app.services.MediaService.UploadMedia(file, submission.ID) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	media, err = app.services.MediaService.UploadMedia(file, submission) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

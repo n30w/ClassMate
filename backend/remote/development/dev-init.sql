@@ -127,6 +127,14 @@ CREATE TABLE IF NOT EXISTS message_media (
                                              PRIMARY KEY (message_id, media_id)
 );
 
+-- Authentication Table
+CREATE TABLE IF NOT EXISTS tokens (
+                                      hash bytea PRIMARY KEY,
+                                      net_id VARCHAR UNIQUE REFERENCES users(net_id) ON DELETE CASCADE,
+                                      expiry timestamp(0) with time zone NOT NULL,
+                                      scope text NOT NULL
+);
+
 
 -- Adding foreign key constraints after all tables are established and maintain direct single relationships
 -- Use a cascade deletion.
@@ -210,3 +218,4 @@ SELECT * FROM messages;
 SELECT * FROM projects;
 SELECT * FROM submissions;
 SELECT * FROM users;
+SELECT * FROM tokens;

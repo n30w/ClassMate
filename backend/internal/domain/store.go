@@ -6,4 +6,6 @@ type Store interface {
 	MessageStore
 	AssignmentStore
 	AuthenticationStore
+	SubmissionStore
+	ExcelStore
 }

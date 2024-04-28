@@ -16,15 +16,18 @@ type Assignment struct {
 	Post       `json:"post"`
 	Submission []string  `json:"submission,omitempty"`
 	Feedback   string    `json:"feedback,omitempty"`
-	Grade      float64   `json:"grade,omitempty"`
 	DueDate    time.Time `json:"due_date"`
 }
 
 type Submission struct {
 	Entity
+	Grade          float64 `json:"grade,omitempty"`
+	AssignmentId   string
 	User           User
 	FileType       string
 	SubmissionTime time.Time
+	Media          *Media
+	Feedback       string
 	OnTime         bool
 }
 
@@ -42,14 +45,6 @@ func (s *Submission) IsOnTime(due time.Time) bool {
 	// If the duration is less than 0, that means the assignment is
 	// not on time.
 	return dur.Seconds() < 0
-	AssignmentId string
-	UserId       string
-	Feedback     string
-	Grade        int
-	Media        *Media
-
-	SubmissionTime string
-	OnTime         bool
 }
 
 type Course struct {
