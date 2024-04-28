@@ -26,6 +26,7 @@ func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Expires", "0")
 	err = file.Write(w)
+	file.Close()
 }
 
 // An input struct is used for ushering in data because it makes it explicit
