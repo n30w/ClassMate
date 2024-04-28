@@ -44,6 +44,50 @@ const Assignments: React.FC<props> = (props: props) => {
     setUploadedFiles(newFiles);
   };
 
+  const postSubmission = async (submissionData: any) => {
+    try {
+      const fileContent = await readFileAsBase64(submissionData.file);
+
+      const postData = {
+        filename: submissionData.file.name,
+        timeOfSubmission: new Date().toISOString(),
+        fileContent: fileContent,
+      };
+
+      const res: Response = await fetch(
+        "/v1/course/assignment/submission/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(postData),
+        }
+      );
+
+      if (res.ok) {
+      } else {
+        console.error("Failed to create submission:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating submission:", error);
+    }
+  };
+
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Extract the base64 content from the data URL
+        const base64Content = base64String.split(",")[1];
+        resolve(base64Content);
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
   return (
     <div className="w-full">
       <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
@@ -97,13 +141,7 @@ const Assignments: React.FC<props> = (props: props) => {
         />
         <button
           className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-          onClick={() =>
-            (
-              document.querySelector(
-                'input[type="file"]'
-              ) as HTMLInputElement | null
-            )?.click()
-          }
+          onClick={() => postSubmission(uploadedFiles)}
         >
           Upload Files
         </button>
