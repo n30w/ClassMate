@@ -12,7 +12,7 @@ type UserStore interface {
 	GetUserByID(userid string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	GetUserByUsername(username string) (*models.User, error)
-	DeleteCourseFromUser(u *models.User, courseid models.CourseId) error
+	DeleteCourseFromUser(u *models.User, courseid string) error
 }
 
 type UserService struct {
@@ -98,7 +98,7 @@ func (us *UserService) RetrieveFromUser(
 
 func (us *UserService) UnenrollUserFromCourse(
 	userid string,
-	courseid models.CourseId,
+	courseid string,
 ) error {
 	user, err := us.store.GetUserByID(userid)
 	if err != nil {

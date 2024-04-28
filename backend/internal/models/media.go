@@ -16,5 +16,5 @@ type Media struct {
 	Entity
 	FileName           string            `json:"name"`
 	AttributionsByType map[string]string `json:"attributions_by_type"`
-	FileType           int               `json:"file_type"`
+	FileType           filetype          `json:"file_type"`
 }

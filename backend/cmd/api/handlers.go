@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -784,13 +785,18 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-
+	fileTypeStr := r.FormValue("filetype")
+	fileTypeInt, err := strconv.Atoi(fileTypeStr)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	filetype := models.filetype(fileTypeInt)
 	defer file.Close()
 	media := &models.Media{
 		FileName:           header.Filename,
 		CreatedAt:          r.FormValue("submissiontime"),
 		AttributionsByType: make(map[string]string),
-		FileType:           r.FormValue("filetype"),
+		FileType:           filetype,
 	}
 
 	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
@@ -822,4 +828,8 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	if err != nil {
 		app.serverError(w, r, err)
 	}
+}
+
+func (app *application) submissionUpdateHandler(w http.ResponseWriter, r *http.Request) {
+
 }

@@ -9,6 +9,7 @@ type Service struct {
 	AssignmentService *AssignmentService
 	SubmissionService *SubmissionService
 	ExcelService      *ExcelService
+	MediaService      *MediaService
 }
 
 func NewServices(s *dal.Store) *Service {
@@ -19,5 +20,6 @@ func NewServices(s *dal.Store) *Service {
 		AssignmentService: NewAssignmentService(s),
 		SubmissionService: NewSubmissionService(s),
 		ExcelService:      NewExcelService(s),
+		MediaService:      NewMediaService(s),
 	}
 }

@@ -30,8 +30,7 @@ func (as *AssignmentService) ReadAssignment(assignmentid string) (*models.Assign
 }
 
 func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*models.Assignment, error) {
-	newUUID := uuid.New()
-	assignment.ID = models.AssignmentId(newUUID)
+	assignment.ID = uuid.New().String()
 	err := as.store.InsertAssignment(assignment)
 	if err != nil {
 		return nil, err

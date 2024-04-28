@@ -140,7 +140,7 @@ func (s *Store) GetUserByUsername(username string) (*models.User, error) {
 
 func (s *Store) DeleteCourseFromUser(
 	u *models.User,
-	courseid models.CourseId,
+	courseid string,
 ) error {
 	return nil
 }
@@ -154,14 +154,14 @@ func (s *Store) GetCourseByName(name string) (
 	return nil, nil
 }
 
-func (s *Store) GetCourseByID(courseid models.CourseId) (
+func (s *Store) GetCourseByID(courseid string) (
 	*models.Course,
 	error,
 ) {
 	return nil, nil
 }
 
-func (s *Store) GetRoster(courseid models.CourseId) (
+func (s *Store) GetRoster(courseid string) (
 	[]models.User,
 	error,
 ) {
@@ -189,11 +189,11 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (
 
 func (s *Store) InsertMessage(
 	m *models.Message,
-	courseid models.CourseId,
+	courseid string,
 ) error {
 	return nil
 }
-func (s *Store) GetMessageById(messageid models.MessageId) (
+func (s *Store) GetMessageById(messageid string) (
 	*models.Message,
 	error,
 ) {
@@ -208,7 +208,7 @@ func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 	return nil, nil
 }
-func (s *Store) GetAssignmentById(assignmentid models.AssignmentId) (*models.Assignment, error) {
+func (s *Store) GetAssignmentById(assignmentid string) (*models.Assignment, error) {
 	return nil, nil
 }
 func (s *Store) InsertAssignment(a *models.Assignment) error {
@@ -222,4 +222,10 @@ func (s *Store) ChangeAssignmentTitle(assignment *models.Assignment, title strin
 }
 func (s *Store) ChangeAssignmentBody(assignment *models.Assignment, body string) (*models.Assignment, error) {
 	return nil, nil
+}
+func (s *Store) InsertMediaReference(media *models.Media) error {
+	return nil
+}
+func (s *Store) GetMediaReferenceById(media *models.Media) error {
+	return nil
 }
