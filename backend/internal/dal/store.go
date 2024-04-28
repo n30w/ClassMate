@@ -510,7 +510,6 @@ func (s *Store) GetMessageById(messageid string) (
 		&message.Title,
 		&message.Description,
 		&message.Media,
-		&message.Date,
 		&message.Course,
 		&message.Owner,
 	)
@@ -549,7 +548,6 @@ func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 		&updatedMessage.Title,
 		&updatedMessage.Description,
 		&updatedMessage.Media,
-		&updatedMessage.Date,
 		&updatedMessage.Course,
 		&updatedMessage.Owner,
 	)
@@ -571,7 +569,6 @@ func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 		&updatedMessage.Title,
 		&updatedMessage.Description,
 		&updatedMessage.Media,
-		&updatedMessage.Date,
 		&updatedMessage.Course,
 		&updatedMessage.Owner,
 	)
@@ -751,6 +748,13 @@ func (s *Store) AddTeacher(courseId string, userId string) error {
 	}
 
 	return nil
+}
+
+func (s *Store) ChangeAssignmentDueDate(
+	assignment *models.Assignment,
+	duedate time.Time,
+) (*models.Assignment, error) {
+	return nil, nil
 }
 
 // AddStudent uses junction tables to insert a new student

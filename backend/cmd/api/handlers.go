@@ -178,7 +178,11 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
+		app.serverError(
+			w,
+			r,
+			fmt.Errorf("%s is an invalid action", action),
+		) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -202,18 +206,27 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
+	err = app.services.UserService.UnenrollUserFromCourse(
+		input.UserId,
+		input.CourseId,
+	) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(
+		input.CourseId,
+		input.UserId,
+	) // delete user from course
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
+	courses, err := app.services.UserService.RetrieveFromUser(
+		input.UserId,
+		"courses",
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -273,15 +286,41 @@ func (app *application) announcementCreateHandler(
 	}
 }
 
-// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
+// REQUEST: announcement ID
+// RESPONSE: announcement
+func (app *application) announcementReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		MsgId string `json:"announcementid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	msg, err := app.services.MessageService.ReadMessage(input.MsgId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"announcement": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+}
+
+// REQUEST: announcement ID, action (title, body), updated field
 // RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		CourseId     string `json:"courseid"`
-		TeacherId    string `json:"teacherid"`
 		MsgId        string `json:"announcementid"`
 		Action       string `json:"action"`
 		UpdatedField string `json:"updatedfield"`
@@ -293,7 +332,11 @@ func (app *application) announcementUpdateHandler(
 		return
 	}
 
-	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
+	msg, err := app.services.MessageService.UpdateMessage(
+		input.MsgId,
+		input.Action,
+		input.UpdatedField,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -388,11 +431,8 @@ func (app *application) userReadHandler(
 ) {
 	id := r.PathValue("id")
 
-	var err error
-	var user *models.User
-
 	// Perform a database lookup of user.
-	user, err = app.services.UserService.GetByID(id)
+	user, err := app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -414,6 +454,8 @@ func (app *application) userUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	id := r.PathValue("id")
+
 }
 
 // userDeleteHandler deletes a user. A request must come from
@@ -454,6 +496,30 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		NetId    string `json:"netId"`
+	}
+
+	// Validate the data
+
+	// Check if user exists
+
+	// Generate new token
+	token, err := app.services.AuthenticationService.NewToken()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(
+		w, http.StatusCreated,
+		jsonWrap{"authentication_token": token}, nil,
+	)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 
 }
 
@@ -479,6 +545,7 @@ func (app *application) assignmentCreateHandler(
 		Media       []string `json:"media"`
 		DueDate     string   `json:"duedate"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -506,7 +573,6 @@ func (app *application) assignmentCreateHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-
 }
 
 // assignmentReadHandler relays assignment data back to the requester. To read
@@ -558,7 +624,11 @@ func (app *application) assignmentUpdateHandler(
 		app.serverError(w, r, err)
 	}
 
-	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
+	assignment, err := app.services.AssignmentService.UpdateAssignment(
+		input.Uuid,
+		input.UpdatedField,
+		input.Action,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -579,6 +649,24 @@ func (app *application) assignmentDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		Uuid string `json:"uuid"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	err = app.services.AssignmentService.DeleteAssignment(input.Uuid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 
 // discussionCreateHandler creates a discussion.
@@ -589,7 +677,41 @@ func (app *application) discussionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var input struct {
+		CourseId   string   `json:"courseid"`
+		PosterId   string   `json:"posterid"`
+		Discussion string   `json:"discussion"`
+		Media      []string `json:"media"`
+	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	post := models.Post{
+		Description: input.Discussion,
+		Owner:       input.PosterId,
+		Media:       input.Media,
+	}
+	msg := &models.Message{
+		Post: post,
+		Type: 0,
+	}
+
+	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"discussion": msg}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // discussionReadHandler reads a discussion.
@@ -627,13 +749,60 @@ func (app *application) discussionDeleteHandler(
 }
 
 // Media handlers
-func (app *application) mediaCreateHandler(w http.ResponseWriter,
+func (app *application) mediaCreateHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 
 }
-func (app *application) mediaDeleteHandler(w http.ResponseWriter,
+func (app *application) mediaDeleteHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 
+}
+
+func (app *application) createAuthenticationTokenHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		NetId    string `json:"netId"`
+	}
+
+}
+
+// Comment handlers
+//
+// REQUEST: discussion/announcement uuid + comment + author netid
+// RESPONSE: comment
+func (app *application) commentCreateHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Uuid    string `json:"uuid"`
+		Comment string `json:"comment"`
+		Netid   string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+}
+func (app *application) commentDeleteHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	var input struct {
+		Uuid  string `json:"uuid"`
+		Netid string `json:"netid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }

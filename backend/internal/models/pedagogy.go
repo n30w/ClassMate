@@ -1,11 +1,12 @@
 package models
 
+import "time"
+
 type Post struct {
 	Entity
 	Title       string
 	Description string
 	Media       []string
-	Date        string
 	Course      string
 	Owner       string
 }
@@ -14,16 +15,18 @@ type Assignment struct {
 	Post
 	Submission []string
 	Feedback   string
-	Grade      int
-	DueDate    string
+	Grade      float64
+	DueDate    time.Time `json:"due_date"`
 }
 
 type Submission struct {
 	Entity
 	User           User
 	FileType       string
-	SubmissionTime string
-	OnTime         bool
+	SubmissionTime time.Time
+
+	// TODO write on time calculation method.
+	OnTime bool
 }
 
 type Course struct {
@@ -44,9 +47,7 @@ type Message struct {
 	Type     uint8 // 0 if discussion, 1 if announcement
 }
 
-// TODO: Linked lists
 type Comment struct {
-	Entity
 	Post
 	Replies []string
 }

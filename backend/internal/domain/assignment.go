@@ -79,7 +79,7 @@ func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield 
 	}
 }
 
-func (as *AssignmentService) DeleteAssignment(assignmentid string, action string) error {
+func (as *AssignmentService) DeleteAssignment(assignmentid string) error {
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return err
