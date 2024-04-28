@@ -9,6 +9,7 @@ const (
 	M4A
 	MP3
 	TXT
+	XLSX
 	NULL
 )
 
