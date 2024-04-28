@@ -174,22 +174,21 @@ func fromString(s string) permission {
 // zero value. This means that a null value has the meaning that an object
 // has no permissions at all.
 type AccessControl struct {
-	membership member
-	perms      permissions
+	perms permissions
 }
 
-func (a AccessControl) read(s scope) bool {
+func (a AccessControl) Read(s scope) bool {
 	return a.perms[s].read
 }
 
-func (a AccessControl) write(s scope) bool {
+func (a AccessControl) Write(s scope) bool {
 	return a.perms[s].write
 }
 
-func (a AccessControl) update(s scope) bool {
+func (a AccessControl) Update(s scope) bool {
 	return a.perms[s].update
 }
 
-func (a AccessControl) delete(s scope) bool {
+func (a AccessControl) Delete(s scope) bool {
 	return a.perms[s].delete
 }
