@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
+	"github.com/xuri/excelize/v2"
 )
 
 func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +38,55 @@ func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Expires", "0")
 	err = file.Write(w)
 	file.Close()
+}
+
+func (app *application) uploadExcelHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 << 20)
+	file, _, err := r.FormFile("excelfile")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	defer file.Close()
+	// Read the Excel file content
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	// Create a temporary file to store the uploaded Excel file
+	tempFile, err := os.CreateTemp("temp-excel", "upload-*.xlsx")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	// Write the Excel file content to the temporary file
+	_, err = tempFile.Write(fileBytes)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Open the Excel file using excelize
+	excelFile, err := excelize.OpenFile(tempFile.Name())
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.services.ExcelService.ParseExcel(excelFile)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // An input struct is used for ushering in data because it makes it explicit
