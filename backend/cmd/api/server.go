@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -29,7 +30,7 @@ func (app *application) server() error {
 
 	app.logger.Printf(
 		"starting server on %s:%s", app.config.db.Host,
-		app.config.db.Port,
+		strconv.Itoa(app.config.port),
 	)
 
 	return srv.ListenAndServe()
