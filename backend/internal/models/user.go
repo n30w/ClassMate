@@ -34,12 +34,32 @@ type User struct {
 // NewUser creates a new user based on provided parameter
 // information. It also sets the default access permissions
 // and membership.
-func NewUser(netid string, membership int, c Credentials) (*User, error) {
-	// Check if the membership is valid
-	if !
+func NewUser(netId string, c Credentials) (*User, error) {
+	var err error
+
+	err = c.Username.Valid()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Password.Valid()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Email.Valid()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Membership.Valid()
+	if err != nil {
+		return nil, err
+	}
+
 	return &User{
 		Entity: Entity{
-			ID:        netid,
+			ID:        netId,
 			CreatedAt: time.Time{},
 			UpdatedAt: time.Time{},
 			DeletedAt: sql.NullTime{},
