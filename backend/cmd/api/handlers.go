@@ -413,11 +413,16 @@ func (app *application) userCreateHandler(
 		Membership: app.services.UserService.NewMembership(input.Membership),
 	}
 
-	user := models.NewUser(input.Netid, c)
+	user, err := models.NewUser(input.Netid, c)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	err = app.services.UserService.CreateUser(user)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	// Here we would generate a session token, but not now.
@@ -461,6 +466,7 @@ func (app *application) userUpdateHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
+	app.logger.Println(id)
 
 }
 
