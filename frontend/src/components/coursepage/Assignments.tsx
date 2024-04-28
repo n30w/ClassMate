@@ -48,11 +48,12 @@ const Assignments: React.FC<props> = (props: props) => {
     try {
       const fileContent = await readFileAsBase64(submissionData.file);
 
-      const postData = {
-        filename: submissionData.file.name,
-        timeOfSubmission: new Date().toISOString(),
-        fileContent: fileContent,
-      };
+      const formData = new FormData() ;
+      formData.append("file", fileContent);
+      formData.append("submissiontime", new Date().toISOString());
+      formData.append("assignmentid", submissionData.assignmentid);
+      formData.append("userid", submissionData.userid);
+      formData.append("filetype", int);      
 
       const res: Response = await fetch(
         "/v1/course/assignment/submission/create",
@@ -61,7 +62,7 @@ const Assignments: React.FC<props> = (props: props) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(postData),
+          body: formData,
         }
       );
 
@@ -135,6 +136,7 @@ const Assignments: React.FC<props> = (props: props) => {
         <p className="text-white text-l font-bold">File Upload</p>
         <input
           type="file"
+          id="file"
           onChange={handleFileInputChange}
           multiple
           style={{ display: "none" }}
