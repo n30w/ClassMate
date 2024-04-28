@@ -2,6 +2,12 @@ version: "3"
 
 tasks:
   dev:
+    dir: backend
+    cmds:
+      - task back:db-up -s
+      - defer: task back:db-down -s
+      - task back:run -s
+  run:
     dir: backend/cmd/api
     cmds:
       - go run .
@@ -59,7 +65,7 @@ tasks:
       # compose.yaml file. It starts with the name,
       # darkspace-backend, then the name of the service,
       # in this case it is "database".
-      - docker rmi darkspace-backend-database
+      - docker rmi darkspace-dev-database
 
   # db-test-up does a docker compose on the test database.
   db-test-up:

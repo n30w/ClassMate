@@ -11,15 +11,19 @@ import (
 // and middleware.
 func (app *application) server() error {
 	// handler is the serve mux, wrapped with appropriate middleware.
-	var handler http.Handler = app.recoverPanic(
-		app.enableCORS(
-			app.rateLimit(
-				app.
-					routes(),
-			),
-		),
+	//var handler http.Handler = app.recoverPanic(
+	//	app.enableCORS(
+	//		app.rateLimit(
+	//			app.
+	//				routes(),
+	//		),
+	//	),
+	//)
+	var handler http.Handler = app.enableCORS(
+		app.routes(),
 	)
 
+	//handler = app.routes()
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.config.port),
 		Handler:      handler,
