@@ -128,7 +128,6 @@ func TestDB(t *testing.T) {
 		Roster:      nil,
 		Assignments: nil,
 		Archived:    false,
-		UserNetID:   "",
 	}
 
 	// #################

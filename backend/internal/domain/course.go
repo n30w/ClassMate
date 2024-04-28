@@ -35,17 +35,10 @@ func (cs *CourseService) CreateCourse(c *models.Course) error {
 	c.ID = uuid.New().String()
 
 	// Create the course.
-	courseId, err := cs.store.InsertCourse(c)
+	_, err = cs.store.InsertCourse(c)
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (cs *CourseService) RetrieveCourse(courseid string) (*models.Course, error) {
-	// Set the course's ID.
-	c.ID = courseId
 
 	return nil
 }

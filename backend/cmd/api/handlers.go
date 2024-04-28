@@ -13,10 +13,18 @@ func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Requ
 	var input struct {
 		CourseId string `json:"courseid"`
 	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	// Get the Excel file with the user input data
 	file, err := app.services.ExcelService.CreateExcel(input.CourseId)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	// Set the headers necessary to get browsers to interpret the downloadable file
@@ -85,6 +93,7 @@ func (app *application) courseCreateHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 	teachers := []string{input.TeacherID}
 
@@ -96,6 +105,7 @@ func (app *application) courseCreateHandler(
 	err = app.services.CourseService.CreateCourse(course)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	// Return success.
@@ -103,6 +113,7 @@ func (app *application) courseCreateHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -122,17 +133,20 @@ func (app *application) courseReadHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	course, err := app.services.CourseService.RetrieveCourse(input.CourseId)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	res := jsonWrap{"course": course}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -156,26 +170,31 @@ func (app *application) courseUpdateHandler(
 		err := app.readJSON(w, r, &input)
 		if err != nil {
 			app.serverError(w, r, err)
+			return
 		}
 		if action == "add" {
 			course, err := app.services.CourseService.AddToRoster(id, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
+				return
 			}
 			res := jsonWrap{"course": course}
 			err = app.writeJSON(w, http.StatusOK, res, nil)
 			if err != nil {
 				app.serverError(w, r, err)
+				return
 			}
 		} else if action == "delete" {
 			course, err := app.services.CourseService.RemoveFromRoster(id, input.UserId)
 			if err != nil {
 				app.serverError(w, r, err)
+				return
 			}
 			res := jsonWrap{"course": course}
 			err = app.writeJSON(w, http.StatusOK, res, nil)
 			if err != nil {
 				app.serverError(w, r, err)
+				return
 			}
 		}
 
@@ -186,6 +205,7 @@ func (app *application) courseUpdateHandler(
 		err := app.readJSON(w, r, &input)
 		if err != nil {
 			app.serverError(w, r, err)
+			return
 		}
 
 		course, err := app.services.CourseService.UpdateCourseName(id, input.Name)
@@ -197,6 +217,7 @@ func (app *application) courseUpdateHandler(
 		err = app.writeJSON(w, http.StatusOK, res, nil)
 		if err != nil {
 			app.serverError(w, r, err)
+			return
 		}
 
 	default:
@@ -258,6 +279,7 @@ func (app *application) courseDeleteHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -288,7 +310,6 @@ func (app *application) announcementCreateHandler(
 		Description: input.Description,
 		Owner:       input.TeacherId,
 		Media:       input.Media,
-		Date:        input.Date,
 	}
 	msg := &models.Message{
 		Post: post,
@@ -306,6 +327,7 @@ func (app *application) announcementCreateHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -334,6 +356,7 @@ func (app *application) announcementReadHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -368,6 +391,7 @@ func (app *application) announcementUpdateHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -396,6 +420,7 @@ func (app *application) announcementDeleteHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -420,6 +445,7 @@ func (app *application) userCreateHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	// Map the input fields to the appropriate credentials fields.
@@ -435,6 +461,7 @@ func (app *application) userCreateHandler(
 	err = app.services.UserService.CreateUser(user)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	// Here we would generate a session token, but not now.
@@ -458,6 +485,7 @@ func (app *application) userReadHandler(
 	user, err := app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	res := jsonWrap{"user": user}
@@ -465,6 +493,7 @@ func (app *application) userReadHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 }
@@ -547,6 +576,7 @@ func (app *application) userLoginHandler(
 	)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 }
@@ -577,6 +607,7 @@ func (app *application) assignmentCreateHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	post := models.Post{
@@ -587,12 +618,13 @@ func (app *application) assignmentCreateHandler(
 	}
 	assignment := &models.Assignment{
 		Post:    post,
-		DueDate: input.DueDate,
+		DueDate: time.Time{}.AddDate(),
 	}
 
 	assignment, err = app.services.AssignmentService.CreateAssignment(assignment)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	res := jsonWrap{"assignment": assignment}
@@ -600,6 +632,7 @@ func (app *application) assignmentCreateHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -618,11 +651,13 @@ func (app *application) assignmentReadHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	assignment, err := app.services.AssignmentService.ReadAssignment(input.Uuid)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	res := jsonWrap{"assignment": assignment}
@@ -630,6 +665,7 @@ func (app *application) assignmentReadHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 }
@@ -650,6 +686,7 @@ func (app *application) assignmentUpdateHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	assignment, err := app.services.AssignmentService.UpdateAssignment(
@@ -659,6 +696,7 @@ func (app *application) assignmentUpdateHandler(
 	)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	res := jsonWrap{"assignment": assignment}
@@ -666,6 +704,7 @@ func (app *application) assignmentUpdateHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -683,16 +722,19 @@ func (app *application) assignmentDeleteHandler(
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	err = app.services.AssignmentService.DeleteAssignment(input.Uuid)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, nil, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 }
@@ -739,6 +781,7 @@ func (app *application) discussionCreateHandler(
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -818,42 +861,11 @@ func (app *application) commentCreateHandler(w http.ResponseWriter,
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 }
-func (app *application) commentDeleteHandler(w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		Uuid  string `json:"uuid"`
-		Netid string `json:"netid"`
-	}
 
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-}
-
-// Comment handlers
-//
-// REQUEST: discussion/announcement uuid + comment + author netid
-// RESPONSE: comment
-func (app *application) commentCreateHandler(w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		MessageId string `json:"messageid"`
-		Comment   string `json:"comment"`
-		Netid     string `json:"netid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-
-}
 func (app *application) commentDeleteHandler(w http.ResponseWriter,
 	r *http.Request) {
 	var input struct {
@@ -864,6 +876,7 @@ func (app *application) commentDeleteHandler(w http.ResponseWriter,
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -878,17 +891,28 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 	fileTypeStr := r.FormValue("filetype")
 	fileTypeInt, err := strconv.Atoi(fileTypeStr)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
-	filetype := models.filetype(fileTypeInt)
+	filetype := models.FileType(fileTypeInt)
 	defer file.Close()
+
+	createdAt, err := time.Parse("2006-01-02", r.FormValue("submissiontime"))
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	media := &models.Media{
-		FileName:           header.Filename,
-		CreatedAt:          r.FormValue("submissiontime"),
+		FileName: header.Filename,
+		Entity: models.Entity{
+			CreatedAt: createdAt,
+		},
 		AttributionsByType: make(map[string]string),
 		FileType:           filetype,
 	}
@@ -906,21 +930,25 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	submission, err = app.services.SubmissionService.CreateSubmission(submission)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 	media, err = app.services.MediaService.UploadMedia(file, submission.ID) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	_, err = app.services.AssignmentService.UpdateAssignment(submission.AssignmentId, true, "submit") // assignment is now completed
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
 	res := jsonWrap{"submission": submission}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 

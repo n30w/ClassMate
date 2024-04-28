@@ -5,7 +5,7 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
-type SubmisisonStore interface {
+type SubmissionStore interface {
 	InsertSubmission(submission *models.Submission) error
 	UpdateSubmission(submission *models.Submission)
 }

@@ -1,11 +1,12 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
 type CustomId uuid.UUID
-import "time"
 
 type Post struct {
 	Entity
@@ -38,17 +39,6 @@ type Submission struct {
 }
 
 type Course struct {
-	Name        string     `json:"name"`
-	ID          string     `json:"id"`
-	User           User
-	FileType       string
-	SubmissionTime time.Time
-
-	// TODO write on time calculation method.
-	OnTime bool
-}
-
-type Course struct {
 	Entity
 	Title       string     `json:"name"`
 	Description string     `json:"description"`
@@ -57,7 +47,9 @@ type Course struct {
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
-	UserNetID   string     `json:"user_net_id"`
+
+	// TODO write on time calculation method.
+	OnTime bool
 }
 
 type Message struct {

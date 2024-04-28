@@ -21,12 +21,9 @@ func NewExcelService(e ExcelStore) *ExcelService { return &ExcelService{store: e
 
 func (es *ExcelService) CreateExcel(courseid string) (*excelize.File, error) {
 	f := excelize.NewFile()
-	defer func() {
-		if err := f.Close(); err != nil {
-			return nil, err
-		}
-	}()
-	course, err := cs.store.GetCourseByID(courseid)
+	defer f.Close()
+
+	course, err := es.store.GetCourseByID(courseid)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +48,7 @@ func (es *ExcelService) CreateExcel(courseid string) (*excelize.File, error) {
 			err = f.SetCellValue(courseid, fmt.Sprintf("%s%d", string(rune(68)), index), submission.Feedback) // Add submission feedback in column D
 		}
 	}
-	if err := f.SaveAs(fmt.Sprintf("%s.xlsx"), course.Title); err != nil {
+	if err := f.SaveAs(fmt.Sprintf("%s.xlsx", course.Title)); err != nil {
 		return nil, err
 	}
 	return f, nil
