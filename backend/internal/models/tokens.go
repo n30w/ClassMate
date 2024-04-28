@@ -18,19 +18,18 @@ const (
 type Token struct {
 	Plaintext string    `json:"token"`
 	Hash      []byte    `json:"-"`
-	UserID    int64     `json:"-"`
+	NetID     string    `json:"-"`
 	Expiry    time.Time `json:"expiry"`
 	Scope     string    `json:"-"`
 }
 
-// generateToken generates a new user token.
-// This token will be stored in the database.
-func generateToken(userID int64, ttl time.Duration, scope string) (
-	*Token,
-	error,
-) {
+// GenerateToken creates a new token in the database. It returns a token struct.
+func GenerateToken(
+	netId string,
+	ttl time.Duration, scope string,
+) (*Token, error) {
 	token := &Token{
-		UserID: userID,
+		NetID:  netId,
 		Expiry: time.Now().Add(ttl),
 		Scope:  scope,
 	}

@@ -5,6 +5,15 @@ import (
 	"time"
 )
 
+// Credentials are user credentials gathered from the JSON request body.
+// They represent custom types that implement the credential interface method.
+type Credentials struct {
+	Username   Credential
+	Password   Credential
+	Email      Credential
+	Membership Credential
+}
+
 // User represents the concept of a User in a database.
 // It is composed of an entity, the basic unit of a database object.
 // The ID in this case will be the NetID,
@@ -22,23 +31,39 @@ type User struct {
 	Bio     string   `json:"bio,omitempty"`
 }
 
-func NewUser(netid string, c Credentials) *User {
+// NewUser creates a new user based on provided parameter
+// information. It also sets the default access permissions
+// and membership.
+func NewUser(netId string, c Credentials) (*User, error) {
+	var err error
+
+	err = c.Username.Valid()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Password.Valid()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Email.Valid()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Membership.Valid()
+	if err != nil {
+		return nil, err
+	}
+
 	return &User{
 		Entity: Entity{
-			ID:        netid,
+			ID:        netId,
 			CreatedAt: time.Time{},
 			UpdatedAt: time.Time{},
 			DeletedAt: sql.NullTime{},
 		},
 		Credentials: c,
-	}
-}
-
-// Credentials are user credentials gathered from the JSON request body.
-// They represent custom types that implement the credential interface method.
-type Credentials struct {
-	Username   Credential
-	Password   Credential
-	Email      Credential
-	Membership Credential
+	}, nil
 }

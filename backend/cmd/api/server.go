@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -10,15 +11,19 @@ import (
 // and middleware.
 func (app *application) server() error {
 	// handler is the serve mux, wrapped with appropriate middleware.
-	var handler http.Handler = app.recoverPanic(
-		app.enableCORS(
-			app.rateLimit(
-				app.
-					routes(),
-			),
-		),
+	//var handler http.Handler = app.recoverPanic(
+	//	app.enableCORS(
+	//		app.rateLimit(
+	//			app.
+	//				routes(),
+	//		),
+	//	),
+	//)
+	var handler http.Handler = app.enableCORS(
+		app.routes(),
 	)
 
+	//handler = app.routes()
 	handler = app.enableCORS(app.rateLimit(app.routes()))
 
 	srv := &http.Server{
@@ -31,7 +36,7 @@ func (app *application) server() error {
 
 	app.logger.Printf(
 		"starting server on %s:%s", app.config.db.Host,
-		app.config.db.Port,
+		strconv.Itoa(app.config.port),
 	)
 
 	return srv.ListenAndServe()

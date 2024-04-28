@@ -89,10 +89,10 @@ func (app *application) routes() *http.ServeMux {
 	)
 
 	// Authentication
-	router.HandleFunc(
-		"POST /v1/tokens/authentication",
-		app.createAuthenticationTokenHandler,
-	)
+	// router.HandleFunc(
+	// 	"POST /v1/tokens/authentication",
+	// 	app.createAuthenticationTokenHandler,
+	// )
 
 	// Comment operations
 	router.HandleFunc("POST /v1/course/{post}/comment/create", app.commentCreateHandler)

@@ -1,6 +1,7 @@
 package dal
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -678,6 +679,36 @@ func (s *Store) ChangeAssignmentBody(
 	}
 
 	return updatedAssignment, nil
+}
+
+// InsertToken inserts a created token for a user.
+func (s *Store) InsertToken(t models.Token) error {
+	query := `INSERT INTO tokens (hash, net_id, expiry, 
+scope) VALUES ($1. $2. $3. $4)`
+
+	args := []any{t.Hash, t.NetID, t.Expiry, t.Scope}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query, args...)
+	return err
+}
+
+//func (s *Store) GetToken()
+
+// DeleteTokenFrom deletes a user's authentication Token using their
+// Net ID.
+func (s *Store) DeleteTokenFrom(netId, scope string) error {
+	query := `DELETE FROM tokens WHERE scope = $1 AND net_id = $2`
+
+	args := []any{scope, netId}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query, args...)
+	return err
 }
 
 // ##################

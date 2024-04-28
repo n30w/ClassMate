@@ -19,7 +19,11 @@ func TestUserService_CreateUser(t *testing.T) {
 		Membership: Membership(0),
 	}
 
-	newUser := models.NewUser("abc123", cred)
+	newUser, err := models.NewUser("abc123", cred)
+
+	if err != nil {
+		t.Errorf("%v", err)
+	}
 
 	got := us.CreateUser(newUser)
 
