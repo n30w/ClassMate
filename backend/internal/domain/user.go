@@ -9,10 +9,11 @@ import (
 
 type UserStore interface {
 	InsertUser(u *models.User) error
-	GetUserByID(userid string) (*models.User, error)
+	GetUserByID(u *models.User) (*models.User, error)
 	GetUserByEmail(c models.Credential) (*models.User, error)
 	// GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
+	GetUserCourses(u *models.User) ([]models.Course, error)
 }
 
 type UserService struct {
@@ -23,17 +24,34 @@ func NewUserService(us UserStore) *UserService {
 	return &UserService{store: us}
 }
 
-// CreateUser validates User model values, and if all is well,
-// creates the user in the database.
-func (us *UserService) CreateUser(um *models.User) error {
-	// First check if user exists.
-	_, err := us.store.GetUserByID(um.ID)
+func (us *UserService) ValidateUser(email string, password string) error {
+	user, err := us.store.GetUserByEmail(Email(email))
+	fmt.Printf("%s :: %s", user.Password.String(), password)
 	if err != nil {
 		return err
 	}
 
+	if user.Password.String() != password {
+		return fmt.Errorf("password mismatch")
+	}
+
+	return nil
+}
+
+// CreateUser validates User model values, and if all is well,
+// creates the user in the database.
+func (us *UserService) CreateUser(um *models.User) error {
+	// TEMP
+	// m := &models.User{}
+	// First check if user exists.
+	// _, err := us.store.GetUserByID(m)
+	// _, err := us.store.GetUserByEmail(m.Email)
+	// if err != nil {
+	// 	return err
+	// }
+
 	// Check if credentials are valid.
-	err = validateCredentials(um)
+	err := validateCredentials(um)
 	if err != nil {
 		return err
 	}
@@ -60,8 +78,16 @@ func (us *UserService) CreateUser(um *models.User) error {
 	return nil
 }
 
+func (us *UserService) RetrieveHomepage() (*models.Homepage, error) {
+	hp := &models.Homepage{}
+
+	return nil, nil
+}
+
 func (us *UserService) GetByID(userid string) (*models.User, error) {
-	user, err := us.store.GetUserByID(userid)
+	// TEMP
+	m := &models.User{}
+	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +100,9 @@ func (us *UserService) RetrieveFromUser(
 	userid string,
 	field string,
 ) (interface{}, error) {
-	user, err := us.store.GetUserByID(userid)
+	// TEMP
+	m := &models.User{}
+	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +124,9 @@ func (us *UserService) UnenrollUserFromCourse(
 	userid string,
 	courseid string,
 ) error {
-	user, err := us.store.GetUserByID(userid)
+	// TEMP
+	m := &models.User{}
+	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return err
 	}

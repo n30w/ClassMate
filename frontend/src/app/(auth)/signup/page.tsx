@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import validatePassword from "@/lib/helpers/passwordValidator";
-import FormInput from "./FormInput.tsx";
+import FormInput from "./FormInput";
 import { useRouter } from "next/navigation";
 
 const SignUpForm = () => {
@@ -16,8 +16,8 @@ const SignUpForm = () => {
     membership: 0,
   });
   const [passwordError, setPasswordError] = useState("");
-  const [reenteredPassword, setReenteredPassword] = useState("");
-  const [reenteredPasswordError, setReenteredPasswordError] = useState("");
+  // const [reenteredPassword, setReenteredPassword] = useState("");
+  // const [reenteredPasswordError, setReenteredPasswordError] = useState("");
 
   const router = useRouter();
 
@@ -42,7 +42,6 @@ const SignUpForm = () => {
     // }
     // Call the function to post new user data
     postNewUser(userData);
-    router.push("/login");
   };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
@@ -52,8 +51,8 @@ const SignUpForm = () => {
       [name]: value,
     });
     setPasswordError("");
-    setReenteredPassword(value);
-    setReenteredPasswordError("");
+    // setReenteredPassword(value);
+    // setReenteredPasswordError("");
   };
 
   const postNewUser = async (userData: any) => {
@@ -72,7 +71,9 @@ const SignUpForm = () => {
         }
       );
       if (res.status !== 400) {
+        router.push("/login");
       } else {
+        setPasswordError(res.statusText);
         console.error("Failed to create user:", res.statusText);
       }
     } catch (error) {
