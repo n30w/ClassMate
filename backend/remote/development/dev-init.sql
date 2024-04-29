@@ -210,6 +210,30 @@ INSERT INTO submissions (user_id, file_type, submission_time, on_time, grade, fe
    ((SELECT id FROM users WHERE username = 'ksmith'), 'ZIP', CURRENT_TIMESTAMP, TRUE, 88, 'Good collaboration, impressive research'),
    ((SELECT id FROM users WHERE username = 'jdoe'), 'PDF', CURRENT_TIMESTAMP, TRUE, 90, 'Very thorough and well-structured report');
 
+-- Inserting courses for John Cena into the user_courses junction table
+INSERT INTO user_courses (user_net_id, course_id) VALUES
+                                                      ('abc123', (SELECT id FROM courses WHERE title = 'Introduction to Computer Science')),
+                                                      ('abc123', (SELECT id FROM courses WHERE title = 'Advanced Mathematics')),
+                                                      ('abc123', (SELECT id FROM courses WHERE title = 'Modern Art History')),
+                                                      ('abc123', (SELECT id FROM courses WHERE title = 'Environmental Science')),
+                                                      ('abc123', (SELECT id FROM courses WHERE title = 'Business Management')),
+                                                      ('abc123', 'c3b34a9f-8f59-4818-a684-9cda56f42d02'), -- Clown Foundations
+                                                      ('abc123', '98e64e88-b989-49a0-bbfd-76e158bac634'); -- Delete This Course
+
+
+-- Inserting teachers for courses into the course_teachers junction table
+INSERT INTO course_teachers (course_id, teacher_id) VALUES
+                                                        ('c3b34a9f-8f59-4818-a684-9cda56f42d02', 'xyz789'), -- Clown Foundations
+                                                        ('c3b34a9f-8f59-4818-a684-9cda56f42d02', 'def456'); -- Clown Foundations
+--                                                         ('c3b34a9f-8f59-4818-a684-9cda56f42d02', (SELECT net_id FROM users WHERE username = 'Kevin Smith')), -- Clown Foundations
+--                                                         ('98e64e88-b989-49a0-bbfd-76e158bac634', (SELECT net_id FROM users WHERE username = 'Alice Jackson')), -- Delete This Course
+--                                                         ((SELECT id FROM courses WHERE title = 'Introduction to Computer Science'), (SELECT net_id FROM users WHERE username = 'Kevin Smith')),
+--                                                         ((SELECT id FROM courses WHERE title = 'Advanced Mathematics'), (SELECT net_id FROM users WHERE username = 'Kevin Smith')),
+--                                                         ((SELECT id FROM courses WHERE title = 'Modern Art History'), (SELECT net_id FROM users WHERE username = 'Jane Doe')),
+--                                                         ((SELECT id FROM courses WHERE title = 'Environmental Science'), (SELECT net_id FROM users WHERE username = 'Alice Jackson')),
+--                                                         ((SELECT id FROM courses WHERE title = 'Business Management'), (SELECT net_id FROM users WHERE username = 'Mike Miller'));
+
+
 -- Further junction table entries to link data as per new structure need to be added here, for example linking courses to users, messages to courses, etc.
 
 SELECT * FROM courses;
@@ -219,3 +243,5 @@ SELECT * FROM projects;
 SELECT * FROM submissions;
 SELECT * FROM users;
 SELECT * FROM tokens;
+SELECT * FROM user_courses;
+SELECT * FROM course_teachers;

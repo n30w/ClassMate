@@ -19,7 +19,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		Membership: Membership(0),
 	}
 
-	newUser, err := models.NewUser("abc123", cred)
+	newUser, err := models.NewUser("abc123", cred, "donald duck")
 
 	if err != nil {
 		t.Errorf("%v", err)
@@ -60,11 +60,11 @@ func (mus *mockUserStore) InsertUser(u *models.User) error {
 	return nil
 }
 
-func (mus *mockUserStore) GetUserByID(id string) (
+func (mus *mockUserStore) GetUserByID(u *models.User) (
 	*models.User,
 	error,
 ) {
-	u := mus.byID[id]
+	u = mus.byID[u.ID]
 	return u, nil
 }
 

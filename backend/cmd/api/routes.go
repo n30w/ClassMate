@@ -46,7 +46,7 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("/v1/user/post", app.userPostHandler)
 
 	// Login will require authorization, body will contain the credential info
-	router.HandleFunc("/v1/user/login", app.userLoginHandler)
+	router.HandleFunc("POST /v1/user/login", app.userLoginHandler)
 
 	// Assignment CRUD operations
 	router.HandleFunc(

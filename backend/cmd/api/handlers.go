@@ -620,28 +620,44 @@ func (app *application) userLoginHandler(
 	var input struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
-		NetId    string `json:"netId"`
 	}
 
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// fmt.Printf("%s %s", input.Email, input.Password)
+
+	// err = app.services.UserService.ValidateUser(input.Email, input.Password)
+	// if err != nil {
+	// 	app.serverError(w, r, err)
+	// 	return
+	// }
 	// Validate the data
 
 	// Check if user exists
 
 	// Generate new token
-	token, err := app.services.AuthenticationService.NewToken(input.NetId)
+	token, err := app.services.AuthenticationService.NewToken(input.Email)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	wrapped := jsonWrap{"authentication_token": token}
+
 	err = app.writeJSON(
 		w, http.StatusCreated,
-		jsonWrap{"authentication_token": token}, nil,
+		wrapped, nil,
 	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
+	app.logger.Printf("user: %s :: token: %s", input.Email, token)
 }
 
 // Assignment handlers. Only teachers should be able to request the use of

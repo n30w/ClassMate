@@ -19,24 +19,30 @@ export default function Page() {
   const [loginError, setLoginError] = useState<string>("");
   const route = useRouter();
 
-  const fetchUserInfo = async () => {
+  const loginUser = async () => {
     try {
-      const res: Response = await fetch("/v1/user/login", {
+      const res: Response = await fetch("http://localhost:6789/v1/user/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userLogin),
+        // headers: {
+        //   "Content-Type": "application/json",
+        //   "Access-Control-Allow-Origin": "*",
+        //   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        //   "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        // },
+        body: JSON.stringify({
+          email: userLogin.email,
+          password: userLogin.password,
+        }),
       });
       if (res.ok) {
-        const userInfo = await res.json();
-        return userInfo;
+        const data = await res.json();
+        localStorage.setItem("token", data.authentication_token.token);
       } else {
-        console.error("Failed to fetch user info:", res.statusText);
+        console.error("Failed to login user:", res.statusText);
         return [];
       }
     } catch (error) {
-      console.error("Error fetching user info:", error);
+      console.error("Error fetching logging user in:", error);
       return [];
     }
   };
@@ -51,17 +57,8 @@ export default function Page() {
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const info = await fetchUserInfo();
-    for (let i = 0; i < info.length; i++) {
-      if (info[i].email === userLogin.email) {
-        if (info[i].password === userLogin.password) {
-          route.push("");
-        } else {
-          setLoginError("Wrong password entered");
-        }
-      }
-    }
-    setLoginError("Wrong email entered");
+    const info = await loginUser();
+    route.push("");
   };
 
   return (
@@ -93,13 +90,13 @@ export default function Page() {
             onSubmit={handleSubmit}
           >
             <label htmlFor="email" className="text-white font-light py-2">
-              Email<span className="text-red-500">*</span>
+              NetID<span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               id="email"
               name="email"
-              placeholder="abc123@nyu.edu"
+              placeholder="abc123"
               required
               className="w-80 h-10 px-4 mb-8"
               onChange={handleChange}
@@ -108,7 +105,7 @@ export default function Page() {
               Password<span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
+              type="password"
               id="password"
               name="password"
               placeholder="••••••••••"

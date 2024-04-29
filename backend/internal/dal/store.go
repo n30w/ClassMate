@@ -19,6 +19,10 @@ type username string
 type password string
 type email string
 type membership int
+type ID string
+
+func (i ID) String() string { return string(i) }
+func (i ID) Valid() error   { return nil }
 
 func (u username) String() string { return string(u) }
 func (u username) Valid() error   { return nil }
@@ -112,35 +116,44 @@ func (s *Store) InsertUser(u *models.User) error {
 }
 
 // GetUserByID retrieve's a user by their Net ID.
-func (s *Store) GetUserByID(userid string) (*models.User, error) {
-	u := &models.User{}
-
-	query := `SELECT net_id, email, full_name FROM users WHERE net_id=$1`
-	rows, err := s.db.Query(query, userid)
-
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
 	var e string
-
-	for rows.Next() {
-		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ERR_RECORD_NOT_FOUND
-			default:
-				return nil, err
-			}
+	query := `SELECT net_id, password FROM users WHERE net_id = $1`
+	row := s.db.QueryRow(query, u.ID)
+	if err := row.Scan(&u.ID, &e); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ERR_RECORD_NOT_FOUND
+		default:
+			return nil, err
 		}
 	}
 
-	err = rows.Err()
-	if err != nil {
+	u.Password = password(e)
+
+	return u, nil
+}
+
+func (s *Store) GetUserById_2(c models.Credential) (*models.User, error) {
+	u := &models.User{}
+	var e string
+
+	query := `SELECT net_id, password FROM users WHERE net_id = $1`
+	row := s.db.QueryRow(query, c.String())
+	if err := row.Scan(&u.ID, &e); err != nil {
 		return nil, err
 	}
 
-	u.Email = email(e)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ERR_RECORD_NOT_FOUND
+		default:
+			return nil, err
+		}
+	}
+
+	u.Password = password(e)
 
 	return u, nil
 }
@@ -150,10 +163,11 @@ func (s *Store) GetUserByID(userid string) (*models.User, error) {
 func (s *Store) GetUserByEmail(c models.Credential) (*models.User, error) {
 	u := &models.User{}
 	var e string
+	var f string
 
 	query := `SELECT net_id, email, full_name FROM users WHERE email = $1`
 	row := s.db.QueryRow(query, c.String())
-	if err := row.Scan(&u.ID, &e, &u.FullName); err != nil {
+	if err := row.Scan(&u.ID, &e, &f); err != nil {
 		return nil, err
 	}
 
@@ -167,6 +181,7 @@ func (s *Store) GetUserByEmail(c models.Credential) (*models.User, error) {
 	}
 
 	u.Email = email(e)
+	u.FullName = f
 
 	return u, nil
 }
@@ -369,6 +384,72 @@ func (s *Store) DeleteCourseFromUser(
 
 	return nil
 }
+
+func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
+	courses := make([]models.Course, 0)
+
+	query := `
+	SELECT
+		c.id AS course_id,
+		c.title AS course_title,
+		t.full_name AS teacher_name,
+	FROM users u
+	JOIN user_courses uc ON u.net_id = uc.user_net_id
+	JOIN courses c ON uc.course_id = c.id
+	JOIN course_teachers ct ON c.id = ct.course_id
+	JOIN users t ON ct.teacher_id = t.net_id
+	WHERE u.net_id = $1;
+	`
+	rows, err := s.db.Query(query, u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		c := models.Course{}
+		t := models.User{}
+		if err := rows.Scan(&c.ID, &c.Title, &t.FullName); err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return nil, ERR_RECORD_NOT_FOUND
+			default:
+				return nil, err
+			}
+		}
+		courses = append(courses, c)
+	}
+
+	return courses, err
+}
+
+// func (s *Store) GetCourseProfessors(u *models.User) ([]models.User, error) {
+// 	professors := make([]models.User, 0)
+// 	query := `
+// 	SELECT c.id, c.title, c.description, c.created_at, c.updated_at
+// 	FROM users u
+// 	JOIN user_courses uc ON u.net_id = uc.user_net_id
+// 	JOIN courses c ON uc.course_id = c.id
+// 	WHERE u.net_id = $1`
+
+// 	rows, err := s.db.Query(query, u.ID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	for rows.Next() {
+// 		p := models.Course{}
+// 		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.CreatedAt); err != nil {
+// 			switch {
+// 			case errors.Is(err, sql.ErrNoRows):
+// 				return nil, ERR_RECORD_NOT_FOUND
+// 			default:
+// 				return nil, err
+// 			}
+// 		}
+// 		courses = append(courses, c)
+// 	}
+
+// }
 
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.

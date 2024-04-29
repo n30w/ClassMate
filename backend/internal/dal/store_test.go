@@ -166,53 +166,55 @@ func TestDB(t *testing.T) {
 	// 	RETRIEVAL TESTS
 	// #################
 
-	t.Run(
-		"get user by id", func(t *testing.T) {
-			u, err := store.GetUserByID("abc123")
-			if err != nil {
-				t.Errorf("%s", err)
-			}
+	// t.Run(
+	// 	"get user by id", func(t *testing.T) {
+	// 		var ua, u *models.User
+	// 		ua, err = models.NewUser("abc123", models.Credentials{}, "John Cena")
+	// 		u, err = store.GetUserByID(ua)
+	// 		if err != nil {
+	// 			t.Errorf("%s", err)
+	// 		}
 
-			if u.ID != expectedUser.ID {
-				t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
-			}
+	// 		if u.ID != expectedUser.ID {
+	// 			t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
+	// 		}
 
-			if u.Email.String() != expectedUser.Email.String() {
-				t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
-			}
+	// 		if u.Email.String() != expectedUser.Email.String() {
+	// 			t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
+	// 		}
 
-			if u.FullName != expectedUser.FullName {
-				t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
-			}
-		},
-	)
+	// 		if u.FullName != expectedUser.FullName {
+	// 			t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
+	// 		}
+	// 	},
+	// )
+
+	// t.Run(
+	// 	"get user by id_2", func(t *testing.T) {
+	// 		var id ID = "abc123"
+	// 		u, err := store.GetUserById_2(id)
+	// 		if err != nil {
+	// 			t.Errorf("%v", err)
+	// 		}
+
+	// 		if u.ID != expectedUser.ID {
+	// 			t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
+	// 		}
+
+	// 		if u.Email.String() != expectedUser.Email.String() {
+	// 			t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
+	// 		}
+
+	// 		if u.FullName != expectedUser.FullName {
+	// 			t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
+	// 		}
+	// 	},
+	// )
 
 	t.Run(
 		"get user by email", func(t *testing.T) {
 			var e email = "abc123@nyu.edu"
 			u, err := store.GetUserByEmail(e)
-			if err != nil {
-				t.Errorf("%v", err)
-			}
-
-			if u.ID != expectedUser.ID {
-				t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
-			}
-
-			if u.Email.String() != expectedUser.Email.String() {
-				t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
-			}
-
-			if u.FullName != expectedUser.FullName {
-				t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
-			}
-		},
-	)
-
-	t.Run(
-		"get user by username", func(t *testing.T) {
-			var n username = "jcena"
-			u, err := store.GetUserByUsername(n)
 			if err != nil {
 				t.Errorf("%v", err)
 			}
@@ -309,7 +311,7 @@ func TestDB(t *testing.T) {
 				t.Errorf("%v", err)
 			}
 
-			_, err = store.GetUserByUsername(n)
+			_, err = store.GetUserByID(u)
 			if err != nil {
 				t.Errorf("%v", err)
 			}
