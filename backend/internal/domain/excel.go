@@ -60,17 +60,17 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 				id,
 				fmt.Sprintf("%s%d", string(rune(66)), index),
 				submission.Grade,
-			) // Add submission id in column B
+			) // Add submission grade in column B
 			err = f.SetCellValue(
 				id,
 				fmt.Sprintf("%s%d", string(rune(67)), index),
 				submission.Feedback,
-			) // Add submission grade in column C
+			) // Add submission feedback in column C
 			err = f.SetCellValue(
 				id,
 				fmt.Sprintf("%s%d", string(rune(68)), index),
 				assignment.Submission[index],
-			) // Add submission feedback in column D
+			) // Add submission id in column D
 		}
 	}
 
