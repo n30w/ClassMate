@@ -11,6 +11,7 @@ type ExcelStore interface {
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetAssignmentById(assignmentId string) (*models.Assignment, error)
 	GetSubmissionById(submissionId string) (*models.Submission, error)
+	GradeSubmission()
 }
 
 type ExcelService struct {
@@ -37,19 +38,19 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 		headers := []string{"NetID", "#SID", "Numeric Grade", "Feedback"}
 		for i, header := range headers {
 			f.SetCellValue(
-				courseId,
+				id,
 				fmt.Sprintf("%s%d", string(rune(65+i)), 1),
 				header,
 			) // Set headers
 		}
 		for index, userid := range course.Roster {
 			err = f.SetCellValue(
-				courseId,
+				id,
 				fmt.Sprintf("%s%d", string(rune(65)), index),
 				userid,
 			) // Add user in column A
 			err = f.SetCellValue(
-				courseId,
+				id,
 				fmt.Sprintf("%s%d", string(rune(66)), index),
 				assignment.Submission[index],
 			) // Add submission id in column B
@@ -58,12 +59,12 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 				return nil, err
 			}
 			err = f.SetCellValue(
-				courseId,
+				id,
 				fmt.Sprintf("%s%d", string(rune(67)), index),
 				submission.Grade,
 			) // Add submission grade in column C
 			err = f.SetCellValue(
-				courseId,
+				id,
 				fmt.Sprintf("%s%d", string(rune(68)), index),
 				submission.Feedback,
 			) // Add submission feedback in column D
@@ -77,4 +78,19 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 	return f, nil
 }
 
-//func (cs *ExcelService) DownloadExcel()
+func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
+	for id := 0; id < excel.SheetCount; id++ {
+		// Get the name of the sheet
+		assignmentid := excel.GetSheetName(id)
+		for _, row := range excel.GetRows(assignmentid) {
+			sid := row[1]
+			submission, err:= cs.store.GetSubmissionById(sid)
+			if err != nil {
+				return err
+			}
+			err = cs.store.GradeSubmission(row[2], row[3], submission)
+		}
+		}
+		return nil
+	}
+}

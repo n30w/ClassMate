@@ -15,7 +15,6 @@ type Post struct {
 type Assignment struct {
 	Post       `json:"post"`
 	Submission []string  `json:"submission,omitempty"`
-	Feedback   string    `json:"feedback,omitempty"`
 	DueDate    time.Time `json:"due_date"`
 }
 

@@ -10,7 +10,7 @@ type SubmissionStore interface {
 		*models.Submission,
 		error,
 	)
-	UpdateSubmission(submission *models.Submission)
+	UpdateSubmission(submission *models.Submission) error
 }
 
 type SubmissionService struct {
@@ -52,11 +52,4 @@ func (ss *SubmissionService) UpdateSubmission(id string) (
 	error,
 ) { // check if there already exists a submission from the user
 	return nil, nil
-}
-
-func (ss *SubmissionService) InsertSubmission(
-	submission *models.
-		Submission,
-) error {
-	return nil
 }
