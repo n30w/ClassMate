@@ -97,6 +97,9 @@ func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
 			}
 			gradeStr := row[1]
 			gradeFloat, err := strconv.ParseFloat(gradeStr, 64)
+			if err != nil {
+				return err
+			}
 			err = cs.store.GradeSubmission(gradeFloat, submission) // Grade the submission
 			if err != nil {
 				return err
