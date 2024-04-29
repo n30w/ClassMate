@@ -412,7 +412,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 
 	for rows.Next() {
 		c := models.Course{}
-		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 				return nil, ERR_RECORD_NOT_FOUND

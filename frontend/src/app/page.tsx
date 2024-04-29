@@ -20,13 +20,18 @@ export default function Home() {
     setCourses([...courses, courseData]);
   };
 
+  const token = localStorage.getItem("token");
+
   const fetchCourses = async () => {
     try {
       const res: Response = await fetch("/v1/course/read", {
-        method: "GET",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          token: token,
+        }),
       });
 
       if (res.ok) {
