@@ -392,12 +392,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	SELECT
 		c.id AS course_id,
 		c.title AS course_title,
-		c.description AS course_description,
-		c.created_at AS course_created_at,
-		c.updated_at AS course_updated_at,
-		t.net_id AS teacher_net_id,
 		t.full_name AS teacher_name,
-		t.email AS teacher_email
 	FROM users u
 	JOIN user_courses uc ON u.net_id = uc.user_net_id
 	JOIN courses c ON uc.course_id = c.id
@@ -412,7 +407,8 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 
 	for rows.Next() {
 		c := models.Course{}
-		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.); err != nil {
+		t := models.User{}
+		if err := rows.Scan(&c.ID, &c.Title, &t.FullName); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 				return nil, ERR_RECORD_NOT_FOUND
@@ -426,34 +422,34 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	return courses, err
 }
 
-func (s *Store) GetCourseProfessors(u *models.User) ([]models.User, error) {
-	professors := make([]models.User, 0)
-	query := `
-	SELECT c.id, c.title, c.description, c.created_at, c.updated_at
-	FROM users u
-	JOIN user_courses uc ON u.net_id = uc.user_net_id
-	JOIN courses c ON uc.course_id = c.id
-	WHERE u.net_id = $1`
+// func (s *Store) GetCourseProfessors(u *models.User) ([]models.User, error) {
+// 	professors := make([]models.User, 0)
+// 	query := `
+// 	SELECT c.id, c.title, c.description, c.created_at, c.updated_at
+// 	FROM users u
+// 	JOIN user_courses uc ON u.net_id = uc.user_net_id
+// 	JOIN courses c ON uc.course_id = c.id
+// 	WHERE u.net_id = $1`
 
-	rows, err := s.db.Query(query, u.ID)
-	if err != nil {
-		return nil, err
-	}
+// 	rows, err := s.db.Query(query, u.ID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	for rows.Next() {
-		p := models.Course{}
-		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.CreatedAt); err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ERR_RECORD_NOT_FOUND
-			default:
-				return nil, err
-			}
-		}
-		courses = append(courses, c)
-	}
+// 	for rows.Next() {
+// 		p := models.Course{}
+// 		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.CreatedAt); err != nil {
+// 			switch {
+// 			case errors.Is(err, sql.ErrNoRows):
+// 				return nil, ERR_RECORD_NOT_FOUND
+// 			default:
+// 				return nil, err
+// 			}
+// 		}
+// 		courses = append(courses, c)
+// 	}
 
-}
+// }
 
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.

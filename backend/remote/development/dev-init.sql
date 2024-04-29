@@ -243,3 +243,5 @@ SELECT * FROM projects;
 SELECT * FROM submissions;
 SELECT * FROM users;
 SELECT * FROM tokens;
+SELECT * FROM user_courses;
+SELECT * FROM course_teachers;

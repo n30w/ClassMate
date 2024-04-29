@@ -79,7 +79,7 @@ func (us *UserService) CreateUser(um *models.User) error {
 }
 
 func (us *UserService) RetrieveHomepage() (*models.Homepage, error) {
-	hp := &models.Homepage{}
+	// hp := &models.Homepage{}
 
 	return nil, nil
 }

@@ -11,7 +11,7 @@ type ExcelStore interface {
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetAssignmentById(assignmentId string) (*models.Assignment, error)
 	GetSubmissionById(submissionId string) (*models.Submission, error)
-	GradeSubmission()
+	GradeSubmission(grade float64, submission *models.Submission) error
 }
 
 type ExcelService struct {
@@ -84,13 +84,12 @@ func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
 		assignmentid := excel.GetSheetName(id)
 		for _, row := range excel.GetRows(assignmentid) {
 			sid := row[1]
-			submission, err:= cs.store.GetSubmissionById(sid)
+			submission, err := cs.store.GetSubmissionById(sid)
 			if err != nil {
 				return err
 			}
 			err = cs.store.GradeSubmission(row[2], row[3], submission)
 		}
-		}
-		return nil
 	}
+	return nil
 }
