@@ -57,7 +57,7 @@ func (s *Store) GetSubmissionById(submissionId string) (
 	panic("implement me")
 }
 
-func (s *Store) UpdateSubmission(submission *models.Submission) {
+func (s *Store) UpdateSubmission(submission *models.Submission) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -881,4 +881,12 @@ func (s *Store) InsertSubmission(
 	}
 
 	return sub, nil
+}
+
+func (s *Store) GradeSubmission(grade float64, submission *models.Submission) error {
+	return nil
+}
+
+func (s *Store) InsertSubmissionFeedback(feedback string, submission *models.Submission) error {
+	return nil
 }
