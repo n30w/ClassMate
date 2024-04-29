@@ -111,6 +111,4 @@ func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
 		}
 	}
 	return nil
-	}
-	return nil
 }
