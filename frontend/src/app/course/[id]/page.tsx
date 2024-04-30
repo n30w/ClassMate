@@ -82,9 +82,6 @@ export default async function Page({ params }: { params: { slug: string } }) {
             <h1 className="text-white text-3xl font-bold pb-2 block text-opacity-100">
               {data.course.name}
             </h1>
-            <h2 className="text-white text-2xl block text-opacity-100">
-              with, {data.course.teachers}
-            </h2>
           </div>
           <div className="flex justify-end">
             <Discussions />

@@ -14,6 +14,7 @@ type UserStore interface {
 	// GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
 	GetMembershipById(netid string) (*models.Credential, error)
+	GetUserCourses(u *models.User) ([]models.Course, error)
 }
 
 type UserService struct {
@@ -107,8 +108,21 @@ func (us *UserService) RetrieveFromUser(
 	if err != nil {
 		return nil, err
 	}
+	if field == "Courses" {
+		courses, err := us.store.GetUserCourses(m)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("Service: courses: %T, %v", courses, courses)
 
-	model := reflect.ValueOf(user)
+		for _, course := range courses {
+			fmt.Printf("Course Title: %s, Course ID: %s, Course Teachers: %v", course.Title, course.ID, course.Teachers)
+
+		}
+		return courses, err
+	}
+
+	model := reflect.ValueOf(user).Elem()
 	fieldValue := model.FieldByName(field)
 
 	if !fieldValue.IsValid() {

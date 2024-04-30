@@ -213,6 +213,17 @@ INSERT INTO submissions (user_id, file_type, submission_time, on_time, grade, fe
                                                                                             ((SELECT id FROM users WHERE username = 'jdoe'), 'PDF', CURRENT_TIMESTAMP, TRUE, 90, 'Very thorough and well-structured report');
 
 -- Further junction table entries to link data as per new structure need to be added here, for example linking courses to users, messages to courses, etc.
+CREATE OR REPLACE FUNCTION sync_user_courses()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO user_courses (user_net_id, course_id)
+    VALUES (NEW.teacher_id, NEW.course_id);
+    RETURN NEW;
+END;
+CREATE TRIGGER course_teachers_after_insert_trigger
+AFTER INSERT ON course_teachers
+FOR EACH ROW
+EXECUTE FUNCTION sync_user_courses();
 
 SELECT * FROM courses;
 SELECT * FROM assignments;
