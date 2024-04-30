@@ -14,7 +14,6 @@ export default function Home() {
   const [navbarActive, setNavbarActive] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const currentTerm = "Spring 2024";
 
@@ -31,27 +30,26 @@ export default function Home() {
     if (token) {
       const getCourses = async () => {
         const fetchedCourses = await fetchCourses(token);
-        setCourses(fetchedCourses);
+        setCourses(fetchedCourses.courses);
+        console.log(courses);
       };
       getCourses();
     }
-  }, [searchParams]);
+  }, []);
 
   const fetchCourses = async (tok: string) => {
     try {
       const res: Response = await fetch("http://localhost:6789/v1/home", {
         method: "POST",
-        // headers: {
-        //   "Content-Type": "application/json",
-        // },
         body: JSON.stringify({
           token: tok,
         }),
       });
 
       if (res.ok) {
-        const courses = await res.json();
-        return courses;
+        const data = await res.json();
+        console.log(data);
+        return data;
       } else {
         console.error("Failed to fetch courses:", res.statusText);
         return [];
@@ -121,28 +119,30 @@ export default function Home() {
         </div>
       </nav>
       <div className="bg-black bg-cover bg-no-repeat">
-        {isTeacher && (
-          <div className="flex items-center justify-between py-8 px-32">
-            <h1 className="font-bold text-4xl text-white">{currentTerm}</h1>
+        (
+        <div className="flex items-center justify-between py-8 px-32">
+          <h1 className="font-bold text-4xl text-white">{currentTerm}</h1>
+          {isTeacher && (
             <AddButton
               text={"New Course"}
               onClick={() => {
                 setIsCreatingCourse(true);
               }}
             />
-          </div>
-        )}
-
-        {courses.map((course, i) => (
-          <CourseItem
-            key={i}
-            data={course}
-            onClick={() => {
-              router.push(`/course/${course.id}`);
-            }}
-          />
-        ))}
-
+          )}
+        </div>
+        )
+        <div className="grid grid-cols-3 gap-4 mr-16">
+          {courses.map((course, i) => (
+            <CourseItem
+              key={i}
+              data={course}
+              onClick={() => {
+                router.push(`/course/${course.id}`);
+              }}
+            />
+          ))}
+        </div>
         {isCreatingCourse && (
           <CreateCourse
             onClose={() => {

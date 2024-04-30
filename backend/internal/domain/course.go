@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -15,6 +17,7 @@ type CourseStore interface {
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
 	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
+	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
 }
 
 type CourseService struct {
@@ -25,11 +28,14 @@ func NewCourseService(c CourseStore) *CourseService { return &CourseService{stor
 
 // CreateCourse creates a new course in the database,
 // then assigns a UUID to it. This is not an idempotent method!
-func (cs *CourseService) CreateCourse(c *models.Course) error {
+func (cs *CourseService) CreateCourse(c *models.Course, teacherid string) error {
 	// Check if course already exists. Can also try and do fuzzy name matching.
-	_, err := cs.store.GetCourseByName(c.Title)
+	duplicate, err := cs.store.CheckCourseProfessorDuplicate(c.Title, teacherid)
 	if err != nil {
 		return err
+	}
+	if duplicate {
+		return fmt.Errorf("course already exists")
 	}
 
 	c.ID = uuid.New().String()

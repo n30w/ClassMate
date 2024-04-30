@@ -117,10 +117,12 @@ func (s *Store) InsertUser(u *models.User) error {
 
 // GetUserByID retrieve's a user by their Net ID.
 func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
+	var p string
 	var e string
-	query := `SELECT net_id, password FROM users WHERE net_id = $1`
+	var m int
+	query := `SELECT net_id, full_name, password, email, membership FROM users WHERE net_id = $1`
 	row := s.db.QueryRow(query, u.ID)
-	if err := row.Scan(&u.ID, &e); err != nil {
+	if err := row.Scan(&u.ID, &u.FullName, &p, &e, &m); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			return nil, ERR_RECORD_NOT_FOUND
@@ -128,8 +130,26 @@ func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
 			return nil, err
 		}
 	}
-
-	u.Password = password(e)
+	var courses []string
+	query2 := `SELECT uc.course_id FROM users u JOIN user_courses uc ON u.net_id = uc.user_net_id WHERE u.net_id = $1`
+	rows, err := s.db.Query(query2, u.ID)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var courseID string
+		if err := rows.Scan(&courseID); err != nil {
+			return nil, err
+		}
+		courses = append(courses, courseID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	u.Courses = courses
+	u.Password = password(p)
+	u.Email = email(e)
+	u.Membership = membership(m)
 
 	return u, nil
 }
@@ -366,8 +386,8 @@ func (s *Store) DeleteCourseFromUser(
 	courseid string,
 ) error {
 	var indexToRemove = -1
-	for i, course := range u.Courses {
-		if course.ID == courseid {
+	for i, id := range u.Courses {
+		if id == courseid {
 			indexToRemove = i
 			break
 		}
@@ -387,28 +407,24 @@ func (s *Store) DeleteCourseFromUser(
 
 func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	courses := make([]models.Course, 0)
+	fmt.Printf("Store: user courses: %v, %s", u.Courses, u.Courses)
 
-	query := `
-	SELECT
-		c.id AS course_id,
-		c.title AS course_title,
-		t.full_name AS teacher_name,
-	FROM users u
-	JOIN user_courses uc ON u.net_id = uc.user_net_id
-	JOIN courses c ON uc.course_id = c.id
-	JOIN course_teachers ct ON c.id = ct.course_id
-	JOIN users t ON ct.teacher_id = t.net_id
-	WHERE u.net_id = $1;
-	`
-	rows, err := s.db.Query(query, u.ID)
-	if err != nil {
-		return nil, err
-	}
+	for _, courseID := range u.Courses {
+		coursequery := `SELECT id, title FROM courses WHERE id = $1;`
+		// query := `
+		// SELECT
+		// 	c.id AS id,
+		// 	c.title AS title,
+		// 	ARRAY_AGG(ct.teacher_id) AS teacher_id
+		// FROM courses c
+		// JOIN course_teachers ct ON c.id = ct.course_id
+		// WHERE c.id = $1
+		// GROUP BY c.id, c.title;`
+		row := s.db.QueryRow(coursequery, courseID)
 
-	for rows.Next() {
-		c := models.Course{}
-		t := models.User{}
-		if err := rows.Scan(&c.ID, &c.Title, &t.FullName); err != nil {
+		var course models.Course
+		err = row.Scan(&course.ID, &course.Title)
+		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 				return nil, ERR_RECORD_NOT_FOUND
@@ -416,10 +432,33 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 				return nil, err
 			}
 		}
-		courses = append(courses, c)
+		teacherquery := `SELECT * FROM course_teachers WHERE course_id=$1`
+
+		rows, err := s.db.Query(teacherquery, courseID)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var teacherIDs []string
+
+		for rows.Next() {
+			var teacherID string
+			if err := rows.Scan(&teacherID); err != nil {
+				return nil, err
+			}
+			teacherIDs = append(teacherIDs, teacherID)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+
+		// fmt.Printf("Courseid: %s, Coursetitle: %s, Courseteachers: %s", course.ID, course.Title, course.Teachers)
+		course.Teachers = teacherIDs
+		courses = append(courses, course)
 	}
 
-	return courses, err
+	return courses, nil
 }
 
 // func (s *Store) GetCourseProfessors(u *models.User) ([]models.User, error) {
@@ -459,7 +498,7 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 	var err error
 	var id string
 
-	err = s.db.QueryRow(query, c.Title, c.Description).Scan(&id)
+	err = s.db.QueryRow(query, c.Title, c.Description, c.Teachers).Scan(&id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -469,7 +508,39 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 		}
 	}
 
+	query2 := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2)`
+	_ = s.db.QueryRow(query2, c.Teachers[0], c.ID)
+
 	return id, nil
+}
+func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid string) (
+	bool,
+	error,
+) {
+	var n int
+	query := `SELECT COUNT(*) AS course_count
+	FROM user_courses uc
+	JOIN courses c ON uc.course_id = c.id
+	WHERE uc.teacher_id = $1
+	AND c.title = $2;`
+	row := s.db.QueryRow(query, teacherid, courseName)
+	if err := row.Scan(&n); err != nil {
+		return false, err
+	}
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return false, ERR_RECORD_NOT_FOUND
+		default:
+			return false, err
+		}
+	}
+	if n > 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+
 }
 
 func (s *Store) GetCourseByName(name string) (
@@ -809,18 +880,12 @@ func (s *Store) ChangeAssignmentBody(
 // InsertToken inserts a created token for a user.
 func (s *Store) InsertToken(t *models.Token) error {
 	query := `INSERT INTO tokens (hash, net_id, expiry, scope) VALUES ($1, $2, $3, $4)`
-
 	args := []any{t.Hash, t.NetID, t.Expiry, t.Scope}
-	for _, args := range args {
-		if args == nil {
-			return fmt.Errorf("%t is nil", args)
-		}
-	}
-
+	fmt.Print("After args")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -1001,16 +1066,16 @@ func (s *Store) GetMembershipById(userid string) (
 	return &u.Membership, nil
 }
 
-func (s *Store) GetNetIdFromToken(token string) (
+func (s *Store) GetNetIdFromHash(hash []byte) (
 	string,
 	error,
 ) {
 	u := &models.User{}
+	fmt.Print("GetNetIdFromHash")
+	query := `SELECT net_id FROM tokens WHERE hash = $1`
+	row := s.db.QueryRow(query, hash)
 
-	query := `SELECT net_id FROM tokens WHERE token = $1`
-	row := s.db.QueryRow(query, token)
-
-	err := row.Scan(
+	err = row.Scan(
 		&u.ID,
 	)
 	if err != nil {
@@ -1020,4 +1085,29 @@ func (s *Store) GetNetIdFromToken(token string) (
 		return "", err
 	}
 	return u.ID, nil
+}
+
+func (s *Store) GetNameById(userid string) (
+	*models.Credential,
+	error,
+) {
+	u := &models.User{}
+
+	var m int
+
+	query := `SELECT id, membership FROM users WHERE net_id = $1`
+	row := s.db.QueryRow(query, userid)
+
+	err := row.Scan(
+		&u.ID,
+		&m,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
+		return nil, err
+	}
+	u.Membership = membership(m)
+	return &u.Membership, nil
 }

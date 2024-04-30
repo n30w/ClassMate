@@ -27,7 +27,7 @@ type User struct {
 	FullName       string `json:"fullName,omitempty"`
 	ProfilePicture Media  `json:"profile_picture,omitempty"`
 	// Projects       []Project `json:"projects,omitempty"`
-	Courses []Course `json:"courses,omitempty"`
+	Courses []string `json:"courses,omitempty"`
 	Bio     string   `json:"bio,omitempty"`
 }
 
