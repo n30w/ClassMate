@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -9,7 +10,7 @@ import (
 type AuthenticationStore interface {
 	InsertToken(t *models.Token) error
 	DeleteTokenFrom(netId, scope string) error
-	GetNetIdFromToken(token string) (string, error)
+	GetNetIdFromHash(hash []byte) (string, error)
 }
 
 type AuthenticationService struct{ store AuthenticationStore }
@@ -25,15 +26,18 @@ func (as *AuthenticationService) NewToken(netId string) (*models.Token, error) {
 		return nil, err
 	}
 	err = as.store.InsertToken(token)
+	fmt.Print("After insert function")
 	if err != nil {
 		return nil, err
 	}
+	fmt.Print("After inserting token")
 	return token, nil
 
 }
 
 func (as *AuthenticationService) GetNetIdFromToken(token string) (string, error) {
-	netid, err := as.store.GetNetIdFromToken(token)
+	hash := models.GenerateTokenHash(token)
+	netid, err := as.store.GetNetIdFromHash(hash)
 	if err != nil {
 		return "", err
 	}

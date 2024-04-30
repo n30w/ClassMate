@@ -88,11 +88,12 @@ func main() {
 	defer db.Close()
 
 	store := dal.NewStore(db)
+	excelStore := dal.NewExcelStore()
 
 	app := &application{
 		config:   cfg,
 		logger:   logger,
-		services: domain.NewServices(store),
+		services: domain.NewServices(store, excelStore),
 	}
 	err = app.server()
 

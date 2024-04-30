@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Member defines the affiliation of a user, whether they are a student,
+// member defines the affiliation of a user, whether they are a student,
 // a teacher, or an administrator. In other words,
 // it defines what group someone is a part of.
 // The frontend will send either a 0 for STUDENT or a 1 for TEACHER.

@@ -107,36 +107,18 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-
+	fmt.Printf("In homehandler")
 	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
-	app.logger.Printf("netid: %s", netid)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	courseids, err := app.services.UserService.RetrieveFromUser(netid, "Courses")
+	courses, err := app.services.UserService.RetrieveFromUser(netid, "Courses")
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	idsSlice, ok := courseids.([]string) // Replace YourType with the actual type of elements in courseids
-	if !ok {
-		app.serverError(w, r, fmt.Errorf("courseids is not a slice"))
-		return
-	}
-	app.logger.Printf("courseids: %v", idsSlice)
 
-	var courses []*models.Course
-
-	for _, id := range idsSlice {
-		course, err := app.services.CourseService.RetrieveCourse(id)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-		app.logger.Printf("course: %s", course.Title)
-		courses = append(courses, course)
-	}
 	res := jsonWrap{"courses": courses}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
@@ -182,8 +164,9 @@ func (app *application) courseCreateHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Title     string `json:"title"`
-		TeacherID string `json:"teacherid"`
+		Title string `json:"title"`
+		Token string `json:"token"`
+		Image string `json:"image"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -191,14 +174,19 @@ func (app *application) courseCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	teachers := []string{input.TeacherID}
+	teacherid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	teachers := []string{teacherid}
 
 	course := &models.Course{
 		Title:    input.Title,
 		Teachers: teachers,
 	}
 
-	err = app.services.CourseService.CreateCourse(course)
+	err = app.services.CourseService.CreateCourse(course, teacherid)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -665,7 +653,6 @@ func (app *application) userLoginHandler(
 		NetId    string `json:"netid"`
 		Password string `json:"password"`
 	}
-
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)

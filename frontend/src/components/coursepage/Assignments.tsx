@@ -60,12 +60,12 @@ const Assignments: React.FC<props> = (props: props) => {
     try {
       const fileContent = await readFileAsBase64(submissionData.file);
 
-      const formData = new FormData() ;
+      const formData = new FormData();
       formData.append("file", fileContent);
       formData.append("submissiontime", new Date().toISOString());
       formData.append("assignmentid", submissionData.assignmentid);
       formData.append("userid", submissionData.userid);
-      formData.append("filetype", int);      
+      formData.append("filetype", int);
 
       const res: Response = await fetch(
         "/v1/course/assignment/submission/create",
@@ -170,7 +170,7 @@ const Assignments: React.FC<props> = (props: props) => {
       </div>
       <button
         className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-        onClick={handleFileUpload}
+        // onClick={handleFileUpload}
       >
         Submit
       </button>

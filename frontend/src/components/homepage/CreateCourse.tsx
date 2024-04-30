@@ -9,9 +9,11 @@ interface props {
 }
 
 const CreateCourse: React.FC<props> = (props: props) => {
+  const token = localStorage.getItem("token");
   const [courseData, setCourseData] = useState({
     title: "",
-    professor: "",
+    token: token,
+    image: "",
   });
 
   const postNewCourse = async (courseData: any) => {
@@ -24,10 +26,6 @@ const CreateCourse: React.FC<props> = (props: props) => {
         body: JSON.stringify(courseData),
       });
       if (res.ok) {
-        const newCourse = await res.json();
-        newCourse.name = courseData.title;
-        newCourse.teachers.push(courseData.professor);
-        newCourse.archived = false;
       } else {
         console.error("Failed to create course:", res.statusText);
       }
@@ -71,6 +69,23 @@ const CreateCourse: React.FC<props> = (props: props) => {
               id="title"
               name="title"
               value={courseData.title}
+              onChange={handleChange}
+              className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <label
+              htmlFor="image"
+              className="block text-lg font-medium text-gray-700 py-2"
+            >
+              Course Image URL:
+            </label>
+            <input
+              type="text"
+              id="image"
+              name="image"
+              value={courseData.image}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
               required

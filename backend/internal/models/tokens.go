@@ -49,6 +49,20 @@ func GenerateToken(
 	return token, nil
 }
 
+func GenerateTokenHash(token string) []byte {
+	// Generate random bytes for additional entropy
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		// Handle error
+		return nil
+	}
+	// Hash the combined token and entropy
+	hash := sha256.Sum256([]byte(token))
+
+	return hash[:]
+}
+
 func (t Token) String() string {
 	return t.Plaintext
 }
