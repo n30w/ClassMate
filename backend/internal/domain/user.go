@@ -13,7 +13,7 @@ type UserStore interface {
 	GetUserByEmail(c models.Credential) (*models.User, error)
 	// GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
-	GetUserCourses(u *models.User) ([]models.Course, error)
+	GetMembershipById(netid string) (*models.Credential, error)
 }
 
 type UserService struct {
@@ -102,6 +102,7 @@ func (us *UserService) RetrieveFromUser(
 ) (interface{}, error) {
 	// TEMP
 	m := &models.User{}
+	m.ID = userid
 	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return nil, err
@@ -110,14 +111,22 @@ func (us *UserService) RetrieveFromUser(
 	model := reflect.ValueOf(user)
 	fieldValue := model.FieldByName(field)
 
-	if fieldValue == reflect.ValueOf(nil) {
+	if !fieldValue.IsValid() {
 		return nil, fmt.Errorf(
 			"field %s does not exist or is uninitialized",
 			field,
 		)
 	}
 
-	return fieldValue, nil
+	return fieldValue.Interface(), nil
+}
+
+func (us *UserService) GetMembership(netid string) (*models.Credential, error) {
+	membership, err := us.store.GetMembershipById(netid)
+	if err != nil {
+		return nil, err
+	}
+	return membership, nil
 }
 
 func (us *UserService) UnenrollUserFromCourse(

@@ -99,6 +99,50 @@ func (app *application) uploadExcelHandler(w http.ResponseWriter, r *http.Reques
 // RESPONSE: Active course data [name, 3 most recent assignments uncompleted, ]
 func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user's enrolled courses
+	var input struct {
+		Token string `json:"token"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	app.logger.Printf("netid: %s", netid)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	courseids, err := app.services.UserService.RetrieveFromUser(netid, "Courses")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	idsSlice, ok := courseids.([]string) // Replace YourType with the actual type of elements in courseids
+	if !ok {
+		app.serverError(w, r, fmt.Errorf("courseids is not a slice"))
+		return
+	}
+	app.logger.Printf("courseids: %v", idsSlice)
+
+	var courses []*models.Course
+
+	for _, id := range idsSlice {
+		course, err := app.services.CourseService.RetrieveCourse(id)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		app.logger.Printf("course: %s", course.Title)
+		courses = append(courses, course)
+	}
+	res := jsonWrap{"courses": courses}
+
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 
 // courseHomepageHandler returns data related to the homepage of a course.
@@ -618,7 +662,7 @@ func (app *application) userLoginHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		Email    string `json:"email"`
+		NetId    string `json:"netid"`
 		Password string `json:"password"`
 	}
 
@@ -640,13 +684,19 @@ func (app *application) userLoginHandler(
 	// Check if user exists
 
 	// Generate new token
-	token, err := app.services.AuthenticationService.NewToken(input.Email)
-	if err != nil {
-		app.serverError(w, r, err)
+	token, err1 := app.services.AuthenticationService.NewToken(input.NetId)
+	if err1 != nil {
+		app.serverError(w, r, err1)
 		return
 	}
 
-	wrapped := jsonWrap{"authentication_token": token}
+	membership, err2 := app.services.UserService.GetMembership(input.NetId)
+	if err2 != nil {
+		app.serverError(w, r, err2)
+		return
+	}
+
+	wrapped := jsonWrap{"authentication_token": token, "permissions": membership}
 
 	err = app.writeJSON(
 		w, http.StatusCreated,
@@ -657,7 +707,7 @@ func (app *application) userLoginHandler(
 		return
 	}
 
-	app.logger.Printf("user: %s :: token: %s", input.Email, token)
+	app.logger.Printf("user: %s :: token: %s", input.NetId, token)
 }
 
 // Assignment handlers. Only teachers should be able to request the use of

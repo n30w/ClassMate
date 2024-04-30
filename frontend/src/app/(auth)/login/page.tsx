@@ -13,7 +13,7 @@ export default function Page() {
   // };
 
   const [userLogin, setUserLogin] = useState({
-    email: "",
+    netid: "",
     password: "",
   });
   const [loginError, setLoginError] = useState<string>("");
@@ -30,13 +30,15 @@ export default function Page() {
         //   "Access-Control-Allow-Headers": "Content-Type, Authorization",
         // },
         body: JSON.stringify({
-          email: userLogin.email,
+          netid: userLogin.netid,
           password: userLogin.password,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem("token", data.authentication_token.token);
+        route.push("/");
+        console.log("token: %s", data.authentication_token.token);
       } else {
         console.error("Failed to login user:", res.statusText);
         return [];
@@ -89,13 +91,13 @@ export default function Page() {
             // onClick={handleFormClick}
             onSubmit={handleSubmit}
           >
-            <label htmlFor="email" className="text-white font-light py-2">
+            <label htmlFor="netid" className="text-white font-light py-2">
               NetID<span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              id="email"
-              name="email"
+              id="netid"
+              name="netid"
               placeholder="abc123"
               required
               className="w-80 h-10 px-4 mb-8"

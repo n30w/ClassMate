@@ -11,7 +11,7 @@ func (app *application) routes() *http.ServeMux {
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
-	router.HandleFunc("GET /v1/home", app.homeHandler)
+	router.HandleFunc("POST /v1/home", app.homeHandler)
 	router.HandleFunc("GET /v1/course/homepage/{id}", app.courseHomepageHandler)
 
 	router.HandleFunc(

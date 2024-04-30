@@ -1,7 +1,7 @@
 import { Course } from "@/lib/types";
-import Announcements from "./DashboardAnnouncements";
-import Assignments from "../DashboardAssignments";
-import Discussions from "../DashboardDiscussions";
+// import Announcements from "./DashboardAnnouncements";
+// import Assignments from "../DashboardAssignments";
+// import Discussions from "../DashboardDiscussions";
 import Image from "next/image";
 
 interface props {
@@ -26,12 +26,12 @@ const CourseItem: React.FC<props> = (props: props) => {
               {props.data.title}
             </h1>
             <h2 className="text-white mb-2">with {props.data.professor}</h2>
-            <h3 className="text-white font-light text-sm">
+            {/* <h3 className="text-white font-light text-sm">
               {props.data.location}
-            </h3>
+            </h3> */}
           </div>
         </div>
-        <div className="flex my-8 mx-4 justify-between">
+        {/* <div className="flex my-8 mx-4 justify-between">
           <div className="flex flex-col">
             <Announcements />
           </div>
@@ -41,7 +41,7 @@ const CourseItem: React.FC<props> = (props: props) => {
           <div className="flex flex-col">
             <Discussions />
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -28,3 +28,8 @@ export interface User {
   username: string;
   fullname: string;
 }
+
+export interface Token {
+  authentication_token: { token: string };
+  permissions: string;
+}

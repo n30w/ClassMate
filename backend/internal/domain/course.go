@@ -51,6 +51,7 @@ func (cs *CourseService) RetrieveCourse(courseid string) (
 	if err != nil {
 		return nil, err
 	}
+
 	return c, nil
 }
 

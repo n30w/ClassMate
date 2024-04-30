@@ -1,9 +1,8 @@
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
-import Discussions from "@/components/Discussions";
+import Discussions from "@/components/coursepage/Discussions";
 import { Announcement, Assignment, Discussion } from "@/lib/types";
 import Navbar from "@/components/Navbar";
-import apiPath from "@/lib/helpers/apiPath";
 
 // These data names must match what the API returns.
 interface HomepageData {

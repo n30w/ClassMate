@@ -807,11 +807,15 @@ func (s *Store) ChangeAssignmentBody(
 }
 
 // InsertToken inserts a created token for a user.
-func (s *Store) InsertToken(t models.Token) error {
-	query := `INSERT INTO tokens (hash, net_id, expiry,
-scope) VALUES ($1. $2. $3. $4)`
+func (s *Store) InsertToken(t *models.Token) error {
+	query := `INSERT INTO tokens (hash, net_id, expiry, scope) VALUES ($1, $2, $3, $4)`
 
 	args := []any{t.Hash, t.NetID, t.Expiry, t.Scope}
+	for _, args := range args {
+		if args == nil {
+			return fmt.Errorf("%t is nil", args)
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -970,4 +974,50 @@ func (s *Store) GradeSubmission(grade float64, submission *models.Submission) er
 
 func (s *Store) InsertSubmissionFeedback(feedback string, submission *models.Submission) error {
 	return nil
+}
+
+func (s *Store) GetMembershipById(userid string) (
+	*models.Credential,
+	error,
+) {
+	u := &models.User{}
+
+	var m int
+
+	query := `SELECT id, membership FROM users WHERE net_id = $1`
+	row := s.db.QueryRow(query, userid)
+
+	err := row.Scan(
+		&u.ID,
+		&m,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
+		return nil, err
+	}
+	u.Membership = membership(m)
+	return &u.Membership, nil
+}
+
+func (s *Store) GetNetIdFromToken(token string) (
+	string,
+	error,
+) {
+	u := &models.User{}
+
+	query := `SELECT net_id FROM tokens WHERE token = $1`
+	row := s.db.QueryRow(query, token)
+
+	err := row.Scan(
+		&u.ID,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", ERR_RECORD_NOT_FOUND
+		}
+		return "", err
+	}
+	return u.ID, nil
 }
