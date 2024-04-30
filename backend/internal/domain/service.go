@@ -13,14 +13,14 @@ type Service struct {
 	AuthenticationService *AuthenticationService
 }
 
-func NewServices(s *dal.Store) *Service {
+func NewServices(s *dal.Store, e *dal.ExcelStore) *Service {
 	return &Service{
 		UserService:           NewUserService(s),
 		CourseService:         NewCourseService(s),
 		MessageService:        NewMessageService(s),
 		AssignmentService:     NewAssignmentService(s),
 		SubmissionService:     NewSubmissionService(s),
-		ExcelService:          NewExcelService(s),
+		ExcelService:          NewExcelService(e),
 		MediaService:          NewMediaService(s),
 		AuthenticationService: NewAuthenticationService(s),
 	}

@@ -1,3 +1,6 @@
+// files.go contains any data access layer representations that access
+// data from specific file types, such as XLSX or CSV.
+
 package dal
 
 import (
@@ -6,10 +9,54 @@ import (
 	"os"
 )
 
+type ExcelStore struct {
+	excelTemplatePath, excelTemplateName string
+}
+
+func NewExcelStore() *ExcelStore {
+	return &ExcelStore{}
+}
+
+func (es *ExcelStore) GetCourseByID(courseid string) (*models.Course, error) {
+
+	return nil, nil
+}
+
+func (es *ExcelStore) GetAssignmentById(assignmentId string) (
+	*models.
+		Assignment, error,
+) {
+	return nil, nil
+}
+
+func (es *ExcelStore) GetSubmissionById(submissionId string) (
+	*models.
+		Submission, error,
+) {
+	return nil, nil
+}
+
+func (es *ExcelStore) GradeSubmission(
+	grade float64,
+	submission *models.Submission,
+) error {
+	return nil
+}
+
+func (es *ExcelStore) InsertSubmissionFeedback(
+	feedback string,
+	submission *models.Submission,
+) error {
+	return nil
+}
+
+// CSVStore ================================================================= //
+//
 // CSV defines access operations for accessing data from a CSV file.
 // This exists because we currently do not have a functioning database just yet.
 // General overview of CSV handling in Go: https://earthly.dev/blog/golang-csv-files/
-
+//
+// ========================================================================== //
 type CSVStore struct {
 	path string
 }
