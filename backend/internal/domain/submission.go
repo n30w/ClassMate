@@ -1,12 +1,11 @@
 package domain
 
 import (
-	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
 type SubmissionStore interface {
-	InsertSubmission(sub *models.Submission, file string) (
+	InsertSubmission(sub *models.Submission) (
 		*models.Submission,
 		error,
 	)
@@ -25,8 +24,7 @@ func (ss *SubmissionService) CreateSubmission(s *models.Submission) (
 	*models.Submission,
 	error,
 ) {
-	s.ID = uuid.New().String()
-	_, err := ss.store.InsertSubmission(s, "")
+	s, err := ss.store.InsertSubmission(s)
 	if err != nil {
 		return nil, err
 	}

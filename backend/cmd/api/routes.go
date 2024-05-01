@@ -123,7 +123,7 @@ func (app *application) routes() *http.ServeMux {
 	)
 
 	// Image operations
-	router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
+	// router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
 
 	return router
 }

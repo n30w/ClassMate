@@ -902,7 +902,26 @@ func (s *Store) InsertToken(t *models.Token) error {
 	return err
 }
 
-//func (s *Store) GetToken()
+func (s *Store) GetTokenFromNetId(t *models.Token) (*models.Token, error) {
+	query := `SELECT hash, expiry, scope FROM tokens WHERE hash = $1;`
+	row := s.db.QueryRow(query, t.NetID)
+
+	err := row.Scan(
+		&t.Hash,
+		&t.Expiry,
+		&t.Scope,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
+		return nil, err
+	}
+
+	return t, nil
+
+}
 
 // DeleteTokenFrom deletes a user's authentication Token using their
 // Net ID.

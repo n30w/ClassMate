@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -671,25 +671,42 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	// fmt.Printf("%s %s", input.Email, input.Password)
-
-	// err = app.services.UserService.ValidateUser(input.Email, input.Password)
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
-	// Validate the data
-
-	// Check if user exists
-
-	// Generate new token
-	token, err1 := app.services.AuthenticationService.NewToken(input.NetId)
-	if err1 != nil {
-		app.serverError(w, r, err1)
+	// 	Validate credentials
+	err = app.services.UserService.ValidateUser(input.NetId, input.Password)
+	if err != nil {
+		app.serverError(w, r, err)
+		err = app.writeJSON(
+			w, http.StatusCreated,
+			fmt.Sprint("wrong login information"), nil,
+		)
 		return
 	}
 
+	// If token exists, return token:
+	token, err := app.services.AuthenticationService.RetrieveToken(input.NetId)
+	if err != errors.New("record not found") {
+		membership, err2 := app.services.UserService.GetMembership(input.NetId)
+		if err2 != nil {
+			app.serverError(w, r, err2)
+			return
+		}
+		wrapped := jsonWrap{"authentication_token": token, "permissions": membership}
+		err = app.writeJSON(
+			w, http.StatusCreated,
+			wrapped, nil,
+		)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		return
+	}
+	// Otherwise, generate new token
+	token, err = app.services.AuthenticationService.NewToken(input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 	membership, err2 := app.services.UserService.GetMembership(input.NetId)
 	if err2 != nil {
 		app.serverError(w, r, err2)
@@ -1009,7 +1026,7 @@ func (app *application) commentDeleteHandler(
 
 // Submission handlers
 //
-// REQUEST: assignmentid + userid + filetype + submissiontime
+// REQUEST: assignmentid + userid + filetype
 // RESPONSE: submission
 func (app *application) submissionCreateHandler(
 	w http.ResponseWriter,
@@ -1022,7 +1039,7 @@ func (app *application) submissionCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	fileTypeStr := r.FormValue("filetype")
+	fileTypeStr := r.FormValue("filetype") // file type of string to type FileType
 	fileTypeInt, err := strconv.Atoi(fileTypeStr)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1031,28 +1048,14 @@ func (app *application) submissionCreateHandler(
 	filetype := models.FileType(fileTypeInt)
 	defer file.Close()
 
-	createdAt, err := time.Parse("2006-01-02", r.FormValue("submissiontime"))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	media := &models.Media{
-		FileName: header.Filename,
-		Entity: models.Entity{
-			CreatedAt: createdAt,
-		},
+	metadata := &models.Media{
+		FileName:           header.Filename,
 		AttributionsByType: make(map[string]string),
 		FileType:           filetype,
 	}
 
-	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
-	media.AttributionsByType["user"] = r.FormValue("userid")
-
-	submissionTime, err := time.Parse(
-		"2006-02-01",
-		r.FormValue("submissiontime"),
-	)
+	metadata.AttributionsByType["assignment"] = r.FormValue("assignmentid") // Set media attributions
+	metadata.AttributionsByType["user"] = r.FormValue("userid")
 
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1066,25 +1069,21 @@ func (app *application) submissionCreateHandler(
 				ID: r.FormValue("userid"),
 			},
 		},
-		SubmissionTime: submissionTime,
-		Media:          media,
 	}
-
-	submission, err = app.services.SubmissionService.CreateSubmission(submission)
+	submission, err = app.services.SubmissionService.CreateSubmission(submission) // Add submission into database and return model with ID
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	media, err = app.services.MediaService.UploadMedia(
-		file,
-		submission,
-	) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	metadata.AttributionsByType["submission"] = submission.ID // Set media submission attribution with new submission ID
+
+	metadata, err = app.services.MediaService.UploadMedia(file, metadata) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	_, err = app.services.AssignmentService.UpdateAssignment(
+	_, err = app.services.AssignmentService.UpdateAssignment( // Submit assignment
 		submission.AssignmentId,
 		true,
 		"submit",
@@ -1094,7 +1093,7 @@ func (app *application) submissionCreateHandler(
 		return
 	}
 
-	res := jsonWrap{"submission": submission}
+	res := jsonWrap{"submission": submission} // Return submission
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1102,6 +1101,8 @@ func (app *application) submissionCreateHandler(
 	}
 }
 
+// SubmissionUpdateHandler handles multiple submisisons
+// REQUEST: submission id + action()
 func (app *application) submissionUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -1109,20 +1110,20 @@ func (app *application) submissionUpdateHandler(
 
 }
 
-func (app *application) courseImageHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	f := app.services.MediaService.
-	buf, err := os.ReadFile("sid.png")
+// func (app *application) courseImageHandler(
+// 	w http.ResponseWriter,
+// 	r *http.Request,
+// ) {
+// 	f := app.services.MediaService.
+// 	buf, err := os.ReadFile("sid.png")
 
-	if err != nil {
+// 	if err != nil {
 
-		log.Fatal(err)
-	}
+// 		log.Fatal(err)
+// 	}
 
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
+// 	w.Header().Set("Content-Type", "image/png")
+// 	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
 
-	w.Write(buf)
-}
+// 	w.Write(buf)
+// }
