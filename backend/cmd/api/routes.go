@@ -95,14 +95,35 @@ func (app *application) routes() *http.ServeMux {
 	// )
 
 	// Comment operations
-	router.HandleFunc("POST /v1/course/{post}/comment/create", app.commentCreateHandler)
-	router.HandleFunc("POST /v1/course/{post}/comment/delete", app.commentDeleteHandler)
+	router.HandleFunc(
+		"POST /v1/course/{post}/comment/create",
+		app.commentCreateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/{post}/comment/delete",
+		app.commentDeleteHandler,
+	)
 
 	// Submission operations
-	router.HandleFunc("POST /v1/course/assignment/submission/create", app.submissionCreateHandler)
-	router.HandleFunc("POST /v1/course/assignment/submission/update", app.submissionUpdateHandler)
-	router.HandleFunc("POST /v1/course/assignment/submission/delete", app.submissionUpdateHandler)
-	router.HandleFunc("POST /v1/course/assignment/submission/read", app.submissionUpdateHandler)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/create",
+		app.submissionCreateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/update",
+		app.submissionUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/delete",
+		app.submissionUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/read",
+		app.submissionUpdateHandler,
+	)
+
+	// Image operations
+	router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
 
 	return router
 }

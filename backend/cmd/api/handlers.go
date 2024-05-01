@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,7 +13,10 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) downloadExcelHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	var input struct {
 		CourseId string `json:"courseid"`
 	}
@@ -32,7 +36,10 @@ func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Requ
 
 	// Set the headers necessary to get browsers to interpret the downloadable file
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, "todo")) // TODO FIX ME
+	w.Header().Set(
+		"Content-Disposition",
+		fmt.Sprintf(`attachment; filename="%s"`, "todo"),
+	) // TODO FIX ME
 	w.Header().Set("File-Name", fmt.Sprintf("%s"))
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Expires", "0")
@@ -40,7 +47,10 @@ func (app *application) downloadExcelHandler(w http.ResponseWriter, r *http.Requ
 	file.Close()
 }
 
-func (app *application) uploadExcelHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) uploadExcelHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	r.ParseMultipartForm(10 << 20)
 	file, _, err := r.FormFile("excelfile")
 	if err != nil {
@@ -1000,8 +1010,10 @@ func (app *application) commentDeleteHandler(
 //
 // REQUEST: assignmentid + userid + filetype + submissiontime
 // RESPONSE: submission
-func (app *application) submissionCreateHandler(w http.ResponseWriter,
-	r *http.Request) {
+func (app *application) submissionCreateHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 
 	r.ParseMultipartForm(10 << 20)
 	file, header, err := r.FormFile("file")
@@ -1036,7 +1048,10 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
 	media.AttributionsByType["user"] = r.FormValue("userid")
 
-	submissionTime, err := time.Parse("2006-02-01", r.FormValue("submissiontime"))
+	submissionTime, err := time.Parse(
+		"2006-02-01",
+		r.FormValue("submissiontime"),
+	)
 
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1059,13 +1074,20 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 		app.serverError(w, r, err)
 		return
 	}
-	media, err = app.services.MediaService.UploadMedia(file, submission) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	media, err = app.services.MediaService.UploadMedia(
+		file,
+		submission,
+	) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	_, err = app.services.AssignmentService.UpdateAssignment(submission.AssignmentId, true, "submit") // assignment is now completed
+	_, err = app.services.AssignmentService.UpdateAssignment(
+		submission.AssignmentId,
+		true,
+		"submit",
+	) // assignment is now completed
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1079,6 +1101,27 @@ func (app *application) submissionCreateHandler(w http.ResponseWriter,
 	}
 }
 
-func (app *application) submissionUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) submissionUpdateHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 
+}
+
+func (app *application) courseImageHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	f := app.services.MediaService.
+	buf, err := os.ReadFile("sid.png")
+
+	if err != nil {
+
+		log.Fatal(err)
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
+
+	w.Write(buf)
 }

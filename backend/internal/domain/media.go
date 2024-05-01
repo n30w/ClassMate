@@ -25,3 +25,10 @@ func (ms *MediaService) UploadMedia(
 ) (*models.Media, error) {
 	return nil, nil
 }
+
+// GetMedia retrieves a piece of media from a file system given a reference.
+// It does two things: finds a piece of media in the database by its
+// reference and, if it does find it, returns it as a sequence of bytes.
+func (ms *MediaService) GetMedia(ref string) ([]byte, error) {
+
+}
