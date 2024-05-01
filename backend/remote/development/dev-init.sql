@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS courses (
                                        description TEXT,
                                        created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
                                        updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                       archived BOOLEAN NOT NULL DEFAULT FALSE,
+                                       archived BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Media Table
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS submissions (
 
 CREATE TABLE IF NOT EXISTS images (
                                           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                          url VARCHAR NOT NULL,
+                                          url VARCHAR NOT NULL
 );
 
 -----------------
@@ -92,10 +92,10 @@ CREATE TABLE IF NOT EXISTS user_courses (
 
 -- Junction Table for Courses and Banners (One-to-One)
 CREATE TABLE IF NOT EXISTS course_banners (
-                                             course_id UUID VARCHAR REFERENCES courses(id) ON DELETE CASCADE,
-                                             banner_id UUID REFERENCES image(id) ON DELETE CASCADE ,
+                                             course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+                                             banner_id UUID REFERENCES images(id) ON DELETE CASCADE ,
                                              PRIMARY KEY (course_id, banner_id)
-)
+);
 
 
 -- Junction Table for Courses and Messages (Many-to-Many)
@@ -239,24 +239,24 @@ INSERT INTO course_teachers (course_id, teacher_id) VALUES
                                                         ('c3b34a9f-8f59-4818-a684-9cda56f42d02', 'xyz789'), -- Clown Foundations
                                                       --   ('c3b34a9f-8f59-4818-a684-9cda56f42d02', 'def456'); -- Clown Foundations
                                                       --   ('c3b34a9f-8f59-4818-a684-9cda56f42d02', (SELECT net_id FROM users WHERE username = 'Kevin Smith')), -- Clown Foundations
-                                                        ('98e64e88-b989-49a0-bbfd-76e158bac634', (SELECT net_id FROM users WHERE username = 'Alice Jackson')), -- Delete This Course
-                                                        ((SELECT id FROM courses WHERE title = 'Introduction to Computer Science'), (SELECT net_id FROM users WHERE username = 'Kevin Smith')),
-                                                        ((SELECT id FROM courses WHERE title = 'Advanced Mathematics'), (SELECT net_id FROM users WHERE username = 'Kevin Smith')),
-                                                        ((SELECT id FROM courses WHERE title = 'Modern Art History'), (SELECT net_id FROM users WHERE username = 'Jane Doe')),
-                                                        ((SELECT id FROM courses WHERE title = 'Environmental Science'), (SELECT net_id FROM users WHERE username = 'Alice Jackson')),
-                                                        ((SELECT id FROM courses WHERE title = 'Business Management'), (SELECT net_id FROM users WHERE username = 'Mike Miller'));
+--                                                         ('98e64e88-b989-49a0-bbfd-76e158bac634', (SELECT net_id FROM users WHERE username = 'Alice Jackson')), -- Delete This Course
+                                                        ((SELECT id FROM courses WHERE title = 'Introduction to Computer Science'), (SELECT net_id FROM users WHERE full_name = 'Kevin Smith')),
+                                                        ((SELECT id FROM courses WHERE title = 'Advanced Mathematics'), (SELECT net_id FROM users WHERE full_name = 'Kevin Smith')),
+                                                        ((SELECT id FROM courses WHERE title = 'Modern Art History'), (SELECT net_id FROM users WHERE full_name = 'Jane Doe')),
+                                                        ((SELECT id FROM courses WHERE title = 'Environmental Science'), (SELECT net_id FROM users WHERE full_name = 'Alice Jackson')),
+                                                        ((SELECT id FROM courses WHERE title = 'Business Management'), (SELECT net_id FROM users WHERE full_name = 'Mike Miller'));
 
-CREATE OR REPLACE FUNCTION sync_user_courses()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO user_courses (user_net_id, course_id)
-    VALUES (NEW.teacher_id, NEW.course_id);
-    RETURN NEW;
-END;
-CREATE TRIGGER course_teachers_after_insert_trigger
-AFTER INSERT ON course_teachers
-FOR EACH ROW
-EXECUTE FUNCTION sync_user_courses();
+-- CREATE OR REPLACE FUNCTION sync_user_courses()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     INSERT INTO user_courses (user_net_id, course_id)
+--     VALUES (NEW.teacher_id, NEW.course_id);
+--     RETURN NEW;
+-- END;
+-- CREATE TRIGGER course_teachers_after_insert_trigger
+-- AFTER INSERT ON course_teachers
+-- FOR EACH ROW
+-- EXECUTE FUNCTION sync_user_courses();
 -- Further junction table entries to link data as per new structure need to be added here, for example linking courses to users, messages to courses, etc.
 
 SELECT * FROM courses;
@@ -268,5 +268,5 @@ SELECT * FROM users;
 SELECT * FROM tokens;
 SELECT * FROM user_courses;
 SELECT * FROM course_teachers;
-SELECT * FROM course_id;
+-- SELECT * FROM course_id;
 SELECT * FROM course_roster;
