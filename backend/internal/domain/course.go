@@ -3,7 +3,6 @@ package domain
 import (
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -18,6 +17,8 @@ type CourseStore interface {
 	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
+	InsertIntoUserCourses(c *models.Course, teacherid string) error
+	InsertBanner(courseid string, bannerurl string) (string, error)
 }
 
 type CourseService struct {
@@ -28,25 +29,36 @@ func NewCourseService(c CourseStore) *CourseService { return &CourseService{stor
 
 // CreateCourse creates a new course in the database,
 // then assigns a UUID to it. This is not an idempotent method!
-func (cs *CourseService) CreateCourse(c *models.Course, teacherid string) error {
+func (cs *CourseService) CreateCourse(c *models.Course, teacherid string, bannerurl string) (*models.Course, error) {
 	// Check if course already exists. Can also try and do fuzzy name matching.
 	duplicate, err := cs.store.CheckCourseProfessorDuplicate(c.Title, teacherid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if duplicate {
-		return fmt.Errorf("course already exists")
+		return nil, fmt.Errorf("course already exists")
 	}
 
-	c.ID = uuid.New().String()
+	// c.ID = uuid.New().String()
 
 	// Create the course.
-	_, err = cs.store.InsertCourse(c)
+	id, err := cs.store.InsertCourse(c)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	c.ID = id
+	bannerid, err := cs.store.InsertBanner(c.ID, bannerurl)
+	if err != nil {
+		return nil, err
+	}
+	c.Banner = bannerid
+
+	err = cs.store.InsertIntoUserCourses(c, teacherid)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return c, nil
 }
 
 func (cs *CourseService) RetrieveCourse(courseid string) (

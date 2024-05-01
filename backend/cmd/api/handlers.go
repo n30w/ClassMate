@@ -107,7 +107,7 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("In homehandler")
+
 	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -135,38 +135,39 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	id := r.PathValue("id")
+	var input struct {
+		CourseId string `json:"courseid"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-	var course *models.Course
+	id := r.PathValue("id")
 
 	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
-	res := jsonWrap{"course": course}
+	res := jsonWrap{"courseinfo": course}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-
-	// If the course ID exists in the database AND the user requesting this
-	// data has the appropriate permissions, retrieve the course data requested.
 }
 
 // createCourseHandler creates a course.
-//
-// REQUEST: course title, user id
-// RESPONSE: course id, name, teacher, assignments
 func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
-		Title string `json:"title"`
-		Token string `json:"token"`
-		Image string `json:"image"`
+		Title     string `json:"title"`
+		Token     string `json:"token"`
+		BannerUrl string `json:"banner"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -174,6 +175,7 @@ func (app *application) courseCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 	teacherid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -186,7 +188,7 @@ func (app *application) courseCreateHandler(
 		Teachers: teachers,
 	}
 
-	err = app.services.CourseService.CreateCourse(course, teacherid)
+	course, err = app.services.CourseService.CreateCourse(course, teacherid, input.BannerUrl)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

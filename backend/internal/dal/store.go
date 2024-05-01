@@ -498,7 +498,7 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 	var err error
 	var id string
 
-	err = s.db.QueryRow(query, c.Title, c.Description, c.Teachers).Scan(&id)
+	err = s.db.QueryRow(query, c.Title, c.Description).Scan(&id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -508,11 +508,22 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 		}
 	}
 
-	query2 := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2)`
-	_ = s.db.QueryRow(query2, c.Teachers[0], c.ID)
-
 	return id, nil
 }
+func (s *Store) InsertBanner(courseid string, bannerurl string) (string, error) {
+	// query := `INSERT`
+	return "", nil
+}
+
+func (s *Store) InsertIntoUserCourses(c *models.Course, teacherId string) error {
+	query := `INSERT INTO user_courses (user_net_id, course_id) VALUES ($1, $2);`
+	_, err = s.db.Query(query, teacherId, c.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid string) (
 	bool,
 	error,
@@ -521,7 +532,7 @@ func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid strin
 	query := `SELECT COUNT(*) AS course_count
 	FROM user_courses uc
 	JOIN courses c ON uc.course_id = c.id
-	WHERE uc.teacher_id = $1
+	WHERE uc.user_net_id = $1
 	AND c.title = $2;`
 	row := s.db.QueryRow(query, teacherid, courseName)
 	if err := row.Scan(&n); err != nil {
