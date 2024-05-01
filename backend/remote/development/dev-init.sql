@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS courses (
                                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                                        title VARCHAR NOT NULL,
                                        description TEXT,
-                                       teacher_id UUID[] REFERENCES users(net_id) ON DELETE CASCADE,
                                        created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
                                        updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
                                        archived BOOLEAN NOT NULL DEFAULT FALSE

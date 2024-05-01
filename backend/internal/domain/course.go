@@ -18,6 +18,7 @@ type CourseStore interface {
 	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
+	InsertTeacherToCourse(c *models.Course, t string) error
 }
 
 type CourseService struct {
@@ -34,6 +35,7 @@ func (cs *CourseService) CreateCourse(c *models.Course, teacherid string) error 
 	if err != nil {
 		return err
 	}
+
 	if duplicate {
 		return fmt.Errorf("course already exists")
 	}
@@ -41,7 +43,12 @@ func (cs *CourseService) CreateCourse(c *models.Course, teacherid string) error 
 	c.ID = uuid.New().String()
 
 	// Create the course.
-	_, err = cs.store.InsertCourse(c)
+	id, err := cs.store.InsertCourse(c)
+	if err != nil {
+		return err
+	}
+
+	err = cs.store.InsertTeacherToCourse(c, id)
 	if err != nil {
 		return err
 	}

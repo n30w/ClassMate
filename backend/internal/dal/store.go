@@ -493,12 +493,12 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.
 func (s *Store) InsertCourse(c *models.Course) (string, error) {
-	query := `INSERT INTO courses (title, description, created_at, updated_at
-) VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+	query := `INSERT INTO courses (title, description, created_at, updated_at) VALUES ('` + c.Title + `', '` + c.Description + `', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
 	var err error
 	var id string
 
-	err = s.db.QueryRow(query, c.Title, c.Description, c.Teachers).Scan(&id)
+	err = s.db.QueryRow(query).Scan(&id)
+	fmt.Printf("inserted the course!")
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -507,12 +507,25 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 			return "", err
 		}
 	}
-
-	query2 := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2)`
-	_ = s.db.QueryRow(query2, c.Teachers[0], c.ID)
-
+	fmt.Printf("after error in insert course")
 	return id, nil
 }
+
+func (s *Store) InsertTeacherToCourse(c *models.Course, t string) error {
+	var id string
+	// query := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO user_courses (user_net_id, course_id) VALUES ('` + t + `', '` + c.ID + `') RETURNING user_net_id;`
+	// args := []interface{}{t, c.ID}
+	// err := s.db.QueryRow(query, args).Scan(&id)
+	err := s.db.QueryRow(query).Scan(&id)
+	fmt.Printf("inserting the teacher and course!")
+	if err != nil {
+		return err
+	}
+	fmt.Printf("after error in insert teacher to course")
+	return nil
+}
+
 func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid string) (
 	bool,
 	error,

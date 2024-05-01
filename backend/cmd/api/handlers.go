@@ -174,11 +174,13 @@ func (app *application) courseCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 	teacherid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	teachers := []string{teacherid}
 
 	course := &models.Course{
