@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS courses (
                                        description TEXT,
                                        created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
                                        updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                                       archived BOOLEAN NOT NULL DEFAULT FALSE
+                                       archived BOOLEAN NOT NULL DEFAULT FALSE,
 );
 
 -- Media Table
@@ -74,6 +74,11 @@ CREATE TABLE IF NOT EXISTS submissions (
                                            feedback VARCHAR
 );
 
+CREATE TABLE IF NOT EXISTS images (
+                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                          url VARCHAR NOT NULL,
+);
+
 -----------------
 --- JUNCTIONS ---
 -----------------
@@ -84,6 +89,14 @@ CREATE TABLE IF NOT EXISTS user_courses (
                                             course_id UUID REFERENCES courses(id) ON DELETE CASCADE ,
                                             PRIMARY KEY (user_net_id, course_id)
 );
+
+-- Junction Table for Courses and Banners (One-to-One)
+CREATE TABLE IF NOT EXISTS course_banners (
+                                             course_id UUID VARCHAR REFERENCES courses(id) ON DELETE CASCADE,
+                                             banner_id UUID REFERENCES image(id) ON DELETE CASCADE ,
+                                             PRIMARY KEY (course_id, banner_id)
+)
+
 
 -- Junction Table for Courses and Messages (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_messages (

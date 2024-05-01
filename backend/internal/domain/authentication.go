@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -26,11 +25,9 @@ func (as *AuthenticationService) NewToken(netId string) (*models.Token, error) {
 		return nil, err
 	}
 	err = as.store.InsertToken(token)
-	fmt.Print("After insert function")
 	if err != nil {
 		return nil, err
 	}
-	fmt.Print("After inserting token")
 	return token, nil
 
 }

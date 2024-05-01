@@ -55,6 +55,7 @@ type Course struct {
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
+	Banner      string     `json:"banner"`
 
 	// TODO write on time calculation method.
 	OnTime bool
