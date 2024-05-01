@@ -35,6 +35,7 @@ func (cs *CourseService) CreateCourse(c *models.Course, teacherid string, banner
 	if err != nil {
 		return nil, err
 	}
+
 	if duplicate {
 		return nil, fmt.Errorf("course already exists")
 	}

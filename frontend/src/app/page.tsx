@@ -18,12 +18,6 @@ export default function Page() {
     try {
       const res: Response = await fetch("http://localhost:6789/v1/user/login", {
         method: "POST",
-        // headers: {
-        //   "Content-Type": "application/json",
-        //   "Access-Control-Allow-Origin": "*",
-        //   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        //   "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        // },
         body: JSON.stringify({
           netid: userLogin.netid,
           password: userLogin.password,
@@ -31,8 +25,6 @@ export default function Page() {
       });
       if (res.ok) {
         const data: Token = await res.json();
-        console.log("token: ", data.authentication_token.token);
-        console.log("permissions: ", data.permissions);
         localStorage.setItem("token", data.authentication_token.token);
         localStorage.setItem("permissions", data.permissions);
         router.push(`/homepage`);

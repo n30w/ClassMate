@@ -56,21 +56,33 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 				fmt.Sprintf("%s%d", string(rune(65)), index),
 				userid,
 			) // Add user in column A
+			if err != nil {
+				return nil, err
+			}
 			err = f.SetCellValue(
 				id,
 				fmt.Sprintf("%s%d", string(rune(66)), index),
 				submission.Grade,
 			) // Add submission grade in column B
+			if err != nil {
+				return nil, err
+			}
 			err = f.SetCellValue(
 				id,
 				fmt.Sprintf("%s%d", string(rune(67)), index),
 				submission.Feedback,
 			) // Add submission feedback in column C
+			if err != nil {
+				return nil, err
+			}
 			err = f.SetCellValue(
 				id,
 				fmt.Sprintf("%s%d", string(rune(68)), index),
 				assignment.Submission[index],
 			) // Add submission id in column D
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

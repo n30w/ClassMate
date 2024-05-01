@@ -493,8 +493,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.
 func (s *Store) InsertCourse(c *models.Course) (string, error) {
-	query := `INSERT INTO courses (title, description, created_at, updated_at
-) VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+	query := `INSERT INTO courses (title, description, created_at, updated_at) VALUES ('` + c.Title + `', '` + c.Description + `', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
 	var err error
 	var id string
 
@@ -507,6 +506,9 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 			return "", err
 		}
 	}
+
+	query2 := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2)`
+	_ = s.db.QueryRow(query2, c.Teachers[0], c.ID)
 
 	return id, nil
 }

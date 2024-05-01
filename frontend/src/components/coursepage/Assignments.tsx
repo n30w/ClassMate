@@ -58,22 +58,18 @@ const Assignments: React.FC<props> = (props: props) => {
 
   const postSubmission = async (submissionData: any) => {
     try {
-      const fileContent = await readFileAsBase64(submissionData.file);
-
       const formData = new FormData();
-      formData.append("file", fileContent);
+      submissionData.forEach((file: File) => {
+        formData.append("files", file);
+      });
       formData.append("submissiontime", new Date().toISOString());
       formData.append("assignmentid", submissionData.assignmentid);
       formData.append("userid", submissionData.userid);
-      formData.append("filetype", int);
 
       const res: Response = await fetch(
-        "/v1/course/assignment/submission/create",
+        "http://localhost:6789/v1/course/assignment/submission/create",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: formData,
         }
       );
