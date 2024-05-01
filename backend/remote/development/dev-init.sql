@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS messages (
                                         title VARCHAR NOT NULL,
                                         description TEXT,
                                         date TIMESTAMP WITHOUT TIME ZONE,
-                                        type BOOLEAN
+                                        type INT NOT NULL
 );
 
 -- Assignments Table

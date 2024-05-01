@@ -4,54 +4,41 @@ import React, { useState, useEffect } from "react";
 import CreateAnnouncement from "./CreateAnnouncement";
 import AddButton from "@/components/buttons/AddButton";
 import AnnouncementDisplay from "./AnnouncementDisplay";
-import { Discussion } from "@/lib/types";
+import axios from "axios";
+import { revalidatePath } from "next/cache";
 
 interface props {
-  entries: Discussion[];
   courseId: string;
 }
 
 const Announcements: React.FC<props> = (props: props) => {
-  const [announcements, setAnnouncements] = useState<Discussion[]>([]);
   const [isCreatingAnnouncement, setIsCreatingAnnouncement] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
   const [token, setToken] = useState("");
 
-  const handleCreateAnnouncement = (announcementData: any) => {
-    setAnnouncements([...announcements, announcementData]);
-  };
+  async function fetchAnnouncements() {
+    const response = await fetch(
+      `http://localhost:6789/v1/course/announcement/read/${props.courseId}`
+    );
+    const { announcements } = await response.json();
+    setAnnouncements(announcements);
+  }
+
+  const [announced, setAnnouncements] = useState<any>();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    setToken(token);
+    if (token) {
+      setToken(token);
+    }
+
     const permissions = localStorage.getItem("permissions");
     if (permissions === "1") {
       setIsTeacher(true);
     }
-    fetchAnnouncements(props.courseId);
-  }, []);
 
-  const fetchAnnouncements = async (url: string) => {
-    try {
-      const response = await fetch(
-        "http://localhost:6789/v1/api/announcements/read",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            courseid: url,
-          }),
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAnnouncements(data);
-      } else {
-        console.error("Failed to fetch announcements:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching announcements:", error);
-    }
-  };
+    fetchAnnouncements();
+  }, []);
 
   return (
     <div className="w-full">
@@ -65,15 +52,15 @@ const Announcements: React.FC<props> = (props: props) => {
           />
         )}
       </div>
-      <AnnouncementDisplay announcements={announcements} />
+      <AnnouncementDisplay announcements={announced} />
+
       {isCreatingAnnouncement && (
         <CreateAnnouncement
           onClose={() => {
             setIsCreatingAnnouncement(false);
           }}
-          onAnnouncementCreate={handleCreateAnnouncement}
-          courseId={props.courseId}
           token={token}
+          params={{ id: props.courseId }}
         />
       )}
     </div>

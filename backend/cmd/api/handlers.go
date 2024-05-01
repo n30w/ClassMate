@@ -385,6 +385,7 @@ func (app *application) announcementCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	cId := r.PathValue("id")
 	var input struct {
 		CourseId    string   `json:"courseid"`
 		Token       string   `json:"token"`
@@ -392,13 +393,12 @@ func (app *application) announcementCreateHandler(
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
-
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
+	fmt.Printf("Course id: %s   ", cId)
 	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -414,7 +414,8 @@ func (app *application) announcementCreateHandler(
 		Type: 1,
 	}
 
-	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+	// msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+	msg, err = app.services.MessageService.CreateMessage(msg, cId)
 
 	if err != nil {
 		app.serverError(w, r, err)
@@ -435,22 +436,25 @@ func (app *application) announcementReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		MsgId string `json:"announcementid"`
-	}
-
-	err := app.readJSON(w, r, &input)
+	courseId := r.PathValue("id")
+	msgids, err := app.services.MessageService.RetrieveMessages(courseId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	msg, err := app.services.MessageService.ReadMessage(input.MsgId)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	var msgs []models.Message
+	for _, msgid := range msgids {
+		msg, err := app.services.MessageService.ReadMessage(msgid)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		msgs = append(msgs, *msg)
 	}
-	res := jsonWrap{"announcement": msg}
+
+	fmt.Printf("Msgids: %#v\n", msgs)
+
+	res := jsonWrap{"announcements": msgs}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1119,15 +1123,11 @@ func (app *application) addStudentHandler(
 		return
 	}
 
-	app.logger.Printf("received: %s, %s", input.NetId, input.CourseId)
-
 	user, err := app.services.UserService.GetByID(input.NetId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	app.logger.Printf("retrieved: %s", user.ID)
 
 	for _, course := range user.Courses {
 		if course == input.CourseId {

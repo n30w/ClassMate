@@ -103,10 +103,7 @@ export default function Page({ params }: { params: { id: string } }) {
       <div className="flex justify-around p-16">
         {data && (
           <div className="flex flex-col w-96">
-            <Announcements
-              entries={data.course_info.discussions}
-              courseId={url}
-            />
+            <Announcements courseId={url} />
           </div>
         )}
         {data && (

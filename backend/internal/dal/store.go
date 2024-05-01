@@ -516,7 +516,6 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 func (s *Store) InsertIntoUserCourses(c *models.Course, userid string) error {
 	query := `INSERT INTO user_courses (user_net_id, course_id) VALUES ($1, $2);`
 	_, err = s.db.Query(query, userid, c.ID)
-	fmt.Print("insert user and course into user_courses")
 	if err != nil {
 		return err
 	}
@@ -597,6 +596,28 @@ func (s *Store) GetCourseByName(name string) (
 	}
 
 	return c, nil
+}
+func (s *Store) GetMessagesByCourse(courseid string) ([]string, error) {
+	query := `SELECT message_id FROM course_messages WHERE course_id = $1`
+	rows, err := s.db.Query(query, courseid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messageIds []string
+
+	for rows.Next() {
+		var messageId string
+		if err := rows.Scan(&messageId); err != nil {
+			return nil, err
+		}
+		messageIds = append(messageIds, messageId)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return messageIds, nil
 }
 
 func (s *Store) GetCourseByID(courseid string) (
@@ -695,23 +716,28 @@ func (s *Store) InsertMessage(
 	m *models.Message,
 	courseid string,
 ) error {
-	query := `INSERT INTO messages (title, description, type) VALUES ($1, $2, $3)`
-	_, err := s.db.Exec(
+	query := `INSERT INTO messages (title, description, type) VALUES ($1, $2, $3) RETURNING id`
+	row := s.db.QueryRow(
 		query,
 		m.Title,
 		m.Description,
 		m.Type,
 	)
+	err := row.Scan(&m.ID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return ERR_RECORD_NOT_FOUND
+		}
 		return err
 	}
-
 	courseQuery := `INSERT INTO course_messages (course_id, message_id)
-VALUES ($1, $2);`
+VALUES ($1, $2)`
+
 	_, err = s.db.Exec(courseQuery, courseid, m.ID)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -721,16 +747,16 @@ func (s *Store) GetMessageById(messageid string) (
 ) {
 	message := &models.Message{}
 
-	query := `SELECT id, title, description, date, type FROM messages WHERE id = $1`
+	query := `SELECT id, title, description, type FROM messages WHERE id = $1`
 	row := s.db.QueryRow(query, messageid)
 
 	err := row.Scan(
 		&message.ID,
 		&message.Title,
 		&message.Description,
-		&message.Date,
 		&message.Type,
 	)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ERR_RECORD_NOT_FOUND

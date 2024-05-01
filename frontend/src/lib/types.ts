@@ -20,7 +20,8 @@ export interface Course {
 }
 
 export interface Discussion {
-  name: string;
+  title: string;
+  description: string;
 }
 
 export interface User {

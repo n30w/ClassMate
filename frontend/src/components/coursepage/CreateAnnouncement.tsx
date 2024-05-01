@@ -5,12 +5,14 @@ import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
-  onAnnouncementCreate: (announcementData: any) => void;
-  courseId: string;
+  // onAnnouncementCreate: (announcementData: any) => void;
+  params: {
+    id: string;
+  };
   token: string;
 }
 
-const CreateAnnouncement: React.FC<props> = (props: props) => {
+const CreateAnnouncement: React.FC<props> = (props) => {
   // const currentDate = new Date();
 
   // const formattedDate = `${currentDate
@@ -24,18 +26,19 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
   //   minute: "2-digit",
   // })}`;
 
+  const url = props.params.id;
+
   const [announcementData, setAnnouncementData] = useState({
-    courseId: props.courseId,
+    courseId: url,
     token: props.token,
     title: "",
-    // date: formattedDate,
     description: "",
   });
 
   const postNewAnnouncement = async (announcementData: any) => {
     try {
       const res: Response = await fetch(
-        "http://localhost:6789/v1/course/announcement/create",
+        `http://localhost:6789/v1/course/announcement/create/${announcementData.courseId}`,
         {
           method: "POST",
           body: JSON.stringify({
@@ -66,7 +69,7 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onAnnouncementCreate({ announcementData });
+    // props.onAnnouncementCreate(announcementData);
     postNewAnnouncement(announcementData);
     props.onClose();
   };
