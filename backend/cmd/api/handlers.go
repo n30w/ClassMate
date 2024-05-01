@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -145,15 +144,6 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		CourseId string `json:"courseid"`
-	}
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
 	id := r.PathValue("id")
 
 	course, err := app.services.CourseService.RetrieveCourse(id)
@@ -161,7 +151,7 @@ func (app *application) courseHomepageHandler(
 		app.serverError(w, r, err)
 	}
 
-	res := jsonWrap{"courseinfo": course}
+	res := jsonWrap{"course_info": course}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
@@ -397,9 +387,8 @@ func (app *application) announcementCreateHandler(
 ) {
 	var input struct {
 		CourseId    string   `json:"courseid"`
-		TeacherId   string   `json:"teacherid"`
+		Token       string   `json:"token"`
 		Title       string   `json:"title"`
-		Date        string   `json:"date"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
@@ -410,15 +399,18 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	post := models.Post{
-		Date:        input.Date,
-		Title:       input.Title,
-		Description: input.Description,
-		Owner:       input.TeacherId,
-		Media:       input.Media,
+	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 	msg := &models.Message{
-		Post: post,
+		Post: models.Post{
+			Title:       input.Title,
+			Description: input.Description,
+			Owner:       netid,
+			Media:       input.Media,
+		},
 		Type: 1,
 	}
 
@@ -574,8 +566,6 @@ func (app *application) userCreateHandler(
 		return
 	}
 
-	app.logger.Printf("received %s :: user %s created", r.Method, user.ID)
-
 	// Here we would generate a session token, but not now.
 
 	// Send back home page.
@@ -707,7 +697,6 @@ func (app *application) userLoginHandler(
 		return
 	}
 
-	app.logger.Printf("user: %s :: token: %s", input.NetId, token)
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -727,7 +716,7 @@ func (app *application) assignmentCreateHandler(
 ) {
 	var input struct {
 		Title       string   `json:"title"`
-		TeacherId   string   `json:"teacherid"`
+		Token       string   `json:"token"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 		DueDate     string   `json:"duedate"`
@@ -738,11 +727,16 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	post := models.Post{
 		Title:       input.Title,
 		Description: input.Description,
-		Owner:       input.TeacherId,
+		Owner:       netid,
 		Media:       input.Media,
 	}
 
@@ -1109,20 +1103,72 @@ func (app *application) submissionUpdateHandler(
 
 }
 
-func (app *application) courseImageHandler(
+func (app *application) addStudentHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	f := app.services.MediaService.
-	buf, err := os.ReadFile("sid.png")
-
-	if err != nil {
-
-		log.Fatal(err)
+	app.logger.Print("in addstudenthandler")
+	var input struct {
+		NetId    string `json:"netid"`
+		CourseId string `json:"courseid"`
 	}
 
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-	w.Write(buf)
+	app.logger.Printf("received: %s, %s", input.NetId, input.CourseId)
+
+	user, err := app.services.UserService.GetByID(input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.logger.Printf("retrieved: %s", user.ID)
+
+	for _, course := range user.Courses {
+		if course == input.CourseId {
+			res := jsonWrap{"response": "User is already enrolled"}
+			err = app.writeJSON(w, http.StatusOK, res, nil)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+		}
+	}
+
+	// User is not enrolled in the course
+	_, err = app.services.CourseService.AddToRoster(input.CourseId, input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"response": "user successfully added to course"}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
+
+// func (app *application) courseImageHandler(
+// 	w http.ResponseWriter,
+// 	r *http.Request,
+// ) {
+// 	f := app.services.MediaService.
+// 	buf, err := os.ReadFile("sid.png")
+
+// 	if err != nil {
+
+// 		log.Fatal(err)
+// 	}
+
+// 	w.Header().Set("Content-Type", "image/png")
+// 	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
+
+// 	w.Write(buf)
+// }

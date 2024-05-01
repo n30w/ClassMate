@@ -94,7 +94,10 @@ func NewStore(db *sql.DB) *Store {
 // InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
 	id := 0
-	stmt, err := s.db.Prepare("INSERT INTO users (net_id, created_at, updated_at, username, password, email, membership, full_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id")
+	stmt, err := s.db.Prepare(`
+		INSERT INTO users (net_id, created_at, updated_at,
+		username, password, email, membership, full_name)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`)
 	if err != nil {
 		return err
 	}
@@ -407,8 +410,6 @@ func (s *Store) DeleteCourseFromUser(
 
 func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	courses := make([]models.Course, 0)
-	fmt.Printf("Store: user courses: %v, %s", u.Courses, u.Courses)
-
 	for _, courseID := range u.Courses {
 		coursequery := `SELECT id, title FROM courses WHERE id = $1;`
 		// query := `
@@ -452,8 +453,6 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
-
-		// fmt.Printf("Courseid: %s, Coursetitle: %s, Courseteachers: %s", course.ID, course.Title, course.Teachers)
 		course.Teachers = teacherIDs
 		courses = append(courses, course)
 	}
@@ -489,11 +488,16 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // 	}
 
 // }
+func (s *Store) InsertBanner(courseid string, bannerurl string) (string,
+	error) {
+	return "", nil
+}
 
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.
 func (s *Store) InsertCourse(c *models.Course) (string, error) {
-	query := `INSERT INTO courses (title, description, created_at, updated_at) VALUES ('` + c.Title + `', '` + c.Description + `', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+	query := `INSERT INTO courses (title, description, created_at, updated_at
+		) VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
 	var err error
 	var id string
 
@@ -506,20 +510,27 @@ func (s *Store) InsertCourse(c *models.Course) (string, error) {
 			return "", err
 		}
 	}
-
-	query2 := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2)`
-	_ = s.db.QueryRow(query2, c.Teachers[0], c.ID)
-
 	return id, nil
 }
-func (s *Store) InsertBanner(courseid string, bannerurl string) (string, error) {
-	// query := `INSERT`
-	return "", nil
+
+func (s *Store) InsertIntoUserCourses(c *models.Course, userid string) error {
+	query := `INSERT INTO user_courses (user_net_id, course_id) VALUES ($1, $2);`
+	_, err = s.db.Query(query, userid, c.ID)
+	fmt.Print("insert user and course into user_courses")
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *Store) InsertIntoUserCourses(c *models.Course, teacherId string) error {
-	query := `INSERT INTO user_courses (user_net_id, course_id) VALUES ($1, $2);`
-	_, err = s.db.Query(query, teacherId, c.ID)
+func (s *Store) InsertTeacherToCourse(c *models.Course, t string) error {
+	var id string
+	// query := `INSERT INTO user_course (user_net_id, course_id) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO courses (title, description, created_at, updated_at
+		) VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+	// args := []interface{}{t, c.ID}
+	// err := s.db.QueryRow(query, args).Scan(&id)
+	err := s.db.QueryRow(query, c.Title, c.Description).Scan(&id)
 	if err != nil {
 		return err
 	}
@@ -593,6 +604,7 @@ func (s *Store) GetCourseByID(courseid string) (
 	error,
 ) {
 	c := &models.Course{}
+	c.ID = courseid
 
 	query := `SELECT title, description, created_at FROM courses WHERE id=$1`
 	rows, err := s.db.Query(query, courseid)
@@ -683,23 +695,20 @@ func (s *Store) InsertMessage(
 	m *models.Message,
 	courseid string,
 ) error {
-	query := `INSERT INTO messages (id, title, description, media, date, course, owner) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	query := `INSERT INTO messages (title, description, type) VALUES ($1, $2, $3)`
 	_, err := s.db.Exec(
 		query,
-		m.ID,
 		m.Title,
 		m.Description,
-		m.Media,
-		m.Date,
-		courseid,
-		m.Owner,
+		m.Type,
 	)
 	if err != nil {
 		return err
 	}
 
-	courseQuery := `UPDATE courses SET messages = array_append(messages, $1) WHERE id = $2`
-	_, err = s.db.Exec(courseQuery, m.ID, courseid)
+	courseQuery := `INSERT INTO course_messages (course_id, message_id)
+VALUES ($1, $2);`
+	_, err = s.db.Exec(courseQuery, courseid, m.ID)
 	if err != nil {
 		return err
 	}
@@ -712,16 +721,15 @@ func (s *Store) GetMessageById(messageid string) (
 ) {
 	message := &models.Message{}
 
-	query := `SELECT id, title, description, media, date, course, owner FROM messages WHERE id = $1`
+	query := `SELECT id, title, description, date, type FROM messages WHERE id = $1`
 	row := s.db.QueryRow(query, messageid)
 
 	err := row.Scan(
 		&message.ID,
 		&message.Title,
 		&message.Description,
-		&message.Media,
-		&message.Course,
-		&message.Owner,
+		&message.Date,
+		&message.Type,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -894,7 +902,6 @@ func (s *Store) ChangeAssignmentBody(
 func (s *Store) InsertToken(t *models.Token) error {
 	query := `INSERT INTO tokens (hash, net_id, expiry, scope) VALUES ($1, $2, $3, $4)`
 	args := []any{t.Hash, t.NetID, t.Expiry, t.Scope}
-	fmt.Print("After args")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_, err := s.db.ExecContext(ctx, query, args...)
@@ -1005,12 +1012,13 @@ func (s *Store) AddStudent(c *models.Course, userid string) (
 	*models.Course,
 	error,
 ) {
-	query := `UPDATE courses SET roster = array_append(roster, $1) WHERE id = $2`
+	query := `INSERT INTO course_roster (course_id, student_id) VALUES ($1, $2)`
 
-	_, err := s.db.Exec(query, userid, c.ID)
+	_, err := s.db.Exec(query, c.ID, userid)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("inserting student into course_roster")
 
 	return c, nil
 }
@@ -1084,7 +1092,6 @@ func (s *Store) GetNetIdFromHash(hash []byte) (
 	error,
 ) {
 	u := &models.User{}
-	fmt.Print("GetNetIdFromHash")
 	query := `SELECT net_id FROM tokens WHERE hash = $1`
 	row := s.db.QueryRow(query, hash)
 

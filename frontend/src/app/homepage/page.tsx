@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import CreateCourse from "@/components/homepage/CreateCourse";
 import AddButton from "@/components/buttons/AddButton";
 import { Course } from "@/lib/types";
@@ -48,7 +48,6 @@ export default function Home() {
 
       if (res.ok) {
         const data = await res.json();
-        console.log(data);
         return data;
       } else {
         console.error("Failed to fetch courses:", res.statusText);

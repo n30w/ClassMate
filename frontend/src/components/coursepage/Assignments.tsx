@@ -19,7 +19,7 @@ const Assignments: React.FC<props> = (props: props) => {
 
   const fetchAssignments = async () => {
     try {
-      const response = await fetch("/v1/assignment");
+      const response = await fetch("/v1/assignment/read");
       if (response.ok) {
         const data = await response.json();
         setAssignments(data);

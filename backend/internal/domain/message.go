@@ -3,7 +3,6 @@ package domain
 import (
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -23,7 +22,6 @@ type MessageService struct {
 func NewMessageService(m MessageStore) *MessageService { return &MessageService{store: m} }
 
 func (ms *MessageService) CreateMessage(m *models.Message, courseid string) (*models.Message, error) {
-	m.ID = uuid.New().String()
 	err := ms.store.InsertMessage(m, courseid)
 	if err != nil {
 		return nil, err
