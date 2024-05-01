@@ -95,3 +95,7 @@ func (mus *mockUserStore) DeleteCourseFromUser(
 ) error {
 	return nil
 }
+
+func (mus *mockUserStore) GetMembershipById(id string) (*models.Credential, error) {
+	return nil, nil
+}

@@ -12,6 +12,12 @@ func TestCreateandParseExcel(t *testing.T) {
 	mock := newMockExcelStore()
 	es := NewExcelService(mock)
 	SetDatabase(2, 4, 4, mock)
+	for idx, student := range mock.Students {
+		t.Logf("Student %d: id(%s)", idx, student.ID)
+	}
+	for _, submission := range mock.Submissions {
+		t.Logf("Submission from User %s, Grade: %f, Feedback: %s", submission.User.ID, submission.Grade, submission.Feedback)
+	}
 	file, err := es.CreateExcel(mock.Course.ID) // Create Excel
 	if err != nil {
 		t.Errorf("%v", err)
@@ -24,7 +30,7 @@ func TestCreateandParseExcel(t *testing.T) {
 		if err != nil {
 			t.Errorf("%v", err)
 		}
-		for rowidx, _ := range rows { // Loop through each row (each student)
+		for rowidx := range rows { // Loop through each row (each student)
 			file.SetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(66)), rowidx), 0+rowidx)
 			file.SetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(67)), rowidx), fmt.Sprintf("Nice Work Student %d", rowidx))
 		}
@@ -34,7 +40,17 @@ func TestCreateandParseExcel(t *testing.T) {
 		}
 		// Check database for grade and feedback
 	}
+	for idx, student := range mock.Students {
+		t.Logf("Student %d: id(%s)", idx, student.ID)
+	}
+	for _, submission := range mock.Submissions {
+		t.Logf("Submission from User %s, Grade: %f, Feedback: %s", submission.User.ID, submission.Grade, submission.Feedback)
+	}
 	file, err = es.CreateExcel(mock.Course.ID) // Create Excel
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+	t.Logf("%d", file.SheetCount)
 	for id := 0; id < file.SheetCount; id++ {
 		// Get the name of the sheet
 		assignment := file.GetSheetName(id) // Sheet name in the form of "Assignment-{id}"
@@ -42,21 +58,23 @@ func TestCreateandParseExcel(t *testing.T) {
 		if err != nil {
 			t.Errorf("%v", err)
 		}
-		for rowidx, _ := range rows { // Loop through each row (each student)
+		t.Logf("here")
+		for rowidx := range rows { // Loop through each row (each student)
 			grade, err := file.GetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(66)), rowidx))
 			if err != nil {
 				t.Errorf("%v", err)
 			}
 			want := 0 + rowidx
+			t.Logf("want:%d", want)
 			if grade != fmt.Sprintf("%d", want) {
-				t.Errorf("got %s, want %s", grade, want)
+				t.Errorf("got %s, want %d", grade, want)
 			}
 			feedback, err := file.GetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(67)), rowidx))
 			if err != nil {
 				t.Errorf("%v", err)
 			}
 			wantStr := fmt.Sprintf("Nice Work Student %d", rowidx)
-			if grade != fmt.Sprintf("%d", wantStr) {
+			if grade != wantStr {
 				t.Errorf("got %s, want %s", feedback, wantStr)
 			}
 		}
@@ -80,7 +98,15 @@ func ID() string {
 	// Generate a random number of length 3
 	randomNumber := rand.Intn(900) + 100
 
-	return fmt.Sprintf("%s", randomNumber)
+	return fmt.Sprintf("%d", randomNumber)
+}
+func Print(mus *mockExcelStore, t *testing.T) {
+	for idx, student := range mus.Students {
+		t.Logf("Student %d: id(%s)", idx, student.ID)
+	}
+	for _, submission := range mus.Submissions {
+		t.Logf("Submission from User %s, Grade: %f, Feedback: %s", submission.User.ID, submission.Grade, submission.Feedback)
+	}
 }
 
 func SetDatabase(assignment int, submission int, students int, mus *mockExcelStore) {
