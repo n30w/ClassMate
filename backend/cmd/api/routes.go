@@ -15,7 +15,7 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("GET /v1/course/homepage/{id}", app.courseHomepageHandler)
 
 	router.HandleFunc(
-		"POST /v1/course/announcement/create",
+		"POST /v1/course/announcement/create/{id}",
 		app.announcementCreateHandler,
 	)
 	router.HandleFunc(
@@ -26,6 +26,9 @@ func (app *application) routes() *http.ServeMux {
 		"POST /v1/course/announcement/delete",
 		app.announcementDeleteHandler,
 	)
+	// ID is message ID
+	router.HandleFunc("GET /v1/course/announcement/read/{id}", app.announcementReadHandler)
+	router.HandleFunc("POST /v1/course/addstudent", app.addStudentHandler)
 
 	// Course CRUD operations
 	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
@@ -95,14 +98,35 @@ func (app *application) routes() *http.ServeMux {
 	// )
 
 	// Comment operations
-	router.HandleFunc("POST /v1/course/{post}/comment/create", app.commentCreateHandler)
-	router.HandleFunc("POST /v1/course/{post}/comment/delete", app.commentDeleteHandler)
+	router.HandleFunc(
+		"POST /v1/course/{post}/comment/create",
+		app.commentCreateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/{post}/comment/delete",
+		app.commentDeleteHandler,
+	)
 
 	// Submission operations
-	router.HandleFunc("POST /v1/course/assignment/submission/create", app.submissionCreateHandler)
-	router.HandleFunc("POST /v1/course/assignment/submission/update", app.submissionUpdateHandler)
-	router.HandleFunc("POST /v1/course/assignment/submission/delete", app.submissionUpdateHandler)
-	router.HandleFunc("POST /v1/course/assignment/submission/read", app.submissionUpdateHandler)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/create",
+		app.submissionCreateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/update",
+		app.submissionUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/delete",
+		app.submissionUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/read",
+		app.submissionUpdateHandler,
+	)
+
+	// Image operations
+	// router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
 
 	return router
 }
