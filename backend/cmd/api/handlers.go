@@ -145,15 +145,6 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		CourseId string `json:"courseid"`
-	}
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
 	id := r.PathValue("id")
 
 	course, err := app.services.CourseService.RetrieveCourse(id)
@@ -161,7 +152,7 @@ func (app *application) courseHomepageHandler(
 		app.serverError(w, r, err)
 	}
 
-	res := jsonWrap{"courseinfo": course}
+	res := jsonWrap{"course_info": course}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
@@ -395,34 +386,37 @@ func (app *application) announcementCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	cId := r.PathValue("id")
 	var input struct {
 		CourseId    string   `json:"courseid"`
-		TeacherId   string   `json:"teacherid"`
+		Token       string   `json:"token"`
 		Title       string   `json:"title"`
-		Date        string   `json:"date"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
-
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	post := models.Post{
-		Date:        input.Date,
-		Title:       input.Title,
-		Description: input.Description,
-		Owner:       input.TeacherId,
-		Media:       input.Media,
+	fmt.Printf("Course id: %s   ", cId)
+	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 	msg := &models.Message{
-		Post: post,
+		Post: models.Post{
+			Title:       input.Title,
+			Description: input.Description,
+			Owner:       netid,
+			Media:       input.Media,
+		},
 		Type: 1,
 	}
 
-	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+	// msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+	msg, err = app.services.MessageService.CreateMessage(msg, cId)
 
 	if err != nil {
 		app.serverError(w, r, err)
@@ -443,22 +437,25 @@ func (app *application) announcementReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		MsgId string `json:"announcementid"`
-	}
-
-	err := app.readJSON(w, r, &input)
+	courseId := r.PathValue("id")
+	msgids, err := app.services.MessageService.RetrieveMessages(courseId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	msg, err := app.services.MessageService.ReadMessage(input.MsgId)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	var msgs []models.Message
+	for _, msgid := range msgids {
+		msg, err := app.services.MessageService.ReadMessage(msgid)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		msgs = append(msgs, *msg)
 	}
-	res := jsonWrap{"announcement": msg}
+
+	fmt.Printf("Msgids: %#v\n", msgs)
+
+	res := jsonWrap{"announcements": msgs}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -573,8 +570,6 @@ func (app *application) userCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	app.logger.Printf("received %s :: user %s created", r.Method, user.ID)
 
 	// Here we would generate a session token, but not now.
 
@@ -724,7 +719,6 @@ func (app *application) userLoginHandler(
 		return
 	}
 
-	app.logger.Printf("user: %s :: token: %s", input.NetId, token)
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -744,7 +738,7 @@ func (app *application) assignmentCreateHandler(
 ) {
 	var input struct {
 		Title       string   `json:"title"`
-		TeacherId   string   `json:"teacherid"`
+		Token       string   `json:"token"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 		DueDate     string   `json:"duedate"`
@@ -755,11 +749,16 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	post := models.Post{
 		Title:       input.Title,
 		Description: input.Description,
-		Owner:       input.TeacherId,
+		Owner:       netid,
 		Media:       input.Media,
 	}
 
@@ -1108,6 +1107,54 @@ func (app *application) submissionUpdateHandler(
 	r *http.Request,
 ) {
 
+}
+
+func (app *application) addStudentHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	app.logger.Print("in addstudenthandler")
+	var input struct {
+		NetId    string `json:"netid"`
+		CourseId string `json:"courseid"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	user, err := app.services.UserService.GetByID(input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	for _, course := range user.Courses {
+		if course == input.CourseId {
+			res := jsonWrap{"response": "User is already enrolled"}
+			err = app.writeJSON(w, http.StatusOK, res, nil)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+		}
+	}
+
+	// User is not enrolled in the course
+	_, err = app.services.CourseService.AddToRoster(input.CourseId, input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"response": "user successfully added to course"}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
 
 // func (app *application) courseImageHandler(

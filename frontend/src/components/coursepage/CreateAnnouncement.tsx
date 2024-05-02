@@ -5,45 +5,51 @@ import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
-  onAnnouncementCreate: (announcementData: any) => void;
+  // onAnnouncementCreate: (announcementData: any) => void;
+  params: {
+    id: string;
+  };
+  token: string;
 }
 
-const CreateAnnouncement: React.FC<props> = (props: props) => {
-  const currentDate = new Date();
+const CreateAnnouncement: React.FC<props> = (props) => {
+  // const currentDate = new Date();
 
-  const formattedDate = `${currentDate
-    .toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    })
-    .replace(/\//g, "-")} ${currentDate.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+  // const formattedDate = `${currentDate
+  //   .toLocaleDateString("en-US", {
+  //     month: "2-digit",
+  //     day: "2-digit",
+  //     year: "numeric",
+  //   })
+  //   .replace(/\//g, "-")} ${currentDate.toLocaleTimeString("en-US", {
+  //   hour: "2-digit",
+  //   minute: "2-digit",
+  // })}`;
+
+  const url = props.params.id;
 
   const [announcementData, setAnnouncementData] = useState({
+    courseId: url,
+    token: props.token,
     title: "",
-    date: formattedDate,
     description: "",
   });
 
   const postNewAnnouncement = async (announcementData: any) => {
     try {
-      const res: Response = await fetch("/v1/course/announcement/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          courseid: announcementData.courseid,
-          teacherid: announcementData.teacherid,
-          title: announcementData.title,
-          description: announcementData.description,
-          date: announcementData.date,
-          media: "",
-        }),
-      });
+      const res: Response = await fetch(
+        `http://localhost:6789/v1/course/announcement/create/${announcementData.courseId}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            courseid: announcementData.courseid,
+            token: announcementData.token,
+            title: announcementData.title,
+            description: announcementData.description,
+            media: [],
+          }),
+        }
+      );
       if (res.ok) {
       } else {
         console.error("Failed to create announcement:", res.statusText);
@@ -63,7 +69,7 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onAnnouncementCreate({ announcementData });
+    // props.onAnnouncementCreate(announcementData);
     postNewAnnouncement(announcementData);
     props.onClose();
   };

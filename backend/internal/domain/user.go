@@ -90,6 +90,7 @@ func (us *UserService) RetrieveHomepage() (*models.Homepage, error) {
 func (us *UserService) GetByID(userid string) (*models.User, error) {
 	// TEMP
 	m := &models.User{}
+	m.ID = userid
 	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return nil, err
@@ -114,12 +115,6 @@ func (us *UserService) RetrieveFromUser(
 		courses, err := us.store.GetUserCourses(m)
 		if err != nil {
 			return nil, err
-		}
-		fmt.Printf("Service: courses: %T, %v", courses, courses)
-
-		for _, course := range courses {
-			fmt.Printf("Course Title: %s, Course ID: %s, Course Teachers: %v", course.Title, course.ID, course.Teachers)
-
 		}
 		return courses, err
 	}

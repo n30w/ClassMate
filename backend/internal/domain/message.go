@@ -3,7 +3,6 @@ package domain
 import (
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -14,6 +13,7 @@ type MessageStore interface {
 	DeleteMessage(m *models.Message) error
 	ChangeMessageTitle(m *models.Message) (*models.Message, error)
 	ChangeMessageBody(m *models.Message) (*models.Message, error)
+	GetMessagesByCourse(courseid string) ([]string, error)
 }
 
 type MessageService struct {
@@ -23,7 +23,6 @@ type MessageService struct {
 func NewMessageService(m MessageStore) *MessageService { return &MessageService{store: m} }
 
 func (ms *MessageService) CreateMessage(m *models.Message, courseid string) (*models.Message, error) {
-	m.ID = uuid.New().String()
 	err := ms.store.InsertMessage(m, courseid)
 	if err != nil {
 		return nil, err
@@ -68,9 +67,18 @@ func (ms *MessageService) DeleteMessage(messageid string) error {
 }
 
 func (ms *MessageService) ReadMessage(messageid string) (*models.Message, error) {
+
 	msg, err := ms.store.GetMessageById(messageid)
 	if err != nil {
 		return nil, err
 	}
 	return msg, err
+}
+func (ms *MessageService) RetrieveMessages(courseid string) ([]string, error) {
+
+	msgids, err := ms.store.GetMessagesByCourse(courseid)
+	if err != nil {
+		return nil, err
+	}
+	return msgids, err
 }

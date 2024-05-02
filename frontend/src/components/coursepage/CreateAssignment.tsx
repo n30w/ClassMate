@@ -18,18 +18,14 @@ const CreateAssignment: React.FC<props> = (props: props) => {
 
   const postNewAssignment = async (assignmentData: any) => {
     try {
-      const res: Response = await fetch("/v1/course/assignment/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(assignmentData),
-      });
+      const res: Response = await fetch(
+        "http://localhost:6789/v1/course/assignment/create",
+        {
+          method: "POST",
+          body: JSON.stringify(assignmentData),
+        }
+      );
       if (res.ok) {
-        const newAssignment = await res.json();
-        newAssignment.name = assignmentData.title;
-        newAssignment.id = assignmentData.id;
-        newAssignment.due_date = assignmentData.dueDate;
       } else {
         console.error("Failed to create assignment:", res.statusText);
       }

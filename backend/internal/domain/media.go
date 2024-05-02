@@ -34,5 +34,5 @@ func (ms *MediaService) UploadMedia(
 // It does two things: finds a piece of media in the database by its
 // reference and, if it does find it, returns it as a sequence of bytes.
 func (ms *MediaService) GetMedia(ref string) ([]byte, error) {
-
+	return nil, nil
 }

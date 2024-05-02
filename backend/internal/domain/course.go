@@ -17,7 +17,7 @@ type CourseStore interface {
 	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
-	InsertIntoUserCourses(c *models.Course, teacherid string) error
+	InsertIntoUserCourses(c *models.Course, userid string) error
 	InsertBanner(courseid string, bannerurl string) (string, error)
 }
 
@@ -94,6 +94,10 @@ func (cs *CourseService) AddToRoster(
 		return nil, err
 	}
 	c, err = cs.store.AddStudent(c, userid)
+	if err != nil {
+		return nil, err
+	}
+	err = cs.store.InsertIntoUserCourses(c, userid)
 	if err != nil {
 		return nil, err
 	}
