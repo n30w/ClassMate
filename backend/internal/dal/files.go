@@ -5,8 +5,11 @@ package dal
 
 import (
 	"encoding/csv"
+	"fmt"
 	"github.com/n30w/Darkspace/internal/models"
+	"github.com/xuri/excelize/v2"
 	"os"
+	"strconv"
 )
 
 type ExcelStore struct {
@@ -47,6 +50,55 @@ func (es *ExcelStore) InsertSubmissionFeedback(
 	submission *models.Submission,
 ) error {
 	return nil
+}
+
+func (es *ExcelStore) GetSubmissionFeedback(path, sheet string) (
+	[]models.
+		Submission, error,
+) {
+	var submissions []models.Submission
+
+	// Open the file
+	f, err := excelize.OpenFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	// Get all the rows in the Sheet1.
+
+	rows, err := f.GetRows(sheet)
+	if err != nil {
+		return nil, err
+	}
+
+	// [1:] to ignore the first row,
+	// which is just column headers for data in the
+	// Excel template.
+	for _, row := range rows[1:] {
+		submission := models.Submission{}
+		submission.User.ID = row[0]
+		submission.Grade, _ = strconv.ParseFloat(row[1], 64)
+		submission.Feedback = row[2]
+		submission.ID = row[3]
+		submissions = append(submissions, submission)
+	}
+
+	return submissions, nil
+}
+
+func (es *ExcelStore) OpenFile(path string) (*excelize.File, error) {
+	f, err := excelize.OpenFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 // CSVStore ================================================================= //
