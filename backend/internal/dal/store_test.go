@@ -3,7 +3,6 @@ package dal
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -17,7 +16,8 @@ import (
 
 // setupDatabaseTest creates a connection to an already running
 // postgresql database, for running tests.
-func setupDatabaseTest() (*sql.DB, error) {
+func setupDatabaseTest(t *testing.T) (*sql.DB, error) {
+	t.Helper()
 	var dbConf DBConfig
 	dbConf.Driver = "postgres"
 	dbConf.SetFromEnv()
@@ -51,23 +51,6 @@ func setupDatabaseTest() (*sql.DB, error) {
 	return db, nil
 }
 
-type username string
-type password string
-type email string
-type membership int
-
-func (u username) String() string { return string(u) }
-func (u username) Valid() error   { return nil }
-
-func (p password) String() string { return string(p) }
-func (p password) Valid() error   { return nil }
-
-func (e email) String() string { return string(e) }
-func (e email) Valid() error   { return nil }
-
-func (m membership) String() string { return fmt.Sprintf("%d", m) }
-func (m membership) Valid() error   { return nil }
-
 func TestDB(t *testing.T) {
 	var dbConf DBConfig
 	dbConf.Driver = "postgres"
@@ -88,7 +71,7 @@ func TestDB(t *testing.T) {
 
 	db, err := sql.Open(dbConf.Driver, dbConf.CreateDataSourceName())
 	if err != nil {
-		t.Errorf("%s", err)
+		t.Errorf("%v", err)
 	}
 
 	// Passing a value less than or equal to 0 means no limit.
@@ -99,7 +82,7 @@ func TestDB(t *testing.T) {
 
 	duration, err := time.ParseDuration("15m")
 	if err != nil {
-		t.Errorf("%s", err)
+		t.Errorf("%v", err)
 	}
 
 	db.SetConnMaxIdleTime(duration)
@@ -109,19 +92,22 @@ func TestDB(t *testing.T) {
 
 	err = db.PingContext(ctx)
 	if err != nil {
-		t.Errorf("%s", err)
+		t.Errorf("%v", err)
 	}
-	// db, err := setupDatabaseTest()
-	// if err != nil {
-	// 	t.Errorf("%s", err)
-	// }
-	defer db.Close()
+
+	t.Cleanup(
+		func() {
+			db.Close()
+		},
+	)
 
 	store := NewStore(db)
 
+	ei := "abc123"
+
 	// This should match the dev-init.sql file's first entry.
-	expected := &models.User{
-		Entity: models.Entity{ID: "abc123"},
+	expectedUser := &models.User{
+		Entity: models.Entity{ID: ei},
 		Credentials: models.Credentials{
 			Username:   username("jcena"),
 			Password:   password("password123"),
@@ -133,73 +119,259 @@ func TestDB(t *testing.T) {
 		Bio:            "Can you see me?",
 	}
 
+	expectedCourse := &models.Course{
+		Entity:      models.Entity{ID: "c3b34a9f-8f59-4818-a684-9cda56f42d02"},
+		Title:       "Clown Foundations",
+		Description: "Learn how to be a clown",
+		Messages:    [10]string{},
+		Teachers:    nil,
+		Roster:      nil,
+		Assignments: nil,
+		Archived:    false,
+	}
+
+	// #################
+	// 	 REMOVAL TESTS
+	// #################
+
 	t.Run(
-		"get user by id", func(t *testing.T) {
-			u, err := store.GetUserByID("abc123")
+		"delete user by id", func(t *testing.T) {
+			id := "ghi987"
+			n, err := store.DeleteUserByNetID(id)
 			if err != nil {
-				t.Errorf("%s", err)
+				t.Errorf("%v", err)
 			}
 
-			if u.ID != expected.ID {
-				t.Errorf("got %s, want %s", u.ID, expected.ID)
-			}
-
-			if u.Email.String() != expected.Email.String() {
-				t.Errorf("got %s, want %s", u.Email, expected.Email)
-			}
-
-			if u.ID != expected.ID {
-				t.Errorf("got %s, want %s", u.FullName, expected.FullName)
+			if n == 0 {
+				t.Errorf("no rows deleted")
 			}
 		},
 	)
 
 	t.Run(
-		"get user by username", func(t *testing.T) {
-			u, err := store.GetUserByUsername("jcena")
+		"delete course by title", func(t *testing.T) {
+			title := "Delete This Course"
+			n, err := store.DeleteCourseByTitle(title)
 			if err != nil {
-				t.Errorf("%s", err)
+				t.Errorf("%v", err)
 			}
 
-			if u.ID != expected.ID {
-				t.Errorf("got %s, want %s", u.ID, expected.ID)
-			}
-
-			if u.Email.String() != expected.Email.String() {
-				t.Errorf("got %s, want %s", u.Email, expected.Email)
-			}
-
-			if u.ID != expected.ID {
-				t.Errorf("got %s, want %s", u.FullName, expected.FullName)
+			if n == 0 {
+				t.Errorf("no rows deleted")
 			}
 		},
 	)
+
+	// #################
+	// 	RETRIEVAL TESTS
+	// #################
+
+	// t.Run(
+	// 	"get user by id", func(t *testing.T) {
+	// 		var ua, u *models.User
+	// 		ua, err = models.NewUser("abc123", models.Credentials{}, "John Cena")
+	// 		u, err = store.GetUserByID(ua)
+	// 		if err != nil {
+	// 			t.Errorf("%s", err)
+	// 		}
+
+	// 		if u.ID != expectedUser.ID {
+	// 			t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
+	// 		}
+
+	// 		if u.Email.String() != expectedUser.Email.String() {
+	// 			t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
+	// 		}
+
+	// 		if u.FullName != expectedUser.FullName {
+	// 			t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
+	// 		}
+	// 	},
+	// )
+
+	// t.Run(
+	// 	"get user by id_2", func(t *testing.T) {
+	// 		var id ID = "abc123"
+	// 		u, err := store.GetUserById_2(id)
+	// 		if err != nil {
+	// 			t.Errorf("%v", err)
+	// 		}
+
+	// 		if u.ID != expectedUser.ID {
+	// 			t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
+	// 		}
+
+	// 		if u.Email.String() != expectedUser.Email.String() {
+	// 			t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
+	// 		}
+
+	// 		if u.FullName != expectedUser.FullName {
+	// 			t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
+	// 		}
+	// 	},
+	// )
+
+	t.Run(
+		"get user by email", func(t *testing.T) {
+			var e email = "abc123@nyu.edu"
+			u, err := store.GetUserByEmail(e)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			if u.ID != expectedUser.ID {
+				t.Errorf("got %s, want %s", u.ID, expectedUser.ID)
+			}
+
+			if u.Email.String() != expectedUser.Email.String() {
+				t.Errorf("got %s, want %s", u.Email, expectedUser.Email)
+			}
+
+			if u.FullName != expectedUser.FullName {
+				t.Errorf("got %s, want %s", u.FullName, expectedUser.FullName)
+			}
+		},
+	)
+
+	t.Run(
+		"get course by title", func(t *testing.T) {
+			title := "Clown Foundations"
+			c, err := store.GetCourseByName(title)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			if c.ID != expectedCourse.ID {
+				t.Errorf("got %s, want %s", c.ID, expectedCourse.ID)
+			}
+
+			if c.Description != expectedCourse.Description {
+				t.Errorf(
+					"got %s, want %s",
+					c.Description,
+					expectedCourse.Description,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"get course by id", func(t *testing.T) {
+			id := "c3b34a9f-8f59-4818-a684-9cda56f42d02"
+			c, err := store.GetCourseByID(id)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			if c.Title != expectedCourse.Title {
+				t.Errorf("got %s, want %s", c.Title, expectedCourse.Title)
+			}
+
+			if c.Description != expectedCourse.Description {
+				t.Errorf(
+					"got %s, want %s",
+					c.Description,
+					expectedCourse.Description,
+				)
+			}
+		},
+	)
+
+	// #################
+	//  INSERTION TESTS
+	// #################
 
 	t.Run(
 		"insert user", func(t *testing.T) {
+			var n username = "testuser"
+			var id string = "xyz123"
+
 			cred := models.Credentials{
-				Username:   username("testuser"),
+				Username:   n,
 				Password:   password("testpassword"),
 				Email:      email("test@example.com"),
 				Membership: membership(0),
 			}
 
+			t.Cleanup(
+				func() {
+					store.DeleteUserByNetID(id)
+				},
+			)
+
 			u := &models.User{
 				Entity: models.Entity{
-					ID: "xyz123",
+					ID: id,
 				},
 				Credentials: cred,
 			}
 
 			err := store.InsertUser(u)
 			if err != nil {
-				t.Errorf("%s", err)
+				t.Errorf("%v", err)
 			}
 
-			_, err = store.GetUserByUsername("testuser")
+			_, err = store.GetUserByID(u)
 			if err != nil {
-				t.Errorf("%s", err)
+				t.Errorf("%v", err)
 			}
+		},
+	)
+
+	t.Run(
+		"insert course", func(t *testing.T) {
+			c := &models.Course{
+				Entity: models.Entity{ID: "623208ea-7d83-4cf3-9f31" +
+					"-b21d0ce151ff"},
+				Title: "Nonsense and BS: An Introduction",
+				Description: "Everything you need to know about getting your" +
+					" way without knowing anything. " +
+					"Pre-requisite to Intermediate Conning",
+			}
+
+			id, err := store.InsertCourse(c)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			t.Cleanup(
+				func() {
+					store.DeleteCourseByID(id)
+				},
+			)
+
+			_, err = store.GetCourseByID(c.ID)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+		},
+	)
+
+	// ################
+	//  JUNCTION TESTS
+	// ################
+
+	t.Run(
+		"add teacher to course", func(t *testing.T) {
+			userId := "uvw321"
+			err := store.AddTeacher(expectedCourse.ID, userId)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			// Check for bidirectional representations.
+
+			//t.Run(
+			//	"teacher has course", func(t *testing.T) {
+			//
+			//	},
+			//)
+			//
+			//t.Run(
+			//	"course has teacher", func(t *testing.T) {
+			//
+			//	},
+			//)
 		},
 	)
 }

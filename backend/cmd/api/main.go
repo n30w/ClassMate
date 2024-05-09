@@ -2,21 +2,17 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"time"
-
 	"github.com/joho/godotenv"
 	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
+	"log"
+	"os"
 )
 
 const version = "1.0.0"
 
 func main() {
-	err := godotenv.Load()
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -47,6 +43,26 @@ func main() {
 		"PostgreSQL max connection idle time",
 	)
 
+	// Rate limiter configurations.
+	flag.Float64Var(
+		&cfg.limiter.rps,
+		"limiter-rps",
+		2,
+		"Rate limiter maximum requests per second",
+	)
+	flag.IntVar(
+		&cfg.limiter.burst,
+		"limiter-burst",
+		4,
+		"Rate limiter maximum burst",
+	)
+	flag.BoolVar(
+		&cfg.limiter.enabled,
+		"limiter-enabled",
+		true,
+		"Enable rate limiter",
+	)
+
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "[DKSE] ", log.Ldate|log.Ltime)
@@ -72,24 +88,14 @@ func main() {
 	defer db.Close()
 
 	store := dal.NewStore(db)
+	excelStore := dal.NewExcelStore()
 
 	app := &application{
 		config:   cfg,
 		logger:   logger,
-		services: domain.NewServices(store),
+		services: domain.NewServices(store, excelStore),
 	}
-
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-
-	logger.Printf("starting %s server on %s", cfg.env, server.Addr)
-
-	err = server.ListenAndServe()
+	err = app.server()
 
 	logger.Fatal(err)
 }

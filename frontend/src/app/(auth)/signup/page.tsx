@@ -4,22 +4,30 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import validatePassword from "@/lib/helpers/passwordValidator";
-import FormInput from "./FormInput.tsx";
+import FormInput from "./FormInput";
+import { useRouter } from "next/navigation";
 
 const SignUpForm = () => {
   const [userData, setUserData] = useState({
     email: "",
+    fullname: "",
     password: "",
     netid: "",
+    membership: 0,
   });
   const [passwordError, setPasswordError] = useState("");
-  const [reenteredPassword, setReenteredPassword] = useState("");
-  const [reenteredPasswordError, setReenteredPasswordError] = useState("");
+  // const [reenteredPassword, setReenteredPassword] = useState("");
+  // const [reenteredPasswordError, setReenteredPasswordError] = useState("");
+
+  const router = useRouter();
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     const isValidPassword = validatePassword(userData.password);
-    const doPasswordsMatch = userData.password === reenteredPassword;
+    // const doPasswordsMatch = userData.password === reenteredPassword;
+
+    // console.log(userData.password);
+    // console.log(reenteredPassword);
 
     if (!isValidPassword) {
       setPasswordError(
@@ -28,11 +36,12 @@ const SignUpForm = () => {
       return;
     }
 
-    if (!doPasswordsMatch) {
-      setReenteredPasswordError("Passwords do not match.");
-      return;
-    }
+    // if (!doPasswordsMatch) {
+    //   setReenteredPasswordError("Passwords do not match.");
+    //   return;
+    // }
     // Call the function to post new user data
+    postNewUser(userData);
   };
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
@@ -42,8 +51,34 @@ const SignUpForm = () => {
       [name]: value,
     });
     setPasswordError("");
-    setReenteredPassword(value);
-    setReenteredPasswordError("");
+    // setReenteredPassword(value);
+    // setReenteredPasswordError("");
+  };
+
+  const postNewUser = async (userData: any) => {
+    try {
+      const res: Response = await fetch(
+        "http://localhost:6789/v1/user/create",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: userData.email,
+            fullname: userData.fullname,
+            password: userData.password,
+            netid: userData.netid,
+            membership: userData.membership,
+          }),
+        }
+      );
+      if (res.status !== 400) {
+        router.push("/login");
+      } else {
+        setPasswordError(res.statusText);
+        console.error("Failed to create user:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
   };
 
   return (
@@ -83,6 +118,14 @@ const SignUpForm = () => {
               onChange={handleChange}
             />
             <FormInput
+              label="Fullname"
+              type="text"
+              name="fullname"
+              placeholder="John Smith"
+              value={userData.fullname}
+              onChange={handleChange}
+            />
+            <FormInput
               label="Email"
               type="text"
               name="email"
@@ -90,6 +133,25 @@ const SignUpForm = () => {
               value={userData.email}
               onChange={handleChange}
             />
+            <div className="flex justify-between items-center">
+              <span className="text-white mr-4">Membership:</span>
+              <div>
+                <button
+                  type="button"
+                  className="bg-white px-4 py-2 rounded focus:outline-none mr-16 mb-8"
+                  onClick={() => setUserData({ ...userData, membership: 1 })}
+                >
+                  Teacher
+                </button>
+                <button
+                  type="button"
+                  className="bg-white px-4 py-2 rounded focus:outline-none"
+                  onClick={() => setUserData({ ...userData, membership: 0 })}
+                >
+                  Student
+                </button>
+              </div>
+            </div>
             <FormInput
               label="Password"
               type="password"
@@ -99,7 +161,7 @@ const SignUpForm = () => {
               onChange={handleChange}
               errorMessage={passwordError}
             />
-            <FormInput
+            {/* <FormInput
               label="Re-enter Password"
               type="password"
               name="reenteredPassword"
@@ -109,7 +171,7 @@ const SignUpForm = () => {
                 target: { value: React.SetStateAction<string> };
               }) => setReenteredPassword(e.target.value)}
               errorMessage={reenteredPasswordError}
-            />
+            />*/}
             <input
               type="submit"
               className="text-white font-bold w-40 h-10 px-4 border border-white my-16 hover:bg-gray-400 active:bg-white active:text-black"

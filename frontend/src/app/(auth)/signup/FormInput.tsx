@@ -32,6 +32,7 @@ const FormInput: React.FC<FormInputProps> = ({
         value={value}
         onChange={onChange}
         className="w-80 h-10 px-4 mb-8"
+        required
       />
       {errorMessage && (
         <p data-testid="errorMessage" className="text-red-500 pb-2">

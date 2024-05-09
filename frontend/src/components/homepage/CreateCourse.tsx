@@ -9,28 +9,24 @@ interface props {
 }
 
 const CreateCourse: React.FC<props> = (props: props) => {
+  const token = localStorage.getItem("token");
   const [courseData, setCourseData] = useState({
-    id: "",
     title: "",
-    professor: "",
-    location: "",
+    token: token,
+    banner: "",
   });
 
   const postNewCourse = async (courseData: any) => {
     try {
-      const res: Response = await fetch("/v1/course/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(courseData),
-      });
+      const res: Response = await fetch(
+        "http://localhost:6789/v1/course/create",
+        {
+          method: "POST",
+          body: JSON.stringify(courseData),
+        }
+      );
       if (res.ok) {
-        const newCourse = await res.json();
-        newCourse.name = courseData.title;
-        newCourse.id = courseData.id;
-        newCourse.teachers.push(courseData.professor);
-        newCourse.archived = false;
+        window.location.reload();
       } else {
         console.error("Failed to create course:", res.statusText);
       }
@@ -49,12 +45,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idNum = Date.now().toString();
-    setCourseData({
-      ...courseData,
-      id: idNum,
-    });
-    props.onCourseCreate({ ...courseData, id: idNum });
+    props.onCourseCreate({ ...courseData });
     postNewCourse(courseData);
     props.onClose();
   };
@@ -86,33 +77,16 @@ const CreateCourse: React.FC<props> = (props: props) => {
           </div>
           <div className="mb-2">
             <label
-              htmlFor="teacher"
+              htmlFor="banner"
               className="block text-lg font-medium text-gray-700 py-2"
             >
-              Professor:
+              Course Image URL:
             </label>
             <input
               type="text"
-              id="teacher"
-              name="professor"
-              value={courseData.professor}
-              onChange={handleChange}
-              className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
-              required
-            />
-          </div>
-          <div className="mb-2">
-            <label
-              htmlFor="location"
-              className="block text-lg font-medium text-gray-700 py-2"
-            >
-              Location:
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={courseData.location}
+              id="banner"
+              name="banner"
+              value={courseData.banner}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
               required

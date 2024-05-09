@@ -3,22 +3,32 @@ package domain
 import "github.com/n30w/Darkspace/internal/dal"
 
 type Service struct {
-	UserService       *UserService
-	CourseService     *CourseService
-	MessageService    *MessageService
-	AssignmentService *AssignmentService
+	UserService           *UserService
+	CourseService         *CourseService
+	MessageService        *MessageService
+	AssignmentService     *AssignmentService
+	SubmissionService     *SubmissionService
+	ExcelService          *ExcelService
+	MediaService          *MediaService
+	AuthenticationService *AuthenticationService
 }
 
-func NewServices(s *dal.Store) *Service {
+func NewServices(s *dal.Store, e *dal.ExcelStore) *Service {
 	return &Service{
-		UserService:       NewUserService(s),
-		CourseService:     NewCourseService(s),
-		MessageService:    NewMessageService(s),
-		AssignmentService: NewAssignmentService(s),
+		UserService:           NewUserService(s),
+		CourseService:         NewCourseService(s),
+		MessageService:        NewMessageService(s),
+		AssignmentService:     NewAssignmentService(s),
+		SubmissionService:     NewSubmissionService(s),
+		ExcelService:          NewExcelService(e),
+		MediaService:          NewMediaService(s),
+		AuthenticationService: NewAuthenticationService(s),
 	}
 }
 
-// validates UUID before dal operations
-type Validator interface {
-	ValidateID(id string) bool
-}
+type action int
+
+const (
+	Add action = iota
+	Delete
+)

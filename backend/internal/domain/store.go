@@ -5,4 +5,7 @@ type Store interface {
 	CourseStore
 	MessageStore
 	AssignmentStore
+	AuthenticationStore
+	SubmissionStore
+	ExcelStore
 }

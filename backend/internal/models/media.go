@@ -1,25 +1,21 @@
 package models
 
-import (
-	"time"
-)
-
-type filetype int
+type FileType int
 
 const (
-	JPG filetype = iota
+	JPG FileType = iota
 	PNG
 	PDF
 	M4A
 	MP3
 	TXT
+	XLSX
 	NULL
 )
 
 type Media struct {
-	Name               string     `json:"name"`
-	MediaId            MediaId    `json:"uuid"`
-	DateUploaded       time.Time  `json:"date_uploaded"`
-	CourseAttributions []CourseId `json:"course_attributions"`
-	FileType           int        `json:"file_type"`
+	Entity
+	FileName           string            `json:"name"`
+	AttributionsByType map[string]string `json:"attributions_by_type"`
+	FileType           FileType          `json:"file_type"`
 }

@@ -3,17 +3,17 @@ package domain
 import (
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
 // announcement and discussion services
 type MessageStore interface {
-	InsertMessage(m *models.Message, courseid models.CourseId) error
-	GetMessageById(messageid models.MessageId) (*models.Message, error)
+	InsertMessage(m *models.Message, courseid string) error
+	GetMessageById(messageid string) (*models.Message, error)
 	DeleteMessage(m *models.Message) error
 	ChangeMessageTitle(m *models.Message) (*models.Message, error)
 	ChangeMessageBody(m *models.Message) (*models.Message, error)
+	GetMessagesByCourse(courseid string) ([]string, error)
 }
 
 type MessageService struct {
@@ -22,30 +22,15 @@ type MessageService struct {
 
 func NewMessageService(m MessageStore) *MessageService { return &MessageService{store: m} }
 
-func (ms *MessageService) ValidateID(id models.MessageId) bool {
-	return true
-}
-
-func (ms *MessageService) CreateMessage(m *models.Message, courseid models.CourseId) (*models.Message, error) {
-	newUUID := uuid.New()
-	m.ID = models.MessageId(newUUID)
-
+func (ms *MessageService) CreateMessage(m *models.Message, courseid string) (*models.Message, error) {
 	err := ms.store.InsertMessage(m, courseid)
 	if err != nil {
 		return nil, err
 	}
-	msg, err := ms.store.GetMessageById(m.ID)
-	if err != nil {
-		return nil, err
-	}
-	return msg, nil
+	return m, nil
 }
 
-func (ms *MessageService) UpdateMessage(messageid models.MessageId, action string, updatedField string) (*models.Message, error) {
-	if !ms.ValidateID(messageid) {
-		return nil, fmt.Errorf("invalid message ID: %s", messageid)
-	}
-
+func (ms *MessageService) UpdateMessage(messageid string, action string, updatedField string) (*models.Message, error) {
 	msg, err := ms.store.GetMessageById(messageid)
 	if err != nil {
 		return nil, err
@@ -68,10 +53,7 @@ func (ms *MessageService) UpdateMessage(messageid models.MessageId, action strin
 	return msg, nil
 }
 
-func (ms *MessageService) DeleteMessage(messageid models.MessageId) error {
-	if !ms.ValidateID(messageid) {
-		return fmt.Errorf("invalid message ID: %s", messageid)
-	}
+func (ms *MessageService) DeleteMessage(messageid string) error {
 
 	msg, err := ms.store.GetMessageById(messageid)
 	if err != nil {
@@ -84,14 +66,19 @@ func (ms *MessageService) DeleteMessage(messageid models.MessageId) error {
 	return nil
 }
 
-func (ms *MessageService) ReadMessage(messageid models.MessageId) (*models.Message, error) {
-	if !ms.ValidateID(messageid) {
-		return nil, fmt.Errorf("invalid message ID: %s", messageid)
-	}
+func (ms *MessageService) ReadMessage(messageid string) (*models.Message, error) {
 
 	msg, err := ms.store.GetMessageById(messageid)
 	if err != nil {
 		return nil, err
 	}
 	return msg, err
+}
+func (ms *MessageService) RetrieveMessages(courseid string) ([]string, error) {
+
+	msgids, err := ms.store.GetMessagesByCourse(courseid)
+	if err != nil {
+		return nil, err
+	}
+	return msgids, err
 }

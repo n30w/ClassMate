@@ -14,11 +14,23 @@ export interface Assignment {
 
 export interface Course {
   id: string;
-  title: string;
+  name: string;
   professor: string;
   location: string;
 }
 
 export interface Discussion {
-  name: string;
+  title: string;
+  description: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  fullname: string;
+}
+
+export interface Token {
+  authentication_token: { token: string };
+  permissions: string;
 }

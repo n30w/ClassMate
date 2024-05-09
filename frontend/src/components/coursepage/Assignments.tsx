@@ -1,22 +1,50 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import CreateAssignment from "./CreateAssignment";
 import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
+import CreateAssignment from "./CreateAssignment";
+import { useRouter, usePathname } from "next/navigation";
 
 interface props {
   entries: Assignment[];
+  courseId: string;
 }
 
 const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [isTeacher, setIsTeacher] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
+  const [token, setIsToken] = useState("");
 
-  const handleCreateAssignment = (assignmentData: any) => {
-    setAssignments([...assignments, assignmentData]);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsToken(token);
+    }
+    const permissions = localStorage.getItem("permissions");
+    if (permissions === "1") {
+      setIsTeacher(true);
+    }
+    fetchAssignments();
+  }, [assignments]);
+
+  const fetchAssignments = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:6789/v1/course/assignment/read/${props.courseId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setAssignments(data.assignment);
+      } else {
+        console.error("Failed to fetch assignments:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+    }
   };
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -44,24 +72,76 @@ const Assignments: React.FC<props> = (props: props) => {
     setUploadedFiles(newFiles);
   };
 
+  const postSubmission = async (submissionData: any) => {
+    try {
+      const formData = new FormData();
+      submissionData.forEach((file: File) => {
+        formData.append("files", file);
+      });
+      formData.append("submissiontime", new Date().toISOString());
+      formData.append("assignmentid", submissionData.assignmentid);
+      formData.append("userid", submissionData.userid);
+
+      const res: Response = await fetch(
+        "http://localhost:6789/v1/course/assignment/submission/create",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (res.ok) {
+      } else {
+        console.error("Failed to create submission:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating submission:", error);
+    }
+  };
+
+  // const readFileAsBase64 = (file: File): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onload = () => {
+  //       const base64String = reader.result as string;
+  //       // Extract the base64 content from the data URL
+  //       const base64Content = base64String.split(",")[1];
+  //       resolve(base64Content);
+  //     };
+  //     reader.onerror = (error) => reject(error);
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
+
+  const refreshData = async () => {
+    setIsCreatingAssignment(false);
+    await fetchAssignments();
+  };
+
   return (
     <div className="w-full">
-      <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
-        <h1 className="text-white font-bold text-2xl">Assignments</h1>
-        <AddButton
-          onClick={() => {
-            setIsCreatingAssignment(true);
-          }}
-        />
+      <div className="flex">
+        {isTeacher && (
+          <AddButton
+            onClick={() => {
+              setIsCreatingAssignment(true);
+            }}
+          />
+        )}
+        <select
+          className="ml-16 p-2"
+          value={selectedAssignment}
+          onChange={handleSelectChange}
+        >
+          <option value="">Choose an assignment</option>
+          {assignments &&
+            assignments.map((assignment: any, index: number) => (
+              <option key={index} value={index}>
+                {assignment.name}
+              </option>
+            ))}
+        </select>
       </div>
-      <select value={selectedAssignment} onChange={handleSelectChange}>
-        <option value="">Choose an assignment</option>
-        {assignments.map((assignment, index) => (
-          <option key={index} value={index}>
-            {assignment.title}
-          </option>
-        ))}
-      </select>
       {selectedAssignment !== "" &&
         assignments[parseInt(selectedAssignment)] && (
           <>
@@ -91,19 +171,14 @@ const Assignments: React.FC<props> = (props: props) => {
         <p className="text-white text-l font-bold">File Upload</p>
         <input
           type="file"
+          id="file"
           onChange={handleFileInputChange}
           multiple
           style={{ display: "none" }}
         />
         <button
           className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-          onClick={() =>
-            (
-              document.querySelector(
-                'input[type="file"]'
-              ) as HTMLInputElement | null
-            )?.click()
-          }
+          onClick={() => postSubmission(uploadedFiles)}
         >
           Upload Files
         </button>
@@ -124,12 +199,19 @@ const Assignments: React.FC<props> = (props: props) => {
           ))}
         </ul>
       </div>
+      <button
+        className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
+        // onClick={handleFileUpload}
+      >
+        Submit
+      </button>
       {isCreatingAssignment && (
         <CreateAssignment
           onClose={() => {
-            setIsCreatingAssignment(false);
+            refreshData();
           }}
-          onCourseCreate={handleCreateAssignment}
+          token={token}
+          params={{ id: props.courseId }}
         />
       )}
     </div>

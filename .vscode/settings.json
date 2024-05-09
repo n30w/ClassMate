@@ -52,10 +52,13 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "cmds",
-        "coursepage",
-        "corepack",
+    "corepack",
+    "courseid",
+    "coursepage",
     "Darkspace",
     "dbname",
+    "godotenv",
+    "excelize",
     "healthcheck",
     "idnum",
     "Lihua",
@@ -63,6 +66,7 @@
     "sslmode",
     "Taskfile",
     "taskfiles",
+    "userid",
     "Vercel"
   ]
 }
