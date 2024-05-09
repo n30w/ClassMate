@@ -13,7 +13,10 @@ type ExcelStore interface {
 	GetAssignmentById(assignmentId string) (*models.Assignment, error)
 	GetSubmissionById(submissionId string) (*models.Submission, error)
 	GradeSubmission(grade float64, submission *models.Submission) error
-	InsertSubmissionFeedback(feedback string, submission *models.Submission) error
+	InsertSubmissionFeedback(
+		feedback string,
+		submission *models.Submission,
+	) error
 }
 
 type ExcelService struct {
@@ -21,6 +24,20 @@ type ExcelService struct {
 }
 
 func NewExcelService(e ExcelStore) *ExcelService { return &ExcelService{store: e} }
+
+// ReadSubmissions reads an Excel file from a path. This method is
+// to be used when receiving an offline graded submission Excel sheet,
+// which is submitted by the teacher. This method reads the
+// Excel sheet and returns a slice of Submissions, which can then
+// be put into the database.
+func (es *ExcelService) ReadSubmissions(path string) (
+	[]models.Submission,
+	error,
+) {
+	submissions := []models.Submission{}
+
+	return submissions, nil
+}
 
 func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 	f := excelize.NewFile()
@@ -112,11 +129,17 @@ func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
 			if err != nil {
 				return err
 			}
-			err = cs.store.GradeSubmission(gradeFloat, submission) // Grade the submission
+			err = cs.store.GradeSubmission(
+				gradeFloat,
+				submission,
+			) // Grade the submission
 			if err != nil {
 				return err
 			}
-			err = cs.store.InsertSubmissionFeedback(row[2], submission) // Input feedback for submission
+			err = cs.store.InsertSubmissionFeedback(
+				row[2],
+				submission,
+			) // Input feedback for submission
 			if err != nil {
 				return err
 			}

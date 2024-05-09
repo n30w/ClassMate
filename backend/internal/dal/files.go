@@ -18,7 +18,6 @@ func NewExcelStore() *ExcelStore {
 }
 
 func (es *ExcelStore) GetCourseByID(courseid string) (*models.Course, error) {
-
 	return nil, nil
 }
 
