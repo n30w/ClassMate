@@ -41,6 +41,14 @@ type Store struct {
 	db *sql.DB
 }
 
+var err error
+
+func NewStore(db *sql.DB) *Store {
+	return &Store{
+		db: db,
+	}
+}
+
 func (s *Store) InsertMediaReference(media *models.Media) error {
 	return nil
 }
@@ -61,9 +69,34 @@ func (s *Store) GetSubmissionById(submissionId string) (
 	panic("implement me")
 }
 
+// GetSubmissions queries a junction table to retrieve all related
+// submissions for an assignment.
+func (s *Store) GetSubmissions(assignmentId string) (
+	[]models.Submission,
+	error,
+) {
+	var submissions []models.Submission
+	query := ` SELECT (grade, 
+feedback) FROM WHERE (SELECT * FROM assignment_submissions WHERE
+assignment_id
+= $1)`
+	return nil, nil
+}
+
 func (s *Store) UpdateSubmission(submission *models.Submission) error {
-	//TODO implement me
-	panic("implement me")
+	// Change the submission data in the database using the submission ID.
+	query := `UPDATE submissions SET grade = $1, feedback = $2 WHERE id = $3`
+	_, err := s.db.Exec(
+		query,
+		submission.Grade,
+		submission.Feedback,
+		submission.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Store) SubmitAssignment(assignment *models.Assignment) (
@@ -83,21 +116,15 @@ func (s *Store) ChangeAssignment(
 	panic("implement me")
 }
 
-var err error
-
-func NewStore(db *sql.DB) *Store {
-	return &Store{
-		db: db,
-	}
-}
-
 // InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
 	id := 0
-	stmt, err := s.db.Prepare(`
+	stmt, err := s.db.Prepare(
+		`
 		INSERT INTO users (net_id, created_at, updated_at,
 		username, password, email, membership, full_name)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+	)
 	if err != nil {
 		return err
 	}
@@ -488,8 +515,10 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // 	}
 
 // }
-func (s *Store) InsertBanner(courseid string, bannerurl string) (string,
-	error) {
+func (s *Store) InsertBanner(courseid string, bannerurl string) (
+	string,
+	error,
+) {
 	return "", nil
 }
 
@@ -536,7 +565,10 @@ func (s *Store) InsertTeacherToCourse(c *models.Course, t string) error {
 	return nil
 }
 
-func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid string) (
+func (s *Store) CheckCourseProfessorDuplicate(
+	courseName string,
+	teacherid string,
+) (
 	bool,
 	error,
 ) {
@@ -849,7 +881,10 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 	return assignment, nil
 }
 
-func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertAssignment(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	query := `INSERT INTO assignments (title, description, due_date) VALUES ($1, $2, $3) RETURNING id`
 
 	row := s.db.QueryRow(query, a.Title, a.Description, a.DueDate)
@@ -863,19 +898,25 @@ func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, erro
 		}
 		return nil, err
 	}
-	return a , err
+	return a, err
 }
 
-func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error){
+func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	coursequery := `INSERT INTO course_assignments (course_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(coursequery, a.Course, a.ID)
 	if err != nil {
 		return nil, err
 	}
-	return a , err
+	return a, err
 }
 
-func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	userquery := `INSERT INTO user_assignments (user_net_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(userquery, a.Owner, a.ID)
 	if err != nil {
@@ -1118,11 +1159,17 @@ func (s *Store) InsertSubmission(
 	return sub, nil
 }
 
-func (s *Store) GradeSubmission(grade float64, submission *models.Submission) error {
+func (s *Store) GradeSubmission(
+	grade float64,
+	submission *models.Submission,
+) error {
 	return nil
 }
 
-func (s *Store) InsertSubmissionFeedback(feedback string, submission *models.Submission) error {
+func (s *Store) InsertSubmissionFeedback(
+	feedback string,
+	submission *models.Submission,
+) error {
 	return nil
 }
 
