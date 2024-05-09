@@ -89,11 +89,12 @@ func main() {
 
 	store := dal.NewStore(db)
 	excelStore := dal.NewExcelStore()
+	fileStore := dal.NewLocalVolume()
 
 	app := &application{
 		config:   cfg,
 		logger:   logger,
-		services: domain.NewServices(store, excelStore),
+		services: domain.NewServices(store, excelStore, fileStore),
 	}
 	err = app.server()
 

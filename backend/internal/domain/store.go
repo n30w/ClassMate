@@ -8,4 +8,5 @@ type Store interface {
 	AuthenticationStore
 	SubmissionStore
 	ExcelStore
+	FileStore
 }
