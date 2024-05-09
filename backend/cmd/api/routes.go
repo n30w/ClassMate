@@ -56,7 +56,7 @@ func (app *application) routes() *http.ServeMux {
 		"/v1/course/assignment/create",
 		app.assignmentCreateHandler,
 	)
-	router.HandleFunc("/v1/course/assignment/read", app.assignmentReadHandler)
+	router.HandleFunc("GET /v1/course/assignment/read/{id}", app.assignmentReadHandler)
 	router.HandleFunc(
 		"PATCH /v1/course/assignment/update",
 		app.assignmentUpdateHandler,

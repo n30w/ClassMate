@@ -829,7 +829,7 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 ) {
 	assignment := &models.Assignment{}
 
-	query := `SELECT id, title, description, due_date, course_id FROM assignments WHERE id = $1`
+	query := `SELECT id, title, description, due_date FROM assignments WHERE id = $1`
 	row := s.db.QueryRow(query, assignmentid)
 
 	err := row.Scan(
@@ -837,8 +837,8 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 		&assignment.Title,
 		&assignment.Description,
 		&assignment.DueDate,
-		&assignment.Course,
 	)
+	fmt.Printf("In get assignment by id, %s", assignment.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ERR_RECORD_NOT_FOUND
@@ -849,22 +849,39 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 	return assignment, nil
 }
 
-func (s *Store) InsertAssignment(a *models.Assignment) error {
-	query := `INSERT INTO assignments (id, title, description, due_date, course_id) VALUES ($1, $2, $3, $4, $5)`
+func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, error) {
+	query := `INSERT INTO assignments (title, description, due_date) VALUES ($1, $2, $3) RETURNING id`
 
-	_, err := s.db.Exec(
-		query,
-		a.ID,
-		a.Title,
-		a.Description,
-		a.DueDate,
-		a.Course,
-	)
+	row := s.db.QueryRow(query, a.Title, a.Description, a.DueDate)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	err = row.Scan(&a.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
+		return nil, err
+	}
+	return a , err
+}
 
-	return nil
+func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error){
+	coursequery := `INSERT INTO course_assignments (course_id, assignment_id) VALUES ($1, $2)`
+	_, err = s.db.Exec(coursequery, a.Course, a.ID)
+	if err != nil {
+		return nil, err
+	}
+	return a , err
+}
+
+func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error) {
+	userquery := `INSERT INTO user_assignments (user_net_id, assignment_id) VALUES ($1, $2)`
+	_, err = s.db.Exec(userquery, a.Owner, a.ID)
+	if err != nil {
+		return nil, err
+	}
+	return a, err
 }
 
 func (s *Store) DeleteAssignment(a *models.Assignment) error {
@@ -876,6 +893,28 @@ func (s *Store) DeleteAssignment(a *models.Assignment) error {
 	}
 
 	return nil
+}
+func (s *Store) GetAssignmentsByCourse(courseid string) ([]string, error) {
+	query := `SELECT assignment_id FROM course_assignments WHERE course_id = $1`
+	rows, err := s.db.Query(query, courseid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var assignmentIds []string
+
+	for rows.Next() {
+		var assignmentId string
+		if err := rows.Scan(&assignmentId); err != nil {
+			return nil, err
+		}
+		assignmentIds = append(assignmentIds, assignmentId)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return assignmentIds, nil
 }
 
 func (s *Store) ChangeAssignmentTitle(
@@ -1044,7 +1083,6 @@ func (s *Store) AddStudent(c *models.Course, userid string) (
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("inserting student into course_roster")
 
 	return c, nil
 }

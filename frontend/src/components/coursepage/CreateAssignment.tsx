@@ -5,15 +5,20 @@ import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
-  onCourseCreate: (assignmentData: any) => void;
+  token: string;
+  params: {
+    id: string;
+  };
 }
 
 const CreateAssignment: React.FC<props> = (props: props) => {
   const [assignmentData, setAssignmentData] = useState({
-    id: "",
     title: "",
-    dueDate: "",
+    duedate: "",
     description: "",
+    media: [],
+    token: props.token,
+    courseid: props.params.id,
   });
 
   const postNewAssignment = async (assignmentData: any) => {
@@ -44,12 +49,6 @@ const CreateAssignment: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idNum = Date.now().toString();
-    setAssignmentData({
-      ...assignmentData,
-      id: idNum,
-    });
-    props.onCourseCreate({ ...assignmentData, id: idNum });
     postNewAssignment(assignmentData);
     props.onClose();
   };
@@ -86,10 +85,10 @@ const CreateAssignment: React.FC<props> = (props: props) => {
               Due Date:
             </label>
             <input
-              type="long text"
+              type="date"
               id="duedate"
               name="duedate"
-              value={assignmentData.dueDate}
+              value={assignmentData.duedate}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
             />
@@ -102,7 +101,7 @@ const CreateAssignment: React.FC<props> = (props: props) => {
               Description:
             </label>
             <input
-              type="text"
+              type="long text"
               id="description"
               name="description"
               value={assignmentData.description}

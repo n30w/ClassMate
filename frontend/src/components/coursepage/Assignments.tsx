@@ -3,26 +3,42 @@
 import React, { useState, useEffect } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
+import CreateAssignment from "./CreateAssignment";
+import { useRouter, usePathname } from "next/navigation";
 
 interface props {
   entries: Assignment[];
+  courseId: string;
 }
 
 const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
+  const [token, setIsToken] = useState("");
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsToken(token);
+    }
+    const permissions = localStorage.getItem("permissions");
+    if (permissions === "1") {
+      setIsTeacher(true);
+    }
     fetchAssignments();
-  }, []);
+  }, [assignments]);
 
   const fetchAssignments = async () => {
     try {
-      const response = await fetch("/v1/assignment/read");
+      const response = await fetch(
+        `http://localhost:6789/v1/course/assignment/read/${props.courseId}`
+      );
       if (response.ok) {
         const data = await response.json();
-        setAssignments(data);
+        setAssignments(data.assignment);
       } else {
         console.error("Failed to fetch assignments:", response.statusText);
       }
@@ -83,30 +99,49 @@ const Assignments: React.FC<props> = (props: props) => {
     }
   };
 
-  const readFileAsBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        // Extract the base64 content from the data URL
-        const base64Content = base64String.split(",")[1];
-        resolve(base64Content);
-      };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
+  // const readFileAsBase64 = (file: File): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onload = () => {
+  //       const base64String = reader.result as string;
+  //       // Extract the base64 content from the data URL
+  //       const base64Content = base64String.split(",")[1];
+  //       resolve(base64Content);
+  //     };
+  //     reader.onerror = (error) => reject(error);
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
+
+  const refreshData = async () => {
+    setIsCreatingAssignment(false);
+    await fetchAssignments();
   };
 
   return (
     <div className="w-full">
-      <select value={selectedAssignment} onChange={handleSelectChange}>
-        <option value="">Choose an assignment</option>
-        {assignments.map((assignment, index) => (
-          <option key={index} value={index}>
-            {assignment.title}
-          </option>
-        ))}
-      </select>
+      <div className="flex">
+        {isTeacher && (
+          <AddButton
+            onClick={() => {
+              setIsCreatingAssignment(true);
+            }}
+          />
+        )}
+        <select
+          className="ml-16 p-2"
+          value={selectedAssignment}
+          onChange={handleSelectChange}
+        >
+          <option value="">Choose an assignment</option>
+          {assignments &&
+            assignments.map((assignment: any, index: number) => (
+              <option key={index} value={index}>
+                {assignment.name}
+              </option>
+            ))}
+        </select>
+      </div>
       {selectedAssignment !== "" &&
         assignments[parseInt(selectedAssignment)] && (
           <>
@@ -170,6 +205,15 @@ const Assignments: React.FC<props> = (props: props) => {
       >
         Submit
       </button>
+      {isCreatingAssignment && (
+        <CreateAssignment
+          onClose={() => {
+            refreshData();
+          }}
+          token={token}
+          params={{ id: props.courseId }}
+        />
+      )}
     </div>
   );
 };

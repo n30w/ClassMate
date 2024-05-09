@@ -26,10 +26,8 @@ const CreateAnnouncement: React.FC<props> = (props) => {
   //   minute: "2-digit",
   // })}`;
 
-  const url = props.params.id;
-
   const [announcementData, setAnnouncementData] = useState({
-    courseId: url,
+    courseId: props.params.id,
     token: props.token,
     title: "",
     description: "",

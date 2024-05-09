@@ -108,7 +108,10 @@ export default function Page({ params }: { params: { id: string } }) {
         )}
         {data && (
           <div className="flex flex-col">
-            <Assignments entries={data.course_info.assignments} />
+            <Assignments
+              courseId={url}
+              entries={data.course_info.assignments}
+            />
           </div>
         )}
       </div>

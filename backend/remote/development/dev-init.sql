@@ -89,6 +89,12 @@ CREATE TABLE IF NOT EXISTS user_courses (
                                             course_id UUID REFERENCES courses(id) ON DELETE CASCADE ,
                                             PRIMARY KEY (user_net_id, course_id)
 );
+-- Junction Table for Users and Assignments (Many-to-Many)
+CREATE TABLE IF NOT EXISTS user_assignments (
+                                            user_net_id VARCHAR REFERENCES users(net_id) ON DELETE CASCADE,
+                                            assignment_id UUID REFERENCES assignments(id) ON DELETE CASCADE ,
+                                            PRIMARY KEY (user_net_id, assignment_id)
+);
 
 -- Junction Table for Courses and Banners (One-to-One)
 CREATE TABLE IF NOT EXISTS course_banners (

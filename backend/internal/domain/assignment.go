@@ -3,13 +3,16 @@ package domain
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
 type AssignmentStore interface {
 	GetAssignmentById(assignmentid string) (*models.Assignment, error)
-	InsertAssignment(assignment *models.Assignment) error
+	GetAssignmentsByCourse(courseid string) ([]string, error) 
+	InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error)
+	InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error)
+	InsertAssignment(assignment *models.Assignment) (*models.Assignment,error)
 	DeleteAssignment(assignment *models.Assignment) error
 	SubmitAssignment(assignment *models.Assignment) (*models.Assignment, error)
 	ChangeAssignment(assignment *models.Assignment, updatedfield string, action string) (*models.Assignment, error)
@@ -28,10 +31,27 @@ func (as *AssignmentService) ReadAssignment(assignmentid string) (*models.Assign
 	}
 	return assignment, nil
 }
+func (as *AssignmentService) RetrieveAssignments(courseid string) ([]string, error) {
+	assignmentids, err := as.store.GetAssignmentsByCourse(courseid)
+	if err != nil {
+		return nil, err
+	}
+	return assignmentids, nil
+}
+
 
 func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*models.Assignment, error) {
-	assignment.ID = uuid.New().String()
-	err := as.store.InsertAssignment(assignment)
+	assignment, err := as.store.InsertAssignment(assignment)
+	if err != nil {
+		return nil, err
+	}
+
+	assignment, err = as.store.InsertIntoCourseAssignments(assignment)
+	if err != nil {
+		return nil, err
+	}
+
+	assignment, err = as.store.InsertAssignmentIntoUser(assignment)
 	if err != nil {
 		return nil, err
 	}

@@ -398,7 +398,6 @@ func (app *application) announcementCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("Course id: %s   ", cId)
 	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -451,8 +450,6 @@ func (app *application) announcementReadHandler(
 		}
 		msgs = append(msgs, *msg)
 	}
-
-	fmt.Printf("Msgids: %#v\n", msgs)
 
 	res := jsonWrap{"announcements": msgs}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
@@ -613,8 +610,7 @@ func (app *application) userUpdateHandler(
 	r *http.Request,
 ) {
 	id := r.PathValue("id")
-	app.logger.Println(id)
-
+	fmt.Printf("id: %s", id)
 }
 
 // userDeleteHandler deletes a user. A request must come from
@@ -718,12 +714,14 @@ func (app *application) assignmentCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	fmt.Printf("AssignmentCreateHandler")
 	var input struct {
 		Title       string   `json:"title"`
 		Token       string   `json:"token"`
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 		DueDate     string   `json:"duedate"`
+		CourseId  string `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -736,15 +734,17 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	fmt.Printf("Assignment Authenticating token")
 
 	post := models.Post{
 		Title:       input.Title,
 		Description: input.Description,
 		Owner:       netid,
 		Media:       input.Media,
+		Course: input.CourseId,
 	}
 
-	dueDate, err := time.Parse("2006-02-01", input.DueDate)
+	dueDate, err := time.Parse("2006-01-02", input.DueDate)
 
 	if err != nil {
 		app.serverError(w, r, err)
@@ -761,7 +761,6 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
 	res := jsonWrap{"assignment": assignment}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
@@ -780,22 +779,27 @@ func (app *application) assignmentReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		Uuid string `json:"uuid"`
-	}
-	err := app.readJSON(w, r, &input)
+
+	courseid := r.PathValue("id")
+	fmt.Printf("courseid: %s", courseid)
+	assignmentids, err := app.services.AssignmentService.RetrieveAssignments(courseid)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	assignment, err := app.services.AssignmentService.ReadAssignment(input.Uuid)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	fmt.Printf("Assignmentids: %v", assignmentids)
+	var assignments []models.Assignment
+	for _, id := range assignmentids {
+		assignment, err := app.services.AssignmentService.ReadAssignment(id)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		assignments = append(assignments, *assignment)
 	}
+	fmt.Printf("Assignments: %v", assignments)
 
-	res := jsonWrap{"assignment": assignment}
+	res := jsonWrap{"assignment": assignments}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
@@ -1111,24 +1115,20 @@ func (app *application) addStudentHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	app.logger.Print("in addstudenthandler")
 	var input struct {
 		NetId    string `json:"netid"`
 		CourseId string `json:"courseid"`
 	}
-
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
 	user, err := app.services.UserService.GetByID(input.NetId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
 	for _, course := range user.Courses {
 		if course == input.CourseId {
 			res := jsonWrap{"response": "User is already enrolled"}
@@ -1139,7 +1139,6 @@ func (app *application) addStudentHandler(
 			}
 		}
 	}
-
 	// User is not enrolled in the course
 	_, err = app.services.CourseService.AddToRoster(input.CourseId, input.NetId)
 	if err != nil {
