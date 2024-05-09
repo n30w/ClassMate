@@ -10,6 +10,7 @@ type AuthenticationStore interface {
 	InsertToken(t *models.Token) error
 	DeleteTokenFrom(netId, scope string) error
 	GetNetIdFromHash(hash []byte) (string, error)
+	GetTokenFromNetId(t *models.Token) (*models.Token, error)
 }
 
 type AuthenticationService struct{ store AuthenticationStore }
@@ -30,6 +31,17 @@ func (as *AuthenticationService) NewToken(netId string) (*models.Token, error) {
 	}
 	return token, nil
 
+}
+
+func (as *AuthenticationService) RetrieveToken(netId string) (*models.Token, error) {
+	t := &models.Token{
+		NetID: netId,
+	}
+	token, err := as.store.GetTokenFromNetId(t)
+	if err != nil {
+		return nil, err
+	}
+	return token, err
 }
 
 func (as *AuthenticationService) GetNetIdFromToken(token string) (string, error) {

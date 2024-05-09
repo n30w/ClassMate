@@ -9,7 +9,7 @@ import (
 // announcement and discussion services
 type MediaStore interface {
 	GetMediaReferenceById(media *models.Media) error
-	UploadMedia(multipart.File, *models.Submission)
+	InsertMetaData(*models.Media) (*models.Media, error)
 	InsertMediaReference(media *models.Media) error
 }
 
@@ -20,10 +20,14 @@ type MediaService struct {
 func NewMediaService(m MediaStore) *MediaService { return &MediaService{store: m} }
 
 func (ms *MediaService) UploadMedia(
-	multipart.File,
-	*models.Submission,
+	file multipart.File,
+	media *models.Media,
 ) (*models.Media, error) {
-	return nil, nil
+	media, err := ms.store.InsertMetaData(media)
+	if err != nil {
+		return nil, err
+	}
+	return media, nil
 }
 
 // GetMedia retrieves a piece of media from a file system given a reference.

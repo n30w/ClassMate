@@ -25,8 +25,10 @@ func NewUserService(us UserStore) *UserService {
 	return &UserService{store: us}
 }
 
-func (us *UserService) ValidateUser(email string, password string) error {
-	user, err := us.store.GetUserByEmail(Email(email))
+func (us *UserService) ValidateUser(netid string, password string) error {
+	u := &models.User{}
+	u.ID = netid
+	user, err := us.store.GetUserByID(u)
 	fmt.Printf("%s :: %s", user.Password.String(), password)
 	if err != nil {
 		return err
