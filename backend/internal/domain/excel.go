@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -17,6 +18,8 @@ type ExcelStore interface {
 		feedback string,
 		submission *models.Submission,
 	) error
+	GetSubmissionFeedback(path, sheet string) ([]models.Submission, error)
+	OpenFile(path string) (*excelize.File, error)
 }
 
 type ExcelService struct {
@@ -34,9 +37,38 @@ func (es *ExcelService) ReadSubmissions(path string) (
 	[]models.Submission,
 	error,
 ) {
-	submissions := []models.Submission{}
+	submissions, err := es.store.GetSubmissionFeedback(path, "Sheet1")
+	if err != nil {
+		return nil, err
+	}
 
 	return submissions, nil
+}
+
+// WriteSubmissions writes to an Excel file which will be sent to the
+// teacher for their offline grading use.
+func (es *ExcelService) WriteSubmissions(
+	path string,
+	submissions []models.Submission,
+) error {
+
+	return nil
+}
+
+func (es *ExcelService) SendFile(path string, w io.Writer) error {
+	f, err := es.store.OpenFile(path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	err = f.Write(w)
+	if err != nil {
+		return nil
+	}
+
+	return nil
 }
 
 func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
@@ -110,7 +142,7 @@ func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
 	return f, nil
 }
 
-func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
+func (es *ExcelService) ParseExcel(excel *excelize.File) error {
 	for id := 0; id < excel.SheetCount; id++ {
 		// Get the name of the sheet
 		assignment := excel.GetSheetName(id) // Sheet name in the form of "Assignment-{id}"
@@ -120,7 +152,7 @@ func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
 		}
 		for _, row := range rows { // Loop through each row (each student)
 			sid := row[0]
-			submission, err := cs.store.GetSubmissionById(sid) // Get submission struct
+			submission, err := es.store.GetSubmissionById(sid) // Get submission struct
 			if err != nil {
 				return err
 			}
@@ -129,14 +161,14 @@ func (cs *ExcelService) ParseExcel(excel *excelize.File) error {
 			if err != nil {
 				return err
 			}
-			err = cs.store.GradeSubmission(
+			err = es.store.GradeSubmission(
 				gradeFloat,
 				submission,
 			) // Grade the submission
 			if err != nil {
 				return err
 			}
-			err = cs.store.InsertSubmissionFeedback(
+			err = es.store.InsertSubmissionFeedback(
 				row[2],
 				submission,
 			) // Input feedback for submission
