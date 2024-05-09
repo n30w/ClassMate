@@ -399,7 +399,6 @@ func (app *application) announcementCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("Course id: %s   ", cId)
 	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -414,15 +413,12 @@ func (app *application) announcementCreateHandler(
 		},
 		Type: 1,
 	}
-
-	// msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
 	msg, err = app.services.MessageService.CreateMessage(msg, cId)
 
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
 	res := jsonWrap{"announcement": msg}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
@@ -676,7 +672,6 @@ func (app *application) userLoginHandler(
 		)
 		return
 	}
-
 	// If token exists, return token:
 	token, err := app.services.AuthenticationService.RetrieveToken(input.NetId)
 	if err != errors.New("record not found") {
@@ -707,9 +702,7 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err2)
 		return
 	}
-
 	wrapped := jsonWrap{"authentication_token": token, "permissions": membership}
-
 	err = app.writeJSON(
 		w, http.StatusCreated,
 		wrapped, nil,
