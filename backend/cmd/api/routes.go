@@ -27,7 +27,10 @@ func (app *application) routes() *http.ServeMux {
 		app.announcementDeleteHandler,
 	)
 	// ID is message ID
-	router.HandleFunc("GET /v1/course/announcement/read/{id}", app.announcementReadHandler)
+	router.HandleFunc(
+		"GET /v1/course/announcement/read/{id}",
+		app.announcementReadHandler,
+	)
 	router.HandleFunc("POST /v1/course/addstudent", app.addStudentHandler)
 
 	// Course CRUD operations
@@ -56,7 +59,10 @@ func (app *application) routes() *http.ServeMux {
 		"/v1/course/assignment/create",
 		app.assignmentCreateHandler,
 	)
-	router.HandleFunc("GET /v1/course/assignment/read/{id}", app.assignmentReadHandler)
+	router.HandleFunc(
+		"GET /v1/course/assignment/read/{id}",
+		app.assignmentReadHandler,
+	)
 	router.HandleFunc(
 		"PATCH /v1/course/assignment/update",
 		app.assignmentUpdateHandler,
@@ -127,6 +133,19 @@ func (app *application) routes() *http.ServeMux {
 
 	// Image operations
 	// router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
+
+	// Offline grading operations
+	// Subtle difference, one is a GET, one is a POST. The POST expects
+	// data to be sent along with request. The GET just sends back data.
+
+	router.HandleFunc(
+		"GET /v1/course/{id}/assignment/{post}/offline",
+		app.sendOfflineTemplate,
+	)
+	router.HandleFunc(
+		"POST /v1/course/{id}/assignment/{post}/offline",
+		app.addOfflineGrading,
+	)
 
 	return router
 }

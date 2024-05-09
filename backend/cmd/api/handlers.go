@@ -189,7 +189,11 @@ func (app *application) courseCreateHandler(
 		Teachers: teachers,
 	}
 
-	course, err = app.services.CourseService.CreateCourse(course, teacherid, input.BannerUrl)
+	course, err = app.services.CourseService.CreateCourse(
+		course,
+		teacherid,
+		input.BannerUrl,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -721,7 +725,7 @@ func (app *application) assignmentCreateHandler(
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 		DueDate     string   `json:"duedate"`
-		CourseId  string `json:"courseid"`
+		CourseId    string   `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -741,7 +745,7 @@ func (app *application) assignmentCreateHandler(
 		Description: input.Description,
 		Owner:       netid,
 		Media:       input.Media,
-		Course: input.CourseId,
+		Course:      input.CourseId,
 	}
 
 	dueDate, err := time.Parse("2006-01-02", input.DueDate)
@@ -1147,6 +1151,105 @@ func (app *application) addStudentHandler(
 	}
 
 	res := jsonWrap{"response": "user successfully added to course"}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// sendOfflineTemplate receives a request from a user about
+// an offline grading template. It then prepares the template and sends
+// it back to the client who requested it.
+func (app *application) sendOfflineTemplate(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	path := ""
+	courseId := r.PathValue("id")
+	assignmentId := r.PathValue("post")
+
+	// Get submissions of this assignment from database.
+	submissions, err := app.services.SubmissionService.GetSubmissions(
+		courseId, assignmentId,
+	)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Prepare the Excel file for transit.
+	err = app.services.ExcelService.WriteSubmissions(path, submissions)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// TODO maybe also save file?
+
+	// With this path, send over the file.
+	w.Header().Set(
+		"Content-Type",
+		"application/vnd.openxmlformats-officedocument.spreadsheet",
+	)
+
+	// TODO might need to change the filename.
+	w.Header().Set(
+		"Content-Disposition",
+		"attachment; filename=\"submissions.xlsx\"",
+	)
+
+	err = app.services.ExcelService.SendFile(path, w)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// addOfflineGrading will receive an incoming template and will
+// sort the itemized template submissions and input them into
+// the database.
+func (app *application) addOfflineGrading(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	path := ""
+	courseId := r.PathValue("id")
+	assignmentId := r.PathValue("post")
+
+	// Limits the upload size to 10MB.
+	r.ParseMultipartForm(10 << 20)
+
+	f, handler, err := r.FormFile("excel")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	defer f.Close()
+
+	// Save the file to disk.
+	err = app.services.FileService.Save(handler.Filename, f)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Import data into database.
+
+	s, err := app.services.ExcelService.ReadSubmissions(path)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.services.SubmissionService.UpdateSubmissions(courseId, s)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"response": "successfully updated submissions"}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
