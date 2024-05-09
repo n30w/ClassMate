@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS submissions (
                                            file_type VARCHAR,
                                            submission_time TIMESTAMP WITHOUT TIME ZONE,
                                            on_time BOOLEAN,
-                                           grade INT,
+                                           grade FLOAT,
                                            feedback VARCHAR
 );
 
