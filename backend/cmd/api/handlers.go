@@ -1143,6 +1143,7 @@ func (app *application) addStudentHandler(
 			}
 		}
 	}
+
 	// User is not enrolled in the course
 	_, err = app.services.CourseService.AddToRoster(input.CourseId, input.NetId)
 	if err != nil {
@@ -1165,7 +1166,8 @@ func (app *application) sendOfflineTemplate(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	path := ""
+	var path string
+
 	courseId := r.PathValue("id")
 	assignmentId := r.PathValue("post")
 
@@ -1178,14 +1180,19 @@ func (app *application) sendOfflineTemplate(
 		return
 	}
 
-	// Prepare the Excel file for transit.
-	err = app.services.ExcelService.WriteSubmissions(path, submissions)
+	// Generate file name for Excel.
+	fileName := fmt.Sprintf("%s-%s", courseId, assignmentId)
+
+	// Prepare the Excel file for transit. WriteSubmissions
+	// saves the file to where it needs to be saved.
+	path, err = app.services.ExcelService.WriteSubmissions(
+		path,
+		fileName, submissions,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	// TODO maybe also save file?
 
 	// With this path, send over the file.
 	w.Header().Set(
@@ -1193,10 +1200,11 @@ func (app *application) sendOfflineTemplate(
 		"application/vnd.openxmlformats-officedocument.spreadsheet",
 	)
 
-	// TODO might need to change the filename.
+	headerValue := fmt.Sprintf(`attachment; filename="%s.xlsx"`, fileName)
+
 	w.Header().Set(
 		"Content-Disposition",
-		"attachment; filename=\"submissions.xlsx\"",
+		headerValue,
 	)
 
 	err = app.services.ExcelService.SendFile(path, w)
@@ -1209,18 +1217,21 @@ func (app *application) sendOfflineTemplate(
 // addOfflineGrading will receive an incoming template and will
 // sort the itemized template submissions and input them into
 // the database.
-func (app *application) addOfflineGrading(
+func (app *application) receiveOfflineGrades(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	path := ""
 	courseId := r.PathValue("id")
 	assignmentId := r.PathValue("post")
 
 	// Limits the upload size to 10MB.
-	r.ParseMultipartForm(10 << 20)
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-	f, handler, err := r.FormFile("excel")
+	f, handler, err := r.FormFile("file")
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1229,26 +1240,30 @@ func (app *application) addOfflineGrading(
 	defer f.Close()
 
 	// Save the file to disk.
-	err = app.services.FileService.Save(handler.Filename, f)
+	path, err := app.services.FileService.Save(handler.Filename, f)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// Import data into database.
-
-	s, err := app.services.ExcelService.ReadSubmissions(path)
+	// Get the submissions from the Excel file via path.
+	submissions, err := app.services.ExcelService.ReadSubmissions(path)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	err = app.services.SubmissionService.UpdateSubmissions(courseId, s)
+	// Update the submission records in the database.
+	err = app.services.SubmissionService.UpdateSubmissions(
+		courseId,
+		submissions,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	// All is well.
 	res := jsonWrap{"response": "successfully updated submissions"}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {

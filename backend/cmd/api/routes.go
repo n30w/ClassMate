@@ -144,7 +144,7 @@ func (app *application) routes() *http.ServeMux {
 	)
 	router.HandleFunc(
 		"POST /v1/course/{id}/assignment/{post}/offline",
-		app.addOfflineGrading,
+		app.receiveOfflineGrades,
 	)
 
 	return router
