@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"io"
+	"path"
 	"strconv"
 
 	"github.com/n30w/Darkspace/internal/models"
@@ -10,16 +11,10 @@ import (
 )
 
 type ExcelStore interface {
-	GetCourseByID(courseid string) (*models.Course, error)
-	GetAssignmentById(assignmentId string) (*models.Assignment, error)
-	GetSubmissionById(submissionId string) (*models.Submission, error)
-	GradeSubmission(grade float64, submission *models.Submission) error
-	InsertSubmissionFeedback(
-		feedback string,
-		submission *models.Submission,
-	) error
-	GetSubmissionFeedback(path, sheet string) ([]models.Submission, error)
-	OpenFile(path string) (*excelize.File, error)
+	Get(path ...string) ([][]string, error)
+	Save(file *excelize.File, to string) (string, error)
+	Open(path ...string) (*excelize.File, error)
+	AddRow(row []string) error
 }
 
 type ExcelService struct {
@@ -37,26 +32,78 @@ func (es *ExcelService) ReadSubmissions(path string) (
 	[]models.Submission,
 	error,
 ) {
-	submissions, err := es.store.GetSubmissionFeedback(path, "Sheet1")
+	var submissions []models.Submission
+	rows, err := es.store.Get(path)
 	if err != nil {
 		return nil, err
+	}
+
+	// [1:] to ignore the first row,
+	// which is just column headers for data in the
+	// Excel template.
+	for _, row := range rows[1:] {
+		submission := models.Submission{}
+		submission.User.ID = row[0]
+		submission.Grade, _ = strconv.ParseFloat(row[1], 64)
+		submission.Feedback = row[2]
+		submission.ID = row[3]
+		submissions = append(submissions, submission)
 	}
 
 	return submissions, nil
 }
 
 // WriteSubmissions writes to an Excel file which will be sent to the
-// teacher for their offline grading use.
+// teacher for their offline grading use. It writes to an Excel file.
+// p is the path to save the file to. The name of the file is automatically
+// generated. The path to the generated file is returned along with an error.
 func (es *ExcelService) WriteSubmissions(
-	path string,
+	p, fileName string,
 	submissions []models.Submission,
-) error {
+) (string, error) {
+	savePath := path.Join(p, fileName)
 
-	return nil
+	// Open template.
+	f, err := es.store.Open()
+	if err != nil {
+		return "", err
+	}
+
+	defer f.Close()
+
+	// Write to template.
+	for _, submission := range submissions {
+		row := []string{submission.User.FullName,
+			fmt.Sprintf("%.1f", submission.Grade), submission.ID}
+		err = es.store.AddRow(row)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Save the file to disk.
+	s, err := es.store.Save(f, savePath)
+	if err != nil {
+		return "", err
+	}
+
+	// s should be a complete path with the generated file name.
+	return s, nil
 }
 
+func (es *ExcelService) Save(f *excelize.File, to string) (string, error) {
+	p, err := es.store.Save(f, to)
+	if err != nil {
+		return "", err
+	}
+
+	return p, nil
+}
+
+// SendFile writes an Excel file to an io.Writer interface. For our
+// use case, this will be an HTTP stream.
 func (es *ExcelService) SendFile(path string, w io.Writer) error {
-	f, err := es.store.OpenFile(path)
+	f, err := es.store.Open(path)
 	if err != nil {
 		return err
 	}
@@ -68,114 +115,5 @@ func (es *ExcelService) SendFile(path string, w io.Writer) error {
 		return nil
 	}
 
-	return nil
-}
-
-func (es *ExcelService) CreateExcel(courseId string) (*excelize.File, error) {
-	f := excelize.NewFile()
-	defer f.Close()
-
-	course, err := es.store.GetCourseByID(courseId)
-	if err != nil {
-		return nil, err
-	}
-	headers := []string{"NetID", "Numeric Grade", "Feedback", "#SID"}
-
-	for idx, id := range course.Assignments {
-		sheetname := fmt.Sprintf("Assignment-%d", rune(idx))
-		f.NewSheet(sheetname)
-		assignment, err := es.store.GetAssignmentById(id)
-		if err != nil {
-			return nil, err
-		}
-		for i, header := range headers {
-			f.SetCellValue(
-				id,
-				fmt.Sprintf("%s%d", string(rune(65+i)), 1),
-				header,
-			) // Set headers
-		}
-		for index, userid := range course.Roster {
-			submission, err := es.store.GetSubmissionById(assignment.Submission[index])
-			if err != nil {
-				return nil, err
-			}
-			err = f.SetCellValue(
-				id,
-				fmt.Sprintf("%s%d", string(rune(65)), index),
-				userid,
-			) // Add user in column A
-			if err != nil {
-				return nil, err
-			}
-			err = f.SetCellValue(
-				id,
-				fmt.Sprintf("%s%d", string(rune(66)), index),
-				submission.Grade,
-			) // Add submission grade in column B
-			if err != nil {
-				return nil, err
-			}
-			err = f.SetCellValue(
-				id,
-				fmt.Sprintf("%s%d", string(rune(67)), index),
-				submission.Feedback,
-			) // Add submission feedback in column C
-			if err != nil {
-				return nil, err
-			}
-			err = f.SetCellValue(
-				id,
-				fmt.Sprintf("%s%d", string(rune(68)), index),
-				assignment.Submission[index],
-			) // Add submission id in column D
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if err := f.SaveAs(fmt.Sprintf("%s.xlsx", course.Title)); err != nil {
-		return nil, err
-	}
-
-	return f, nil
-}
-
-func (es *ExcelService) ParseExcel(excel *excelize.File) error {
-	for id := 0; id < excel.SheetCount; id++ {
-		// Get the name of the sheet
-		assignment := excel.GetSheetName(id) // Sheet name in the form of "Assignment-{id}"
-		rows, err := excel.GetRows(assignment)
-		if err != nil {
-			return err
-		}
-		for _, row := range rows { // Loop through each row (each student)
-			sid := row[0]
-			submission, err := es.store.GetSubmissionById(sid) // Get submission struct
-			if err != nil {
-				return err
-			}
-			gradeStr := row[1]
-			gradeFloat, err := strconv.ParseFloat(gradeStr, 64)
-			if err != nil {
-				return err
-			}
-			err = es.store.GradeSubmission(
-				gradeFloat,
-				submission,
-			) // Grade the submission
-			if err != nil {
-				return err
-			}
-			err = es.store.InsertSubmissionFeedback(
-				row[2],
-				submission,
-			) // Input feedback for submission
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
