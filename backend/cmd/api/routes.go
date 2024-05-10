@@ -132,12 +132,14 @@ func (app *application) routes() *http.ServeMux {
 	)
 
 	// Image operations
-	// router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
+	// router.HandlerFunc("POST /v1/course/image", app.courseImageHandler)
 
 	// Offline grading operations
 	// Subtle difference, one is a GET, one is a POST. The POST expects
 	// data to be sent along with request. The GET just sends back data.
-
+	// The system does not need to know the ID of the course or the ID
+	// of the assignment, because this should be inside the sheet
+	// of the Excel document, under columns G2 and H2.
 	router.HandleFunc(
 		"GET /v1/course/{id}/assignment/{post}/offline",
 		app.sendOfflineTemplate,

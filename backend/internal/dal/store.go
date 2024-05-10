@@ -76,11 +76,36 @@ func (s *Store) GetSubmissions(assignmentId string) (
 	error,
 ) {
 	var submissions []models.Submission
-	query := ` SELECT (grade, 
-feedback) FROM WHERE (SELECT * FROM assignment_submissions WHERE
-assignment_id
-= $1)`
-	return nil, nil
+	query := `  
+		SELECT s.id, s.grade, s.feedback, u.full_name, u.net_id
+        FROM submissions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.assignment_id = $1
+	`
+
+	rows, err := s.db.Query(query, assignmentId)
+	defer rows.Close()
+
+	for rows.Next() {
+		var sub models.Submission
+		err := rows.Scan(
+			&sub.ID,
+			&sub.Grade,
+			&sub.Feedback,
+			&sub.User.FullName,
+			&sub.User.ID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		submissions = append(submissions, sub)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return submissions, nil
 }
 
 func (s *Store) UpdateSubmission(submission *models.Submission) error {

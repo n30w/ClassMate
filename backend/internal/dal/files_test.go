@@ -2,10 +2,13 @@ package dal
 
 import "testing"
 
+const (
+	excelStorePath = "../../resources/"
+	excelFileName  = "grade-offline-template.xlsx"
+)
+
 func TestExcelStore_Get(t *testing.T) {
 	es := NewExcelStore()
-	p := "../../resources/"
-	fileName := "grade-offline-template.xlsx"
 
 	want := [][]string{
 		{
@@ -13,7 +16,7 @@ func TestExcelStore_Get(t *testing.T) {
 		},
 	}
 
-	got, err := es.Get(p + fileName)
+	got, err := es.Get(excelStorePath + excelFileName)
 	if err != nil {
 		t.Errorf("%+v", err)
 	}

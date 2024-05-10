@@ -2,101 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/n30w/Darkspace/internal/models"
-	"github.com/xuri/excelize/v2"
 )
-
-func (app *application) downloadExcelHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		CourseId string `json:"courseid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Get the Excel file with the user input data
-	file, err := app.services.ExcelService.CreateExcel(input.CourseId)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Set the headers necessary to get browsers to interpret the downloadable file
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set(
-		"Content-Disposition",
-		fmt.Sprintf(`attachment; filename="%s"`, "todo"),
-	) // TODO FIX ME
-	w.Header().Set("File-Name", fmt.Sprintf("%s"))
-	w.Header().Set("Content-Transfer-Encoding", "binary")
-	w.Header().Set("Expires", "0")
-	err = file.Write(w)
-	file.Close()
-}
-
-func (app *application) uploadExcelHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	r.ParseMultipartForm(10 << 20)
-	file, _, err := r.FormFile("excelfile")
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	defer file.Close()
-	// Read the Excel file content
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	// Create a temporary file to store the uploaded Excel file
-	tempFile, err := os.CreateTemp("temp-excel", "upload-*.xlsx")
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-	defer tempFile.Close()
-
-	// Write the Excel file content to the temporary file
-	_, err = tempFile.Write(fileBytes)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Open the Excel file using excelize
-	excelFile, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = app.services.ExcelService.ParseExcel(excelFile)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, nil, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-}
 
 // An input struct is used for ushering in data because it makes it explicit
 // as to what we are getting from the incoming request.
@@ -1133,6 +1044,7 @@ func (app *application) addStudentHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 	for _, course := range user.Courses {
 		if course == input.CourseId {
 			res := jsonWrap{"response": "User is already enrolled"}
@@ -1172,9 +1084,7 @@ func (app *application) sendOfflineTemplate(
 	assignmentId := r.PathValue("post")
 
 	// Get submissions of this assignment from database.
-	submissions, err := app.services.SubmissionService.GetSubmissions(
-		courseId, assignmentId,
-	)
+	submissions, err := app.services.SubmissionService.GetSubmissions(assignmentId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1187,7 +1097,8 @@ func (app *application) sendOfflineTemplate(
 	// saves the file to where it needs to be saved.
 	path, err = app.services.ExcelService.WriteSubmissions(
 		path,
-		fileName, submissions,
+		fileName,
+		submissions,
 	)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1221,9 +1132,6 @@ func (app *application) receiveOfflineGrades(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	courseId := r.PathValue("id")
-	assignmentId := r.PathValue("post")
-
 	// Limits the upload size to 10MB.
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -1254,10 +1162,7 @@ func (app *application) receiveOfflineGrades(
 	}
 
 	// Update the submission records in the database.
-	err = app.services.SubmissionService.UpdateSubmissions(
-		courseId,
-		submissions,
-	)
+	err = app.services.SubmissionService.UpdateSubmissions(submissions)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

@@ -51,33 +51,35 @@ func (ss *SubmissionService) ReadSubmission(id string) (
 func (ss *SubmissionService) UpdateSubmission(id string) (
 	*models.Submission,
 	error,
-) { // check if there already exists a submission from the user
+) {
+
 	return nil, nil
 }
 
 // GetSubmissions retrieves the submissions for a specific course given
 // a Course ID and Assignment ID. It returns a slice of submissions
 // for the given assignment.
-func (ss *SubmissionService) GetSubmissions(courseId, assignmentId string) (
+func (ss *SubmissionService) GetSubmissions(assignmentId string) (
 	[]models.Submission,
 	error,
 ) {
-	// Check if the course even exists.
+	// Get all submissions using assignmentId.
+	submissions, err := ss.store.GetSubmissions(assignmentId)
+	if err != nil {
+		return nil, err
+	}
 
-	// Check if the assignment exists.
-
-	// Get all submissions using query.
-
-	return nil, nil
+	return submissions, nil
 }
 
 // UpdateSubmissions updates submissions from a slice of
 // submissions. This is used for updating submission entries
 // in the database from an Excel file.
 func (ss *SubmissionService) UpdateSubmissions(
-	courseId string,
 	submissions []models.Submission,
 ) error {
+	// You can technically do this in one go, but not sure
+	// how to write that query...
 	for _, submission := range submissions {
 		err := ss.store.UpdateSubmission(&submission)
 		if err != nil {

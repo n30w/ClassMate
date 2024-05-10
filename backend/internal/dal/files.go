@@ -16,7 +16,7 @@ type ExcelStore struct {
 
 func NewExcelStore() *ExcelStore {
 	return &ExcelStore{
-		excelTemplateSheetName: "Sheet1",
+		excelTemplateSheetName: "submissions",
 	}
 }
 
@@ -65,7 +65,7 @@ func (es *ExcelStore) Save(file *excelize.File, to string) (string, error) {
 	return "", nil
 }
 
-// Open opens an Excel file at a specified path. Uses variadric
+// Open opens an Excel file at a specified path. Uses variadic
 // parameters to accept an optional value. If the optional value
 // is not set, uses the struct default templatePath.
 func (es *ExcelStore) Open(path ...string) (*excelize.File, error) {
@@ -84,7 +84,17 @@ func (es *ExcelStore) Open(path ...string) (*excelize.File, error) {
 	return f, nil
 }
 
-func (es *ExcelStore) AddRow(row []string) error {
+// AddRow adds a row to an Excel sheet. It takes a row and a start.
+// Start is the starting cell on which to add.
+func (es *ExcelStore) AddRow(
+	f *excelize.File, row *[]interface{},
+	start string,
+) error {
+	err := f.SetSheetRow(es.excelTemplateSheetName, start, row)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

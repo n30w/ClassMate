@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"fmt"
 	"io"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/n30w/Darkspace/internal/models"
 	"github.com/xuri/excelize/v2"
@@ -14,7 +14,7 @@ type ExcelStore interface {
 	Get(path ...string) ([][]string, error)
 	Save(file *excelize.File, to string) (string, error)
 	Open(path ...string) (*excelize.File, error)
-	AddRow(row []string) error
+	AddRow(f *excelize.File, row *[]interface{}, start string) error
 }
 
 type ExcelService struct {
@@ -71,15 +71,27 @@ func (es *ExcelService) WriteSubmissions(
 
 	defer f.Close()
 
-	// Write to template.
-	for _, submission := range submissions {
-		row := []string{submission.User.FullName,
-			fmt.Sprintf("%.1f", submission.Grade), submission.ID}
-		err = es.store.AddRow(row)
+	// Write rows to template.
+	for i, submission := range submissions {
+		row := &[]interface{}{submission.User.FullName, submission.User.ID, submission.Grade, submission.Feedback, submission.ID}
+
+		// Start in column A, increment downward. i+2 because
+		// i starts at 0, Excel rows start at 1, and the first
+		// row is used by column headers.
+		err = es.store.AddRow(f, row, "A"+strconv.Itoa(i+2))
 		if err != nil {
 			return "", err
 		}
 	}
+
+	// Write Course ID and Assignment ID to template. Uses the
+	// fileName to retrieve the Course ID and Assignment ID.
+	caId := strings.Split(fileName, "-")
+	row := &[]interface{}{
+		caId[0],
+		caId[1],
+	}
+	err = es.store.AddRow(f, row, "G2")
 
 	// Save the file to disk.
 	s, err := es.store.Save(f, savePath)
