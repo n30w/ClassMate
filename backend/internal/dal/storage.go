@@ -4,4 +4,38 @@
 
 package dal
 
-type LocalVolume struct{}
+import (
+	"io"
+	"os"
+	"path"
+)
+
+type LocalVolume struct {
+	path string
+}
+
+func NewLocalVolume(path string) *LocalVolume {
+	return &LocalVolume{
+		path: path,
+	}
+}
+
+// CreateFile makes a new file and returns it. Does not automatically close!
+func (lv *LocalVolume) CreateFile(name string) (*os.File, string, error) {
+	p := path.Join(lv.path, name)
+	f, err := os.Create(p)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return f, p, nil
+}
+
+func (lv *LocalVolume) CopyFile(f1 io.Writer, f2 io.Reader) error {
+	_, err := io.Copy(f1, f2)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
