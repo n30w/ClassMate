@@ -7,6 +7,9 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"github.com/n30w/Darkspace/internal/models"
+	"path/filepath"
+
 )
 
 // jsonWrap wraps a json message response before it gets sent out.
@@ -156,4 +159,25 @@ func jsonBuilder(data any) ([]byte, error) {
 	return js, nil
 }
 
-// Database helpers
+// File Helpers
+func GetFileType(filename string) models.FileType {
+    extension := strings.ToLower(filepath.Ext(filename))
+    switch extension {
+    case ".jpg", ".jpeg":
+        return models.JPG
+    case ".png":
+        return models.PNG
+    case ".pdf":
+        return models.PDF
+    case ".m4a":
+        return models.M4A
+    case ".mp3":
+        return models.MP3
+    case ".txt":
+        return models.TXT
+    case ".xlsx":
+        return models.XLSX
+    default:
+        return models.NULL
+    }
+}

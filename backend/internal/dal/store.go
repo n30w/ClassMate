@@ -488,10 +488,6 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // 	}
 
 // }
-func (s *Store) InsertBanner(courseid string, bannerurl string) (string,
-	error) {
-	return "", nil
-}
 
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.
@@ -566,6 +562,8 @@ func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid strin
 
 }
 
+
+
 func (s *Store) GetCourseByName(name string) (
 	*models.Course,
 	error,
@@ -627,7 +625,7 @@ func (s *Store) GetCourseByID(courseid string) (
 	c := &models.Course{}
 	c.ID = courseid
 
-	query := `SELECT title, description, created_at FROM courses WHERE id=$1`
+	query := `SELECT title, description, created_at, banner_id FROM courses WHERE id=$1`
 	rows, err := s.db.Query(query, courseid)
 
 	if err != nil {
@@ -639,6 +637,7 @@ func (s *Store) GetCourseByID(courseid string) (
 			&c.Title,
 			&c.Description,
 			&c.CreatedAt,
+			&c.Banner,
 		); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -685,6 +684,7 @@ func (s *Store) GetRoster(courseid string) (
 
 	return roster, nil
 }
+
 
 func (s *Store) DeleteCourse(c *models.Course) error {
 	query := `
@@ -1122,18 +1122,22 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (
 
 func (s *Store) InsertSubmission(
 	sub *models.Submission,
-	file string,
 ) (
 	*models.Submission,
 	error,
 ) {
-	query := `INSERT INTO submissions (id, file_type, submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO submissions (submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	_, err := s.db.Exec(query, file, sub.ID)
+	row := s.db.QueryRow(query, sub.SubmissionTime, sub.IsOnTime, sub.Grade, sub.Feedback)
+	err := row.Scan(
+		&sub.ID,
+	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
 		return nil, err
 	}
-
 	return sub, nil
 }
 
@@ -1213,4 +1217,86 @@ func (s *Store) GetNameById(userid string) (
 	}
 	u.Membership = membership(m)
 	return &u.Membership, nil
+}
+
+func (s *Store) InsertMedia(
+	m *models.Media,
+) (
+	*models.Media,
+	error,
+) {
+	query := `INSERT INTO media (type, path) VALUES ($1, $2) RETURNING id`
+
+	row := s.db.QueryRow(query, m.FileType, m.FilePath)
+	err := row.Scan(&m.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+	
+
+func (s *Store) GetMediaById(mediaid string) (
+	*models.Media,
+	error,
+) {
+	media := &models.Media{}
+
+	query := `SELECT id, type, path FROM media WHERE id = $1`
+	row := s.db.QueryRow(query, mediaid)
+
+	err := row.Scan(
+		&media.ID,
+		&media.FileType,
+		&media.FilePath,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
+		return nil, err
+	}
+
+	return media, nil
+}
+
+func (s *Store) InsertMediaIntoCourse (
+	m *models.Media,
+) error {
+	query := `INSERT INTO course_media (course_id, media_id, media_path) VALUES ($1, $2, $3)`
+
+	_, err := s.db.Exec(query, m.AttributionsByType["course"], m.ID, m.FilePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) InsertMediaIntoAssignment (
+	m *models.Media,
+) error {
+	query := `INSERT INTO assignment_media (assignment_id, media_id, media_path) VALUES ($1, $2, $3)`
+
+	_, err := s.db.Exec(query, m.AttributionsByType["assignment"], m.ID, m.FilePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) InsertMediaIntoSubmission (
+	m *models.Media,
+) error {
+	query := `INSERT INTO submission_media (submission_id, media_id, media_path) VALUES ($1, $2, $3)`
+
+	_, err := s.db.Exec(query, m.AttributionsByType["submission"], m.ID, m.FilePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

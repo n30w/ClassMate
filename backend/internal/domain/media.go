@@ -1,16 +1,17 @@
 package domain
 
 import (
-	"mime/multipart"
-
 	"github.com/n30w/Darkspace/internal/models"
+	"fmt"
 )
 
 // announcement and discussion services
 type MediaStore interface {
-	GetMediaReferenceById(media *models.Media) error
-	InsertMetaData(*models.Media) (*models.Media, error)
-	InsertMediaReference(media *models.Media) error
+	GetMediaById(id string) (*models.Media, error)
+	InsertMedia(media *models.Media) (*models.Media, error)
+	InsertMediaIntoCourse(m *models.Media) error 
+	InsertMediaIntoAssignment(m *models.Media) error 
+	InsertMediaIntoSubmission(m *models.Media) error 
 }
 
 type MediaService struct {
@@ -19,20 +20,58 @@ type MediaService struct {
 
 func NewMediaService(m MediaStore) *MediaService { return &MediaService{store: m} }
 
-func (ms *MediaService) UploadMedia(
-	file multipart.File,
+func (ms *MediaService) AddBanner(
 	media *models.Media,
 ) (*models.Media, error) {
-	media, err := ms.store.InsertMetaData(media)
+	media, err := ms.store.InsertMedia(media)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Added banner to media table: %v", media)
+	err = ms.store.InsertMediaIntoCourse(media) 
+	if err != nil {
+		return nil, err
+	}
+
+	return media, nil
+}
+
+func (ms *MediaService) AddAssignmentMedia(
+	media *models.Media,
+) (*models.Media, error) {
+	media, err := ms.store.InsertMedia(media)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.store.InsertMediaIntoAssignment(media) 
+	if err != nil {
+		return nil, err
+	}
+	return media, nil
+}
+func (ms *MediaService) AddSubmissionMedia(
+	media *models.Media,
+) (*models.Media, error) {
+	media, err := ms.store.InsertMedia(media)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.store.InsertMediaIntoSubmission(media) 
 	if err != nil {
 		return nil, err
 	}
 	return media, nil
 }
 
-// GetMedia retrieves a piece of media from a file system given a reference.
+// GetMedia retrieves a piece of media from a file system given a path.
 // It does two things: finds a piece of media in the database by its
-// reference and, if it does find it, returns it as a sequence of bytes.
-func (ms *MediaService) GetMedia(ref string) ([]byte, error) {
-	return nil, nil
+// path and, if it does find it, returns it as a sequence of bytes.
+func (ms *MediaService) GetMedia(id string) (*models.Media, error) {
+	media, err := ms.store.GetMediaById(id)
+	if err != nil {
+		return nil, err
+	}
+	return media, nil
 }
+
+

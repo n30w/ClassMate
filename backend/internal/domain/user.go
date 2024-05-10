@@ -26,10 +26,13 @@ func NewUserService(us UserStore) *UserService {
 }
 
 func (us *UserService) ValidateUser(netid string, password string) error {
-	u := &models.User{}
-	u.ID = netid
+	u := &models.User{
+		Entity: models.Entity{
+			ID: netid,
+		},
+	}
+	
 	user, err := us.store.GetUserByID(u)
-	fmt.Printf("%s :: %s", user.Password.String(), password)
 	if err != nil {
 		return err
 	}

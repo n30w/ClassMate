@@ -96,7 +96,7 @@ func main() {
 	app := &application{
 		config:   cfg,
 		logger:   logger,
-		services: domain.NewServices(store, excelStore),
+		services: domain.NewServices(store, excelStore, fileStore),
 	}
 	err = app.server()
 

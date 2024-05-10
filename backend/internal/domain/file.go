@@ -4,6 +4,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"fmt"
 )
 
 type FileStore interface {
@@ -32,6 +33,19 @@ func (fs *FileService) Save(name string, in multipart.File) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Printf("Saved filed to disk \n")
 
 	return p, nil
 }
+
+// GetFile opens a file at the specified path and returns it.
+func (fs *FileService) GetFile(path string) (*os.File, error) {
+    // Open the file at the specified path
+    file, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+
+    return file, nil
+}
+

@@ -33,11 +33,12 @@ func (app *application) routes() *http.ServeMux {
 	// Course CRUD operations
 	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
 	router.HandleFunc("GET /v1/course/read/{id}", app.courseReadHandler)
-	router.HandleFunc(
-		"PATCH /v1/course/update/{id}/{action}",
-		app.courseUpdateHandler,
-	)
+	router.HandleFunc("PATCH /v1/course/update/{id}/{action}", app.courseUpdateHandler)
 	router.HandleFunc("POST /v1/course/delete/{id}", app.courseDeleteHandler)
+	router.HandleFunc("POST /v1/course/{id}/banner/create", app.bannerCreateHandler)
+	router.HandleFunc("POST /v1/course/{id}/banner/read", app.bannerReadHandler)
+
+
 
 	// User CRUD operations
 	router.HandleFunc("POST /v1/user/create", app.userCreateHandler)
@@ -65,6 +66,14 @@ func (app *application) routes() *http.ServeMux {
 		"POST /v1/course/assignment/delete",
 		app.assignmentDeleteHandler,
 	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/{id}/upload",
+		app.assignmentMediaUploadHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/download/{mediaId}",
+		app.mediaDownloadHandler,
+	)
 
 	// Discussion CRUD operations
 	router.HandleFunc(
@@ -86,10 +95,10 @@ func (app *application) routes() *http.ServeMux {
 		"POST /v1/course/{post}/media/create",
 		app.mediaCreateHandler,
 	)
-	router.HandleFunc(
-		"POST /v1/course/{post}/media/delete",
-		app.mediaDeleteHandler,
-	)
+	// router.HandleFunc(
+	// 	"POST /v1/course/{post}/media/delete",
+	// 	app.mediaDeleteHandler,
+	// )
 
 	// Authentication
 	// router.HandleFunc(

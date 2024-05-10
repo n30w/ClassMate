@@ -1,15 +1,16 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-
+	"mime"
+	"path/filepath"
 	"github.com/n30w/Darkspace/internal/models"
+	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -140,7 +141,7 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 // courseHomepageHandler returns data related to the homepage of a course.
 //
 // REQUEST: course id
-// RESPONSE:
+// RESPONSE: course + banner image
 func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -152,11 +153,11 @@ func (app *application) courseHomepageHandler(
 		app.serverError(w, r, err)
 	}
 
-	res := jsonWrap{"course_info": course}
-
+	res := jsonWrap{"course": course}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -168,7 +169,6 @@ func (app *application) courseCreateHandler(
 	var input struct {
 		Title     string `json:"title"`
 		Token     string `json:"token"`
-		BannerUrl string `json:"banner"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -190,7 +190,7 @@ func (app *application) courseCreateHandler(
 		Teachers: teachers,
 	}
 
-	course, err = app.services.CourseService.CreateCourse(course, teacherid, input.BannerUrl)
+	course, err = app.services.CourseService.CreateCourse(course, teacherid)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -380,6 +380,99 @@ func (app *application) courseDeleteHandler(
 	}
 }
 
+// REQUEST: courseid + image file
+// RESPONSE: status
+func (app *application) bannerCreateHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	fmt.Printf("In bannerCreateHandler \n")
+	courseid := r.PathValue("id")
+	// Limit upload size to 10MB
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		app.serverError(w, r, err)
+		return 
+	}
+
+	f, handler, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w,r,err)
+		return
+	}
+	
+	defer f.Close()
+
+	// Save the file to disk
+	path, err := app.services.FileService.Save(handler.Filename, f)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	fmt.Printf("Saved filed to disk \n")
+	ft := GetFileType(handler.Filename)
+	if ft == models.NULL {
+		app.serverError(w, r, fmt.Errorf("invalid file type"))
+		return
+	}
+	// Create metadata and add to database
+	metadata := &models.Media{
+		FileName: handler.Filename,
+		AttributionsByType: make(map[string]string),
+		FileType: ft,
+		FilePath: path,
+	}
+	
+	metadata.AttributionsByType["course"] = courseid
+
+	metadata, err = app.services.MediaService.AddBanner(metadata)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	fmt.Printf("added banner and now sending back response... ")
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// REQUEST: banner idx
+// RESPONSE: banner
+func (app *application) bannerReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	bannerid := r.PathValue("id")
+	banner, err := app.services.MediaService.GetMedia(bannerid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	bannerFile, err := app.services.FileService.GetFile(banner.FilePath)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	defer bannerFile.Close() 
+
+	// Get file information (size and name)
+    fileInfo, err := bannerFile.Stat()
+    if err != nil {
+        app.serverError(w, r, err)
+        return
+    }
+
+    // Set Content-Type header based on file extension
+    contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
+    if contentType == "" {
+        contentType = "application/octet-stream" // Default content type
+    }
+    w.Header().Set("Content-Type", contentType)
+
+    // Serve the file's content
+    http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), bannerFile)
+}
+
 // REQUEST: course ID, teacher ID, announcement description
 // RESPONSE: announcement
 func (app *application) announcementCreateHandler(
@@ -526,7 +619,7 @@ func (app *application) announcementDeleteHandler(
 // userCreateHandler creates a user.
 //
 // REQUEST: email, password, full name, netid, membership
-// RESPONSE: home page
+// RESPONSE: status
 func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -564,11 +657,6 @@ func (app *application) userCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	// Here we would generate a session token, but not now.
-
-	// Send back home page.
-
 }
 
 // userReadHandler reads a specific user's data,
@@ -665,16 +753,20 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		err = app.writeJSON(
 			w, http.StatusCreated,
-			fmt.Sprint("wrong login information"), nil,
+			"wrong login information", nil,
 		)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
 		return
 	}
 	// If token exists, return token:
 	token, err := app.services.AuthenticationService.RetrieveToken(input.NetId)
-	if err != errors.New("record not found") {
-		membership, err2 := app.services.UserService.GetMembership(input.NetId)
-		if err2 != nil {
-			app.serverError(w, r, err2)
+	if err != dal.ERR_RECORD_NOT_FOUND {
+		membership, err := app.services.UserService.GetMembership(input.NetId)
+		if err != nil {
+			app.serverError(w, r, err)
 			return
 		}
 		wrapped := jsonWrap{"authentication_token": token, "permissions": membership}
@@ -694,6 +786,7 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Token: %v", token)
 	membership, err2 := app.services.UserService.GetMembership(input.NetId)
 	if err2 != nil {
 		app.serverError(w, r, err2)
@@ -726,7 +819,6 @@ func (app *application) assignmentCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Printf("AssignmentCreateHandler")
 	var input struct {
 		Title       string   `json:"title"`
 		Token       string   `json:"token"`
@@ -746,7 +838,6 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("Assignment Authenticating token")
 
 	post := models.Post{
 		Title:       input.Title,
@@ -793,13 +884,11 @@ func (app *application) assignmentReadHandler(
 ) {
 
 	courseid := r.PathValue("id")
-	fmt.Printf("courseid: %s", courseid)
 	assignmentids, err := app.services.AssignmentService.RetrieveAssignments(courseid)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("Assignmentids: %v", assignmentids)
 	var assignments []models.Assignment
 	for _, id := range assignmentids {
 		assignment, err := app.services.AssignmentService.ReadAssignment(id)
@@ -809,7 +898,6 @@ func (app *application) assignmentReadHandler(
 		}
 		assignments = append(assignments, *assignment)
 	}
-	fmt.Printf("Assignments: %v", assignments)
 
 	res := jsonWrap{"assignment": assignments}
 
@@ -888,6 +976,88 @@ func (app *application) assignmentDeleteHandler(
 		return
 	}
 
+}
+
+func (app *application) assignmentMediaUploadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	assignmentid := r.PathValue("id")
+	 // Parse the multipart form
+	 err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
+	 if err != nil {
+		 app.serverError(w, r, err)
+		 return
+	 }
+ 
+	// Retrieve the file(s) from the form
+	files := r.MultipartForm.File["files"]
+ 
+	for _, fileHeader := range files {
+		// Open the uploaded file
+		file, err := fileHeader.Open()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer file.Close()
+		path, err := app.services.FileService.Save(fileHeader.Filename, file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		media := &models.Media {
+			FileName: fileHeader.Filename,
+			AttributionsByType: make(map[string]string),
+			FileType: GetFileType(fileHeader.Filename),
+			FilePath: path,
+		}
+		media.AttributionsByType["assignment"] = assignmentid
+		media, err = app.services.MediaService.AddAssignmentMedia(media)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+	}
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+}
+
+// REQUEST: media id
+// RESPONSE: assignment media
+func (app *application) mediaDownloadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	mediaid := r.PathValue("mediaId")
+	media, err := app.services.MediaService.GetMedia(mediaid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	file, err := app.services.FileService.GetFile(media.FilePath)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	defer file.Close() 
+
+	// Get file information (size and name)
+    fileInfo, err := file.Stat()
+    if err != nil {
+        app.serverError(w, r, err)
+        return
+    }
+
+    // Set Content-Type header based on file extension
+    contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
+    if contentType == "" {
+        contentType = "application/octet-stream" // Default content type
+    }
+    w.Header().Set("Content-Type", contentType)
+
+    // Serve the file's content
+    http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
 }
 
 // discussionCreateHandler creates a discussion.
@@ -1054,11 +1224,6 @@ func (app *application) submissionCreateHandler(
 	metadata.AttributionsByType["assignment"] = r.FormValue("assignmentid") // Set media attributions
 	metadata.AttributionsByType["user"] = r.FormValue("userid")
 
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
 	submission := &models.Submission{
 		AssignmentId: r.FormValue("assignmentid"),
 		User: models.User{
@@ -1074,7 +1239,7 @@ func (app *application) submissionCreateHandler(
 	}
 	metadata.AttributionsByType["submission"] = submission.ID // Set media submission attribution with new submission ID
 
-	metadata, err = app.services.MediaService.UploadMedia(file, metadata) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	metadata, err = app.services.MediaService.AddSubmissionMedia(metadata) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
