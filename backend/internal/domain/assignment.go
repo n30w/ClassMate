@@ -9,13 +9,20 @@ import (
 
 type AssignmentStore interface {
 	GetAssignmentById(assignmentid string) (*models.Assignment, error)
-	GetAssignmentsByCourse(courseid string) ([]string, error) 
-	InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error)
+	GetAssignmentsByCourse(courseid string) ([]string, error)
+	InsertIntoCourseAssignments(a *models.Assignment) (
+		*models.Assignment,
+		error,
+	)
 	InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error)
-	InsertAssignment(assignment *models.Assignment) (*models.Assignment,error)
+	InsertAssignment(assignment *models.Assignment) (*models.Assignment, error)
 	DeleteAssignment(assignment *models.Assignment) error
 	SubmitAssignment(assignment *models.Assignment) (*models.Assignment, error)
-	ChangeAssignment(assignment *models.Assignment, updatedfield string, action string) (*models.Assignment, error)
+	ChangeAssignment(
+		assignment *models.Assignment,
+		updatedfield string,
+		action string,
+	) (*models.Assignment, error)
 }
 
 type AssignmentService struct {
@@ -24,23 +31,31 @@ type AssignmentService struct {
 
 func NewAssignmentService(a AssignmentStore) *AssignmentService { return &AssignmentService{store: a} }
 
-func (as *AssignmentService) ReadAssignment(assignmentid string) (*models.Assignment, error) {
+func (as *AssignmentService) ReadAssignment(assignmentid string) (
+	*models.Assignment,
+	error,
+) {
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
 		return nil, err
 	}
 	return assignment, nil
 }
-func (as *AssignmentService) RetrieveAssignments(courseid string) ([]string, error) {
-	assignmentids, err := as.store.GetAssignmentsByCourse(courseid)
+func (as *AssignmentService) RetrieveAssignments(courseid string) (
+	[]string,
+	error,
+) {
+	assignmentIds, err := as.store.GetAssignmentsByCourse(courseid)
 	if err != nil {
 		return nil, err
 	}
-	return assignmentids, nil
+	return assignmentIds, nil
 }
 
-
-func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*models.Assignment, error) {
+func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	assignment, err := as.store.InsertAssignment(assignment)
 	if err != nil {
 		return nil, err
@@ -59,7 +74,11 @@ func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (*m
 	return assignment, nil
 }
 
-func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield interface{}, action string) (*models.Assignment, error) {
+func (as *AssignmentService) UpdateAssignment(
+	assignmentid string,
+	updatedfield interface{},
+	action string,
+) (*models.Assignment, error) {
 
 	assignment, err := as.store.GetAssignmentById(assignmentid)
 	if err != nil {
@@ -67,7 +86,10 @@ func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield 
 	}
 	if action == "submit" {
 		if _, ok := updatedfield.(bool); !ok {
-			return nil, fmt.Errorf("updated field is not of type bool, it is of type %T", updatedfield)
+			return nil, fmt.Errorf(
+				"updated field is not of type bool, it is of type %T",
+				updatedfield,
+			)
 		}
 		assignment, err := as.store.SubmitAssignment(assignment)
 		if err != nil {
@@ -76,9 +98,16 @@ func (as *AssignmentService) UpdateAssignment(assignmentid string, updatedfield 
 		return assignment, nil
 	} else if action == "body" || action == "title" || action == "duedate" {
 		if _, ok := updatedfield.(string); !ok {
-			return nil, fmt.Errorf("updated field is not of type string, it is of type %T", updatedfield)
+			return nil, fmt.Errorf(
+				"updated field is not of type string, it is of type %T",
+				updatedfield,
+			)
 		}
-		assignment, err := as.store.ChangeAssignment(assignment, updatedfield.(string), action)
+		assignment, err := as.store.ChangeAssignment(
+			assignment,
+			updatedfield.(string),
+			action,
+		)
 		if err != nil {
 			return nil, err
 		}
