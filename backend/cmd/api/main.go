@@ -87,9 +87,11 @@ func main() {
 
 	defer db.Close()
 
+	volume := os.Getenv("LOCAL_STORAGE_DIRECTORY")
+
 	store := dal.NewStore(db)
 	excelStore := dal.NewExcelStore()
-	fileStore := dal.NewLocalVolume()
+	fileStore := dal.NewLocalVolume(volume)
 
 	app := &application{
 		config:   cfg,
