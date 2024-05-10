@@ -5,109 +5,96 @@ package dal
 
 import (
 	"encoding/csv"
-	"fmt"
 	"github.com/n30w/Darkspace/internal/models"
 	"github.com/xuri/excelize/v2"
 	"os"
-	"strconv"
 )
 
 type ExcelStore struct {
-	excelTemplatePath, excelTemplateName string
+	excelTemplatePath, excelTemplateSheetName, excelTemplateName string
 }
 
 func NewExcelStore() *ExcelStore {
-	return &ExcelStore{}
+	return &ExcelStore{
+		excelTemplateSheetName: "Sheet1",
+	}
 }
 
-func (es *ExcelStore) GetCourseByID(courseid string) (*models.Course, error) {
-	return nil, nil
-}
-
-func (es *ExcelStore) GetAssignmentById(assignmentId string) (
-	*models.
-		Assignment, error,
+// Get retrieves all the data in a file. It takes optional
+// arguments. It is a slice, where index 0 is the path and
+// index 1 is the sheet name. Defaults to struct initials
+// if left blank.
+func (es *ExcelStore) Get(path ...string) (
+	[][]string, error,
 ) {
-	return nil, nil
-}
+	var p, n string
+	p = es.excelTemplatePath
+	n = es.excelTemplateSheetName
 
-func (es *ExcelStore) GetSubmissionById(submissionId string) (
-	*models.
-		Submission, error,
-) {
-	return nil, nil
-}
-
-func (es *ExcelStore) GradeSubmission(
-	grade float64,
-	submission *models.Submission,
-) error {
-	return nil
-}
-
-func (es *ExcelStore) InsertSubmissionFeedback(
-	feedback string,
-	submission *models.Submission,
-) error {
-	return nil
-}
-
-func (es *ExcelStore) GetSubmissionFeedback(path, sheet string) (
-	[]models.
-		Submission, error,
-) {
-	var submissions []models.Submission
+	if len(path) == 1 {
+		p = path[0]
+	} else if len(path) > 1 {
+		p = path[0]
+		n = path[1]
+	}
 
 	// Open the file
-	f, err := excelize.OpenFile(path)
+	f, err := excelize.OpenFile(p)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() {
-		// Close the spreadsheet.
-		if err := f.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
+	f.Close()
 
-	// Get all the rows in the Sheet1.
-
-	rows, err := f.GetRows(sheet)
+	// Get all the rows in a sheet.
+	rows, err := f.GetRows(n)
 	if err != nil {
 		return nil, err
 	}
 
-	// [1:] to ignore the first row,
-	// which is just column headers for data in the
-	// Excel template.
-	for _, row := range rows[1:] {
-		submission := models.Submission{}
-		submission.User.ID = row[0]
-		submission.Grade, _ = strconv.ParseFloat(row[1], 64)
-		submission.Feedback = row[2]
-		submission.ID = row[3]
-		submissions = append(submissions, submission)
-	}
-
-	return submissions, nil
+	return rows, nil
 }
 
-func (es *ExcelStore) OpenFile(path string) (*excelize.File, error) {
-	f, err := excelize.OpenFile(path)
+// Save saves the Excel file to a place on disk, given a path.
+func (es *ExcelStore) Save(file *excelize.File, to string) (string, error) {
+	err := file.SaveAs(to)
+	if err != nil {
+		return "", nil
+	}
+
+	return "", nil
+}
+
+// Open opens an Excel file at a specified path. Uses variadric
+// parameters to accept an optional value. If the optional value
+// is not set, uses the struct default templatePath.
+func (es *ExcelStore) Open(path ...string) (*excelize.File, error) {
+	var p string
+	if len(path) >= 1 {
+		p = path[0]
+	} else {
+		p = es.excelTemplatePath
+	}
+
+	f, err := excelize.OpenFile(p)
 	if err != nil {
 		return nil, err
 	}
+
 	return f, nil
 }
 
-// CSVStore ================================================================= //
-//
+func (es *ExcelStore) AddRow(row []string) error {
+	return nil
+}
+
+// ========================================================================== //
 // CSV defines access operations for accessing data from a CSV file.
 // This exists because we currently do not have a functioning database just yet.
-// General overview of CSV handling in Go: https://earthly.dev/blog/golang-csv-files/
-//
+// General overview of CSV handling in Go:
+// https://earthly.dev/blog/golang-csv-files/
 // ========================================================================== //
+
 type CSVStore struct {
 	path string
 }
