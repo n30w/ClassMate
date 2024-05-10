@@ -7,22 +7,28 @@ package dal
 import (
 	"io"
 	"os"
+	"path"
 )
 
-type LocalVolume struct{}
+type LocalVolume struct {
+	path string
+}
 
-func NewLocalVolume() *LocalVolume {
-	return &LocalVolume{}
+func NewLocalVolume(path string) *LocalVolume {
+	return &LocalVolume{
+		path: path,
+	}
 }
 
 // CreateFile makes a new file and returns it. Does not automatically close!
-func (lv *LocalVolume) CreateFile(path string) (*os.File, error) {
-	f, err := os.Create(path)
+func (lv *LocalVolume) CreateFile(name string) (*os.File, string, error) {
+	p := path.Join(lv.path, name)
+	f, err := os.Create(p)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return f, nil
+	return f, p, nil
 }
 
 func (lv *LocalVolume) CopyFile(f1 io.Writer, f2 io.Reader) error {
