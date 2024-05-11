@@ -58,7 +58,6 @@ export default function Page({ params }: { params: { id: string } }) {
             alt="Course Background"
             width={400}
             height={400}
-            objectFit="cover"
           />
         )}
         {isTeacher && (

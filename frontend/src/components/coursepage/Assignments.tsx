@@ -5,6 +5,7 @@ import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
 import { useRouter, usePathname } from "next/navigation";
+import AssignmentDisplay from "./AssignmentDisplay";
 
 interface props {
   entries: Assignment[];
@@ -156,55 +157,6 @@ const Assignments: React.FC<props> = (props: props) => {
             </p>
           </>
         )}
-      <h2>File Upload</h2>
-      <div
-        onDrop={handleDrop}
-        onDragOver={(event) => event.preventDefault()}
-        style={{
-          border: "2px dashed #aaa",
-          borderRadius: "5px",
-          padding: "20px",
-          marginTop: "20px",
-          width: "550px",
-        }}
-      >
-        <p className="text-white text-l font-bold">File Upload</p>
-        <input
-          type="file"
-          id="file"
-          onChange={handleFileInputChange}
-          multiple
-          style={{ display: "none" }}
-        />
-        <button
-          className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-          onClick={() => postSubmission(uploadedFiles)}
-        >
-          Upload Files
-        </button>
-      </div>
-      <div>
-        <h2 className="text-white text-l mt-8">Uploaded Files:</h2>
-        <ul>
-          {uploadedFiles.map((file, index) => (
-            <li className="text-white text-l mt-4" key={index}>
-              {file.name} - {file.size} bytes
-              <button
-                className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-2 flex items-center justify-center"
-                onClick={() => handleFileRemove(index)}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <button
-        className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-        // onClick={handleFileUpload}
-      >
-        Submit
-      </button>
       {isCreatingAssignment && (
         <CreateAssignment
           onClose={() => {
