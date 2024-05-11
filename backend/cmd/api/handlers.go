@@ -114,22 +114,30 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Token string `json:"token"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	app.logger.Printf("received home request for token: %s", input.Token)
+
+	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	courses, err := app.services.UserService.RetrieveFromUser(netid, "Courses")
+
+	app.logger.Printf("retrieved netid: %s", netId)
+
+	courses, err := app.services.UserService.GetUserCourses(netId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
+	app.logger.Printf("retrieved courses: %v", courses)
 
 	res := jsonWrap{"courses": courses}
 
@@ -375,10 +383,7 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	courses, err := app.services.UserService.RetrieveFromUser(
-		input.UserId,
-		"courses",
-	)
+	courses, err := app.services.UserService.GetUserCourses(input.UserId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

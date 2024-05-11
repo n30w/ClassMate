@@ -2,8 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"reflect"
-
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -31,7 +29,7 @@ func (us *UserService) ValidateUser(netid string, password string) error {
 			ID: netid,
 		},
 	}
-	
+
 	user, err := us.store.GetUserByID(u)
 	if err != nil {
 		return err
@@ -102,37 +100,39 @@ func (us *UserService) GetByID(userid string) (*models.User, error) {
 	return user, nil
 }
 
-// What if we want only some information from Assignments or Courses?
+// RetrieveFromUser currently is used for the homepage. It just retrieves
+// the user's courses.
 func (us *UserService) RetrieveFromUser(
 	userid string,
-	field string,
-) (interface{}, error) {
+) ([]models.Course, error) {
 	// TEMP
 	m := &models.User{}
 	m.ID = userid
+	courses, err := us.store.GetUserCourses(m)
+	if err != nil {
+		return nil, err
+	}
+	return courses, err
+}
+
+func (us *UserService) GetUserCourses(userId string) ([]models.Course, error) {
+	m := &models.User{
+		Entity: models.Entity{
+			ID: userId,
+		},
+	}
+
 	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return nil, err
 	}
-	if field == "Courses" {
-		courses, err := us.store.GetUserCourses(m)
-		if err != nil {
-			return nil, err
-		}
-		return courses, err
+
+	courses, err := us.store.GetUserCourses(user)
+	if err != nil {
+		return nil, err
 	}
 
-	model := reflect.ValueOf(user).Elem()
-	fieldValue := model.FieldByName(field)
-
-	if !fieldValue.IsValid() {
-		return nil, fmt.Errorf(
-			"field %s does not exist or is uninitialized",
-			field,
-		)
-	}
-
-	return fieldValue.Interface(), nil
+	return courses, err
 }
 
 func (us *UserService) GetMembership(netid string) (*models.Credential, error) {

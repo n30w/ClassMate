@@ -90,10 +90,12 @@ func NewStore(db *sql.DB) *Store {
 // InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
 	id := 0
-	stmt, err := s.db.Prepare(`
+	stmt, err := s.db.Prepare(
+		`
 		INSERT INTO users (net_id, created_at, updated_at,
 		username, password, email, membership, full_name)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+	)
 	if err != nil {
 		return err
 	}
@@ -408,15 +410,6 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	courses := make([]models.Course, 0)
 	for _, courseID := range u.Courses {
 		coursequery := `SELECT id, title, banner_id FROM courses WHERE id = $1;`
-		// query := `
-		// SELECT
-		// 	c.id AS id,
-		// 	c.title AS title,
-		// 	ARRAY_AGG(ct.teacher_id) AS teacher_id
-		// FROM courses c
-		// JOIN course_teachers ct ON c.id = ct.course_id
-		// WHERE c.id = $1
-		// GROUP BY c.id, c.title;`
 		row := s.db.QueryRow(coursequery, courseID)
 
 		var course models.Course
@@ -429,6 +422,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 				return nil, err
 			}
 		}
+
 		teacherquery := `SELECT * FROM course_teachers WHERE course_id=$1`
 
 		rows, err := s.db.Query(teacherquery, courseID)
@@ -528,7 +522,10 @@ func (s *Store) InsertTeacherToCourse(c *models.Course, t string) error {
 	return nil
 }
 
-func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid string) (
+func (s *Store) CheckCourseProfessorDuplicate(
+	courseName string,
+	teacherid string,
+) (
 	bool,
 	error,
 ) {
@@ -841,7 +838,10 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 	return assignment, nil
 }
 
-func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertAssignment(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	query := `INSERT INTO assignments (title, description, due_date) VALUES ($1, $2, $3) RETURNING id`
 
 	row := s.db.QueryRow(query, a.Title, a.Description, a.DueDate)
@@ -858,7 +858,10 @@ func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, erro
 	return a, err
 }
 
-func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	coursequery := `INSERT INTO course_assignments (course_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(coursequery, a.Course, a.ID)
 	if err != nil {
@@ -867,7 +870,10 @@ func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assig
 	return a, err
 }
 
-func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	userquery := `INSERT INTO user_assignments (user_net_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(userquery, a.Owner, a.ID)
 	if err != nil {
@@ -1120,7 +1126,13 @@ func (s *Store) InsertSubmission(
 ) {
 	query := `INSERT INTO submissions (submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	row := s.db.QueryRow(query, sub.SubmissionTime, sub.IsOnTime, sub.Grade, sub.Feedback)
+	row := s.db.QueryRow(
+		query,
+		sub.SubmissionTime,
+		sub.IsOnTime,
+		sub.Grade,
+		sub.Feedback,
+	)
 	err := row.Scan(
 		&sub.ID,
 	)
@@ -1133,11 +1145,17 @@ func (s *Store) InsertSubmission(
 	return sub, nil
 }
 
-func (s *Store) GradeSubmission(grade float64, submission *models.Submission) error {
+func (s *Store) GradeSubmission(
+	grade float64,
+	submission *models.Submission,
+) error {
 	return nil
 }
 
-func (s *Store) InsertSubmissionFeedback(feedback string, submission *models.Submission) error {
+func (s *Store) InsertSubmissionFeedback(
+	feedback string,
+	submission *models.Submission,
+) error {
 	return nil
 }
 
@@ -1219,7 +1237,13 @@ func (s *Store) InsertMedia(
 ) {
 	query := `INSERT INTO media (type, path, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	row := s.db.QueryRow(query, m.FileType, m.FilePath, m.CreatedAt, m.UpdatedAt)
+	row := s.db.QueryRow(
+		query,
+		m.FileType,
+		m.FilePath,
+		m.CreatedAt,
+		m.UpdatedAt,
+	)
 	err := row.Scan(&m.ID)
 	if err != nil {
 		return nil, err
@@ -1281,7 +1305,12 @@ func (s *Store) InsertMediaIntoAssignment(
 ) error {
 	query := `INSERT INTO assignment_media (assignment_id, media_id, media_path) VALUES ($1, $2, $3)`
 
-	_, err := s.db.Exec(query, m.AttributionsByType["assignment"], m.ID, m.FilePath)
+	_, err := s.db.Exec(
+		query,
+		m.AttributionsByType["assignment"],
+		m.ID,
+		m.FilePath,
+	)
 	if err != nil {
 		return err
 	}
@@ -1294,7 +1323,12 @@ func (s *Store) InsertMediaIntoSubmission(
 ) error {
 	query := `INSERT INTO submission_media (submission_id, media_id, media_path) VALUES ($1, $2, $3)`
 
-	_, err := s.db.Exec(query, m.AttributionsByType["submission"], m.ID, m.FilePath)
+	_, err := s.db.Exec(
+		query,
+		m.AttributionsByType["submission"],
+		m.ID,
+		m.FilePath,
+	)
 	if err != nil {
 		return err
 	}
