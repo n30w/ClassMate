@@ -508,7 +508,6 @@ VALUES
 INSERT INTO
    submissions (
       user_id,
-      file_type,
       submission_time,
       on_time,
       grade,
@@ -524,7 +523,6 @@ VALUES
          WHERE
             username = 'jcena'
       ),
-      'PDF',
       CURRENT_TIMESTAMP,
       TRUE,
       85,
@@ -539,7 +537,6 @@ VALUES
          WHERE
             username = 'mmiller'
       ),
-      'DOCX',
       CURRENT_TIMESTAMP,
       FALSE,
       78,
@@ -554,7 +551,6 @@ VALUES
          WHERE
             username = 'ajackson'
       ),
-      'PDF',
       CURRENT_TIMESTAMP,
       TRUE,
       92,
@@ -569,7 +565,6 @@ VALUES
          WHERE
             username = 'ksmith'
       ),
-      'ZIP',
       CURRENT_TIMESTAMP,
       TRUE,
       88,
@@ -584,7 +579,6 @@ VALUES
          WHERE
             username = 'jdoe'
       ),
-      'PDF',
       CURRENT_TIMESTAMP,
       TRUE,
       90,
