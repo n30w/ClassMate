@@ -9,8 +9,9 @@ import { Course } from "@/lib/types";
 import CourseItem from "@/components/homepage/Courses";
 
 export default function Home() {
+  const initCourses: Course[] = [];
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courseArray, setCourseArray] = useState<Course[]>(initCourses);
   const [courseBanners, setCourseBanners] = useState<Map<string, any>>(
     new Map()
   );
@@ -21,63 +22,33 @@ export default function Home() {
   const currentTerm = "Spring 2024";
 
   const handleCreateCourse = (courseData: any) => {
-    setCourses([...courses, courseData]);
+    setCourseArray([...courseArray, courseData]);
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      const permissions = localStorage.getItem("permissions");
-      if (permissions === "1") {
-        setIsTeacher(true);
-      }
-      if (token) {
-        try {
-          const fetchedCourses = await fetchCourses(token);
-          console.log("FETCHED COURSES: ", fetchedCourses);
-          const keys = Object.keys(fetchedCourses.courses);
-          const coursesWithBanners = await Promise.all(
-            keys.map(async (key) => {
-              const course = fetchedCourses.courses[key];
-              const banner = await fetchBanner(course.banner);
-              console.log("BANNER FOR COURSE ID", course.id, ":", banner);
-              setCourseBanners((prevState) =>
-                new Map(prevState).set(course.id, banner)
-              );
-              return course;
-            })
-          );
-          console.log("COURSES WITH BANNERS: ", courseBanners);
-          setCourses(coursesWithBanners);
-        } catch (error) {
-          console.error("Error fetching courses:", error);
-        }
-      }
-    };
-    fetchData();
-  }, []);
+    const token = localStorage.getItem("token")!;
+    const permissions = localStorage.getItem("permissions");
 
-  const fetchCourses = async (tok: string) => {
-    try {
-      const res: Response = await fetch("http://localhost:6789/v1/home", {
+    console.log(token);
+    if (permissions === "1") {
+      setIsTeacher(true);
+    }
+    const fetchCourses = async (tok: string) => {
+      const route = "http://localhost:6789/v1/home";
+      const res: Response = await fetch(route, {
         method: "POST",
         body: JSON.stringify({
           token: tok,
         }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        console.log(data);
-        return data;
-      } else {
-        console.error("Failed to fetch courses:", res.statusText);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      return [];
-    }
-  };
+
+      const { courses }: { courses: Course[] } = await res.json();
+      setCourseArray(courses);
+      console.log(courseArray);
+    };
+
+    fetchCourses(token).catch(console.error);
+  }, []);
 
   const fetchBanner = async (bannerId: string) => {
     try {
@@ -171,11 +142,10 @@ export default function Home() {
         </div>
         )
         <div className="grid grid-cols-3 gap-4 mr-16">
-          {courses.map((course, i) => (
+          {courseArray.map((course, i) => (
             <CourseItem
               key={i}
               data={course}
-              banner={courseBanners.get(course.id)}
               onClick={() => {
                 router.push(`/course/${course.id}`);
               }}

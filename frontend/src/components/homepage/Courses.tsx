@@ -4,17 +4,17 @@ import Image from "next/image";
 interface props {
   data: Course;
   onClick: () => void;
-  banner: any;
 }
 
 const CourseItem: React.FC<props> = (props: props) => {
-  console.log("BANNER PATH: ", props.data.banner);
+  // Banner path for API
+  const url = `http://localhost:6789/v1/api/course/${props.data.banner}/banner/read`;
   return (
     <div className="py-4 px-32" onClick={props.onClick}>
       <div>
         <div className="relative flex-col h-80 w-80">
           <Image
-            src={props.banner}
+            src={url}
             className="object-cover w-full h-full"
             width={340}
             height={340}

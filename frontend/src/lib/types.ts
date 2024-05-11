@@ -1,3 +1,10 @@
+export interface Entity {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string;
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -15,9 +22,10 @@ export interface Assignment {
 export interface Course {
   id: string;
   name: string;
+  description: string;
   professor: string;
   location: string;
-  banner: string;
+  banner: string; // banner ID
 }
 
 export interface Discussion {

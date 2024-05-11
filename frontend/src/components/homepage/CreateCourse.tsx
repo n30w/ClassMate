@@ -83,7 +83,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onCourseCreate({ ...courseData });
+    // props.onCourseCreate({ ...courseData });
     try {
       const courseInfo = await postNewCourse(courseData);
       postNewBanner(courseInfo);
