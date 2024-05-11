@@ -827,7 +827,7 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 		&assignment.Description,
 		&assignment.DueDate,
 	)
-	fmt.Printf("In get assignment by id, %s", assignment.ID)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ERR_RECORD_NOT_FOUND

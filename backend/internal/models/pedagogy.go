@@ -65,7 +65,7 @@ type Message struct {
 	Post
 	ID       string
 	Comments []string
-	Type     uint8 // 0 if discussion, 1 if announcement
+	Type     bool // 0 if discussion, 1 if announcement
 }
 
 type Comment struct {

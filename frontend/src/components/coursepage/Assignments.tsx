@@ -29,24 +29,24 @@ const Assignments: React.FC<props> = (props: props) => {
     if (permissions === "1") {
       setIsTeacher(true);
     }
+    const fetchAssignments = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:6789/v1/course/assignment/read/${props.courseId}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setAssignments(data.assignment);
+        } else {
+          console.error("Failed to fetch assignments:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+      }
+    };
+
     fetchAssignments();
   }, [assignments]);
-
-  const fetchAssignments = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${props.courseId}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAssignments(data.assignment);
-      } else {
-        console.error("Failed to fetch assignments:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
-    }
-  };
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedAssignment(event.target.value);
@@ -116,7 +116,6 @@ const Assignments: React.FC<props> = (props: props) => {
 
   const refreshData = async () => {
     setIsCreatingAssignment(false);
-    await fetchAssignments();
   };
 
   return (

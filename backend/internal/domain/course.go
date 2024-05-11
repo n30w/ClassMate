@@ -63,7 +63,6 @@ func (cs *CourseService) RetrieveCourse(courseid string) (
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%s", c.Banner)
 
 	return c, nil
 }

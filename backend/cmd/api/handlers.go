@@ -513,16 +513,19 @@ func (app *application) announcementCreateHandler(
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	msg := &models.Message{
 		Post: models.Post{
 			Title:       input.Title,
@@ -530,15 +533,17 @@ func (app *application) announcementCreateHandler(
 			Owner:       netid,
 			Media:       input.Media,
 		},
-		Type: 1,
+		Type: true,
 	}
-	msg, err = app.services.MessageService.CreateMessage(msg, cId)
 
+	msg, err = app.services.MessageService.CreateMessage(msg, cId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	res := jsonWrap{"announcement": msg}
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1124,7 +1129,7 @@ func (app *application) discussionCreateHandler(
 	}
 	msg := &models.Message{
 		Post: post,
-		Type: 0,
+		Type: false,
 	}
 
 	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)

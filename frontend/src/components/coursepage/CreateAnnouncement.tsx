@@ -13,28 +13,25 @@ interface props {
 }
 
 const CreateAnnouncement: React.FC<props> = (props) => {
-  // const currentDate = new Date();
-
-  // const formattedDate = `${currentDate
-  //   .toLocaleDateString("en-US", {
-  //     month: "2-digit",
-  //     day: "2-digit",
-  //     year: "numeric",
-  //   })
-  //   .replace(/\//g, "-")} ${currentDate.toLocaleTimeString("en-US", {
-  //   hour: "2-digit",
-  //   minute: "2-digit",
-  // })}`;
-
-  const [announcementData, setAnnouncementData] = useState({
+  const initialAnnouncement = {
     courseId: props.params.id,
     token: props.token,
     title: "",
     description: "",
-  });
+  };
+  const [announcementData, setAnnouncementData] = useState(initialAnnouncement);
 
-  const postNewAnnouncement = async (announcementData: any) => {
-    try {
+  const handleChange = (e: { target: { name: any; value: any } }) => {
+    const { name, value } = e.target;
+    setAnnouncementData({
+      ...announcementData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    const postNewAnnouncement = async (announcementData: any) => {
       const res: Response = await fetch(
         `http://localhost:6789/v1/course/announcement/create/${announcementData.courseId}`,
         {
@@ -48,27 +45,10 @@ const CreateAnnouncement: React.FC<props> = (props) => {
           }),
         }
       );
-      if (res.ok) {
-      } else {
-        console.error("Failed to create announcement:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error creating announcement:", error);
-    }
-  };
+      return res;
+    };
 
-  const handleChange = (e: { target: { name: any; value: any } }) => {
-    const { name, value } = e.target;
-    setAnnouncementData({
-      ...announcementData,
-      [name]: value,
-    });
-  };
-
-  const handleSubmit = (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-    // props.onAnnouncementCreate(announcementData);
-    postNewAnnouncement(announcementData);
+    postNewAnnouncement(announcementData).catch(console.error);
     props.onClose();
   };
 
