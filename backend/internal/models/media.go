@@ -16,19 +16,19 @@ const (
 func (f FileType) String() string {
 	switch f {
 	case JPG:
-		return ".jpg"
+		return "jpg"
 	case PNG:
-		return ".png"
+		return "png"
 	case PDF:
-		return ".pdf"
+		return "pdf"
 	case M4A:
-		return ".m4a"
+		return "m4a"
 	case MP3:
-		return ".mp3"
+		return "mp3"
 	case TXT:
-		return ".txt"
+		return "txt"
 	case XLSX:
-		return ".xlsx"
+		return "xlsx"
 	case NULL:
 		return ""
 	}

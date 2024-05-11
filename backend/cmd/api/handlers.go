@@ -423,7 +423,7 @@ func (app *application) bannerCreateHandler(
 		return
 	}
 
-	fileName := courseid + "_banner" + ft.String()
+	fileName := courseid + "_banner." + ft.String()
 
 	// Save the file to disk
 	path, err := app.services.FileService.Save(fileName, f)
@@ -465,46 +465,34 @@ func (app *application) bannerReadHandler(
 ) {
 	app.logger.Printf("Reading banner...")
 
-	bannerid := r.PathValue("id")
-	app.logger.Printf("Retrieved bannerid from route: %s", bannerid)
+	bannerId := r.PathValue("id")
 
-	banner, err := app.services.MediaService.GetMedia(bannerid)
+	app.logger.Printf("Retrieved bannerid from route: %s", bannerId)
+
+	banner, err := app.services.MediaService.GetMedia(bannerId)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
 	app.logger.Printf("Retrieved Metadata: %v", banner)
 
-	bannerFile, err := app.services.FileService.GetFile(banner.FilePath)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-	defer bannerFile.Close()
-
-	app.logger.Printf("Retrieved file: %v", bannerFile)
-
-	// Get file information (size and name)
-	fileInfo, err := bannerFile.Stat()
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	app.logger.Printf("Retrieved File Info: %v", fileInfo)
-
 	// Set Content-Type header based on file extension
-	contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
+	contentType := mime.TypeByExtension("." + banner.FileType.String())
 	if contentType == "" {
 		contentType = "application/octet-stream" // Default content type
 	}
 
 	app.logger.Printf("Setting content type to: %s", contentType)
 
-	w.Header().Set("Content-Type", contentType)
+	contentDispositionValue := "inline"
 
-	app.logger.Printf("Returning banner: %v", bannerFile)
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", contentDispositionValue)
+
+	app.logger.Printf("File path: %s", banner.FilePath)
+
 	// Serve the file's content
-	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), bannerFile)
+	http.ServeFile(w, r, banner.FilePath)
 }
 
 // REQUEST: course ID, teacher ID, announcement description
@@ -1289,7 +1277,8 @@ func (app *application) submissionCreateHandler(
 		return
 	}
 
-	_, err = app.services.AssignmentService.UpdateAssignment( // Submit assignment
+	_, err = app.services.AssignmentService.UpdateAssignment(
+		// Submit assignment
 		submission.AssignmentId,
 		true,
 		"submit",
