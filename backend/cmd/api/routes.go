@@ -36,7 +36,7 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("PATCH /v1/course/update/{id}/{action}", app.courseUpdateHandler)
 	router.HandleFunc("POST /v1/course/delete/{id}", app.courseDeleteHandler)
 	router.HandleFunc("POST /v1/course/{id}/banner/create", app.bannerCreateHandler)
-	router.HandleFunc("POST /v1/course/{id}/banner/read", app.bannerReadHandler)
+	router.HandleFunc("GET /v1/course/{id}/banner/read", app.bannerReadHandler)
 
 
 
@@ -71,7 +71,7 @@ func (app *application) routes() *http.ServeMux {
 		app.assignmentMediaUploadHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/download/{mediaId}",
+		"GET /v1/course/download/{mediaId}",
 		app.mediaDownloadHandler,
 	)
 

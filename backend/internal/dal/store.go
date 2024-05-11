@@ -41,10 +41,6 @@ type Store struct {
 	db *sql.DB
 }
 
-func (s *Store) InsertMediaReference(media *models.Media) error {
-	return nil
-}
-
 func (s *Store) UploadMedia(
 	file multipart.File,
 	submission *models.Submission,
@@ -411,7 +407,7 @@ func (s *Store) DeleteCourseFromUser(
 func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	courses := make([]models.Course, 0)
 	for _, courseID := range u.Courses {
-		coursequery := `SELECT id, title FROM courses WHERE id = $1;`
+		coursequery := `SELECT id, title, banner_id FROM courses WHERE id = $1;`
 		// query := `
 		// SELECT
 		// 	c.id AS id,
@@ -424,7 +420,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 		row := s.db.QueryRow(coursequery, courseID)
 
 		var course models.Course
-		err = row.Scan(&course.ID, &course.Title)
+		err = row.Scan(&course.ID, &course.Title, &course.Banner)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -562,8 +558,6 @@ func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid strin
 
 }
 
-
-
 func (s *Store) GetCourseByName(name string) (
 	*models.Course,
 	error,
@@ -652,7 +646,6 @@ func (s *Store) GetCourseByID(courseid string) (
 	if err != nil {
 		return nil, err
 	}
-
 	return c, nil
 }
 
@@ -684,7 +677,6 @@ func (s *Store) GetRoster(courseid string) (
 
 	return roster, nil
 }
-
 
 func (s *Store) DeleteCourse(c *models.Course) error {
 	query := `
@@ -863,16 +855,16 @@ func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, erro
 		}
 		return nil, err
 	}
-	return a , err
+	return a, err
 }
 
-func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error){
+func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error) {
 	coursequery := `INSERT INTO course_assignments (course_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(coursequery, a.Course, a.ID)
 	if err != nil {
 		return nil, err
 	}
-	return a , err
+	return a, err
 }
 
 func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error) {
@@ -1225,9 +1217,9 @@ func (s *Store) InsertMedia(
 	*models.Media,
 	error,
 ) {
-	query := `INSERT INTO media (type, path) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO media (type, path, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	row := s.db.QueryRow(query, m.FileType, m.FilePath)
+	row := s.db.QueryRow(query, m.FileType, m.FilePath, m.CreatedAt, m.UpdatedAt)
 	err := row.Scan(&m.ID)
 	if err != nil {
 		return nil, err
@@ -1235,7 +1227,6 @@ func (s *Store) InsertMedia(
 
 	return m, nil
 }
-	
 
 func (s *Store) GetMediaById(mediaid string) (
 	*models.Media,
@@ -1262,7 +1253,7 @@ func (s *Store) GetMediaById(mediaid string) (
 	return media, nil
 }
 
-func (s *Store) InsertMediaIntoCourse (
+func (s *Store) InsertMediaIntoCourse(
 	m *models.Media,
 ) error {
 	query := `INSERT INTO course_media (course_id, media_id, media_path) VALUES ($1, $2, $3)`
@@ -1271,11 +1262,21 @@ func (s *Store) InsertMediaIntoCourse (
 	if err != nil {
 		return err
 	}
+	return nil
+}
+func (s *Store) InsertMediaIntoCourseBanner(
+	m *models.Media,
+) error {
 
+	query := `UPDATE courses SET banner_id = $2 WHERE id = $1;`
+	_, err = s.db.Exec(query, m.AttributionsByType["course"], m.ID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (s *Store) InsertMediaIntoAssignment (
+func (s *Store) InsertMediaIntoAssignment(
 	m *models.Media,
 ) error {
 	query := `INSERT INTO assignment_media (assignment_id, media_id, media_path) VALUES ($1, $2, $3)`
@@ -1288,7 +1289,7 @@ func (s *Store) InsertMediaIntoAssignment (
 	return nil
 }
 
-func (s *Store) InsertMediaIntoSubmission (
+func (s *Store) InsertMediaIntoSubmission(
 	m *models.Media,
 ) error {
 	query := `INSERT INTO submission_media (submission_id, media_id, media_path) VALUES ($1, $2, $3)`

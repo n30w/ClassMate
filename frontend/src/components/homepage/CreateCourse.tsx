@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import CloseButton from "@/components/buttons/CloseButton";
+import { Course } from "@/lib/types";
 
 interface props {
   onClose: () => void;
@@ -22,21 +23,17 @@ const CreateCourse: React.FC<props> = (props: props) => {
 
   const postNewCourse = async (courseData: any) => {
     try {
-      const formData = new FormData();
-      Object.entries(courseData).forEach(([key, value]) => {
-        formData.append(key, value as string);
-      });
       const res: Response = await fetch(
         "http://localhost:6789/v1/course/create",
         {
           method: "POST",
-          body: formData,
+          body: JSON.stringify(courseData),
         }
       );
+      console.log(res.ok);
       if (res.ok) {
         const course_id = await res.json();
-        console.log("INSERTED COURSE INFO:", course_id);
-        window.location.reload();
+        return course_id;
       } else {
         console.error("Failed to create course:", res.statusText);
       }
@@ -45,21 +42,18 @@ const CreateCourse: React.FC<props> = (props: props) => {
     }
   };
 
-  const postNewBanner = async (courseid: any) => {
+  const postNewBanner = async (course: any) => {
     try {
-      const formData = new FormData();
-      formData.append("banner", bannerFile);
-
+      var data = new FormData();
+      data.append("file", bannerFile);
       const res: Response = await fetch(
-        `http://localhost:6789/v1/course/${courseid.id}/banner/create`,
+        `http://localhost:6789/v1/course/${course.course.id}/banner/create`,
         {
           method: "POST",
-          body: formData,
+          body: data,
         }
       );
       if (res.ok) {
-        console.log("BANNER INSERTED!");
-        window.location.reload();
       } else {
         console.error("Failed to create course:", res.statusText);
       }
@@ -69,23 +63,21 @@ const CreateCourse: React.FC<props> = (props: props) => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target;
+    const { name, files, value } = e.target;
     if (files && files.length > 0) {
       const file = files[0];
       const validTypes = ["image/png", "image/jpeg", "image/jpg"];
       if (validTypes.includes(file.type)) {
-        if (name === "banner") {
-          setBannerFile(file);
-        } else {
-          setCourseData({
-            ...courseData,
-            [name]: file,
-          });
-        }
+        setBannerFile(file);
       } else {
         e.target.value = "";
         alert("Please select a valid image file (PNG or JPG).");
       }
+    } else {
+      setCourseData({
+        ...courseData,
+        [name]: value,
+      });
     }
   };
 

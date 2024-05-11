@@ -11,6 +11,9 @@ import CourseItem from "@/components/homepage/Courses";
 export default function Home() {
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [courseBanners, setCourseBanners] = useState<Map<string, any>>(
+    new Map()
+  );
   const [navbarActive, setNavbarActive] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
   const router = useRouter();
@@ -22,19 +25,36 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const permissions = localStorage.getItem("permissions");
-    if (permissions == "1") {
-      setIsTeacher(true);
-    }
-    if (token) {
-      const getCourses = async () => {
-        const fetchedCourses = await fetchCourses(token);
-        setCourses(fetchedCourses.courses);
-        console.log(courses);
-      };
-      getCourses();
-    }
+    const fetchData = async () => {
+      const token = localStorage.getItem("token");
+      const permissions = localStorage.getItem("permissions");
+      if (permissions === "1") {
+        setIsTeacher(true);
+      }
+      if (token) {
+        try {
+          const fetchedCourses = await fetchCourses(token);
+          console.log("FETCHED COURSES: ", fetchedCourses);
+          const keys = Object.keys(fetchedCourses.courses);
+          const coursesWithBanners = await Promise.all(
+            keys.map(async (key) => {
+              const course = fetchedCourses.courses[key];
+              const banner = await fetchBanner(course.banner);
+              console.log("BANNER FOR COURSE ID", course.id, ":", banner);
+              setCourseBanners((prevState) =>
+                new Map(prevState).set(course.id, banner)
+              );
+              return course;
+            })
+          );
+          console.log("COURSES WITH BANNERS: ", courseBanners);
+          setCourses(coursesWithBanners);
+        } catch (error) {
+          console.error("Error fetching courses:", error);
+        }
+      }
+    };
+    fetchData();
   }, []);
 
   const fetchCourses = async (tok: string) => {
@@ -45,9 +65,28 @@ export default function Home() {
           token: tok,
         }),
       });
-
       if (res.ok) {
         const data = await res.json();
+        console.log(data);
+        return data;
+      } else {
+        console.error("Failed to fetch courses:", res.statusText);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      return [];
+    }
+  };
+
+  const fetchBanner = async (bannerId: string) => {
+    try {
+      const res: Response = await fetch(
+        `http://localhost:6789/v1/course/${bannerId}/banner/read`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        console.log(data);
         return data;
       } else {
         console.error("Failed to fetch courses:", res.statusText);
@@ -136,6 +175,7 @@ export default function Home() {
             <CourseItem
               key={i}
               data={course}
+              banner={courseBanners.get(course.id)}
               onClick={() => {
                 router.push(`/course/${course.id}`);
               }}

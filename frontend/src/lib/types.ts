@@ -17,6 +17,7 @@ export interface Course {
   name: string;
   professor: string;
   location: string;
+  banner: string;
 }
 
 export interface Discussion {

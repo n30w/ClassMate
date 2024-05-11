@@ -1,22 +1,20 @@
 import { Course } from "@/lib/types";
-// import Announcements from "./DashboardAnnouncements";
-// import Assignments from "../DashboardAssignments";
-// import Discussions from "../DashboardDiscussions";
 import Image from "next/image";
 
 interface props {
   data: Course;
   onClick: () => void;
+  banner: any;
 }
 
 const CourseItem: React.FC<props> = (props: props) => {
-  console.log(props);
+  console.log("BANNER PATH: ", props.data.banner);
   return (
     <div className="py-4 px-32" onClick={props.onClick}>
       <div>
         <div className="relative flex-col h-80 w-80">
           <Image
-            src="/backgrounds/course-bg.jpg"
+            src={props.banner}
             className="object-cover w-full h-full"
             width={340}
             height={340}

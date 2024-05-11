@@ -2,16 +2,16 @@ package domain
 
 import (
 	"github.com/n30w/Darkspace/internal/models"
-	"fmt"
 )
 
 // announcement and discussion services
 type MediaStore interface {
 	GetMediaById(id string) (*models.Media, error)
 	InsertMedia(media *models.Media) (*models.Media, error)
-	InsertMediaIntoCourse(m *models.Media) error 
-	InsertMediaIntoAssignment(m *models.Media) error 
-	InsertMediaIntoSubmission(m *models.Media) error 
+	InsertMediaIntoCourse(m *models.Media) error
+	InsertMediaIntoAssignment(m *models.Media) error
+	InsertMediaIntoSubmission(m *models.Media) error
+	InsertMediaIntoCourseBanner(m *models.Media) error
 }
 
 type MediaService struct {
@@ -27,8 +27,12 @@ func (ms *MediaService) AddBanner(
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Added banner to media table: %v", media)
-	err = ms.store.InsertMediaIntoCourse(media) 
+
+	err = ms.store.InsertMediaIntoCourse(media)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.store.InsertMediaIntoCourseBanner(media)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +47,7 @@ func (ms *MediaService) AddAssignmentMedia(
 	if err != nil {
 		return nil, err
 	}
-	err = ms.store.InsertMediaIntoAssignment(media) 
+	err = ms.store.InsertMediaIntoAssignment(media)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +60,7 @@ func (ms *MediaService) AddSubmissionMedia(
 	if err != nil {
 		return nil, err
 	}
-	err = ms.store.InsertMediaIntoSubmission(media) 
+	err = ms.store.InsertMediaIntoSubmission(media)
 	if err != nil {
 		return nil, err
 	}
@@ -73,5 +77,3 @@ func (ms *MediaService) GetMedia(id string) (*models.Media, error) {
 	}
 	return media, nil
 }
-
-

@@ -3,14 +3,15 @@ package main
 import (
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
-	"mime"
-	"path/filepath"
-	"github.com/n30w/Darkspace/internal/models"
+
 	"github.com/n30w/Darkspace/internal/dal"
+	"github.com/n30w/Darkspace/internal/models"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -146,12 +147,17 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Reading course homepage...")
+
 	id := r.PathValue("id")
 
 	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
+
+	app.logger.Printf("Returning course: %v", course)
 
 	res := jsonWrap{"course": course}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
@@ -166,9 +172,10 @@ func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Creating course...")
 	var input struct {
-		Title     string `json:"title"`
-		Token     string `json:"token"`
+		Title string `json:"title"`
+		Token string `json:"token"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -182,6 +189,7 @@ func (app *application) courseCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Getting teacher id from token %s", teacherid)
 
 	teachers := []string{teacherid}
 
@@ -195,6 +203,7 @@ func (app *application) courseCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Created course: %v", course)
 
 	// Return success.
 	res := jsonWrap{"course": course}
@@ -214,6 +223,8 @@ func (app *application) courseReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Reading course...")
+
 	var input struct {
 		CourseId string `json:"courseid"`
 	}
@@ -229,6 +240,7 @@ func (app *application) courseReadHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Returning course: %v", course)
 
 	res := jsonWrap{"course": course}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
@@ -386,51 +398,58 @@ func (app *application) bannerCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Printf("In bannerCreateHandler \n")
+	app.logger.Printf("Creating banner...")
+
 	courseid := r.PathValue("id")
 	// Limit upload size to 10MB
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		app.serverError(w, r, err)
-		return 
+		return
 	}
 
 	f, handler, err := r.FormFile("file")
 	if err != nil {
-		app.serverError(w,r,err)
-		return
-	}
-	
-	defer f.Close()
-
-	// Save the file to disk
-	path, err := app.services.FileService.Save(handler.Filename, f)
-	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("Saved filed to disk \n")
+
+	defer f.Close()
+
 	ft := GetFileType(handler.Filename)
+
 	if ft == models.NULL {
 		app.serverError(w, r, fmt.Errorf("invalid file type"))
 		return
 	}
-	// Create metadata and add to database
-	metadata := &models.Media{
-		FileName: handler.Filename,
-		AttributionsByType: make(map[string]string),
-		FileType: ft,
-		FilePath: path,
-	}
-	
-	metadata.AttributionsByType["course"] = courseid
 
-	metadata, err = app.services.MediaService.AddBanner(metadata)
+	fileName := courseid + "_banner" + ft.String()
+
+	// Save the file to disk
+	path, err := app.services.FileService.Save(fileName, f)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("added banner and now sending back response... ")
+	app.logger.Printf("Saved banner: %s to disk...", fileName)
+
+	// Create metadata and add to database
+	metadata := &models.Media{
+		FileName:           handler.Filename,
+		AttributionsByType: make(map[string]string),
+		FileType:           ft,
+		FilePath:           path,
+	}
+
+	metadata.AttributionsByType["course"] = courseid
+
+	_, err = app.services.MediaService.AddBanner(metadata)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.logger.Printf("Created banner: %v", metadata)
 	err = app.writeJSON(w, http.StatusOK, nil, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -438,39 +457,54 @@ func (app *application) bannerCreateHandler(
 	}
 }
 
-// REQUEST: banner idx
+// REQUEST: banner id
 // RESPONSE: banner
 func (app *application) bannerReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Reading banner...")
+
 	bannerid := r.PathValue("id")
+	app.logger.Printf("Retrieved bannerid from route: %s", bannerid)
+
 	banner, err := app.services.MediaService.GetMedia(bannerid)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
+
+	app.logger.Printf("Retrieved Metadata: %v", banner)
+
 	bannerFile, err := app.services.FileService.GetFile(banner.FilePath)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-	defer bannerFile.Close() 
+	defer bannerFile.Close()
+
+	app.logger.Printf("Retrieved file: %v", bannerFile)
 
 	// Get file information (size and name)
-    fileInfo, err := bannerFile.Stat()
-    if err != nil {
-        app.serverError(w, r, err)
-        return
-    }
+	fileInfo, err := bannerFile.Stat()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-    // Set Content-Type header based on file extension
-    contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
-    if contentType == "" {
-        contentType = "application/octet-stream" // Default content type
-    }
-    w.Header().Set("Content-Type", contentType)
+	app.logger.Printf("Retrieved File Info: %v", fileInfo)
 
-    // Serve the file's content
-    http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), bannerFile)
+	// Set Content-Type header based on file extension
+	contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
+	if contentType == "" {
+		contentType = "application/octet-stream" // Default content type
+	}
+
+	app.logger.Printf("Setting content type to: %s", contentType)
+
+	w.Header().Set("Content-Type", contentType)
+
+	app.logger.Printf("Returning banner: %v", bannerFile)
+	// Serve the file's content
+	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), bannerFile)
 }
 
 // REQUEST: course ID, teacher ID, announcement description
@@ -761,9 +795,18 @@ func (app *application) userLoginHandler(
 		}
 		return
 	}
+	app.logger.Printf("Validated user, Now retrieving token...")
 	// If token exists, return token:
 	token, err := app.services.AuthenticationService.RetrieveToken(input.NetId)
 	if err != dal.ERR_RECORD_NOT_FOUND {
+
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		app.logger.Printf("Retrieved token, Getting membership...")
+
 		membership, err := app.services.UserService.GetMembership(input.NetId)
 		if err != nil {
 			app.serverError(w, r, err)
@@ -779,7 +822,9 @@ func (app *application) userLoginHandler(
 			return
 		}
 		return
+
 	}
+
 	// Otherwise, generate new token
 	token, err = app.services.AuthenticationService.NewToken(input.NetId)
 	if err != nil {
@@ -801,7 +846,6 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -825,7 +869,7 @@ func (app *application) assignmentCreateHandler(
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 		DueDate     string   `json:"duedate"`
-		CourseId  string `json:"courseid"`
+		CourseId    string   `json:"courseid"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -844,7 +888,7 @@ func (app *application) assignmentCreateHandler(
 		Description: input.Description,
 		Owner:       netid,
 		Media:       input.Media,
-		Course: input.CourseId,
+		Course:      input.CourseId,
 	}
 
 	dueDate, err := time.Parse("2006-01-02", input.DueDate)
@@ -983,16 +1027,16 @@ func (app *application) assignmentMediaUploadHandler(
 	r *http.Request,
 ) {
 	assignmentid := r.PathValue("id")
-	 // Parse the multipart form
-	 err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
-	 if err != nil {
-		 app.serverError(w, r, err)
-		 return
-	 }
- 
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	// Retrieve the file(s) from the form
 	files := r.MultipartForm.File["files"]
- 
+
 	for _, fileHeader := range files {
 		// Open the uploaded file
 		file, err := fileHeader.Open()
@@ -1006,11 +1050,11 @@ func (app *application) assignmentMediaUploadHandler(
 			app.serverError(w, r, err)
 			return
 		}
-		media := &models.Media {
-			FileName: fileHeader.Filename,
+		media := &models.Media{
+			FileName:           fileHeader.Filename,
 			AttributionsByType: make(map[string]string),
-			FileType: GetFileType(fileHeader.Filename),
-			FilePath: path,
+			FileType:           GetFileType(fileHeader.Filename),
+			FilePath:           path,
 		}
 		media.AttributionsByType["assignment"] = assignmentid
 		media, err = app.services.MediaService.AddAssignmentMedia(media)
@@ -1019,10 +1063,10 @@ func (app *application) assignmentMediaUploadHandler(
 		}
 	}
 	err = app.writeJSON(w, http.StatusOK, nil, nil)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
 
 // REQUEST: media id
@@ -1040,24 +1084,24 @@ func (app *application) mediaDownloadHandler(
 	if err != nil {
 		app.serverError(w, r, err)
 	}
-	defer file.Close() 
+	defer file.Close()
 
 	// Get file information (size and name)
-    fileInfo, err := file.Stat()
-    if err != nil {
-        app.serverError(w, r, err)
-        return
-    }
+	fileInfo, err := file.Stat()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-    // Set Content-Type header based on file extension
-    contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
-    if contentType == "" {
-        contentType = "application/octet-stream" // Default content type
-    }
-    w.Header().Set("Content-Type", contentType)
+	// Set Content-Type header based on file extension
+	contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
+	if contentType == "" {
+		contentType = "application/octet-stream" // Default content type
+	}
+	w.Header().Set("Content-Type", contentType)
 
-    // Serve the file's content
-    http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
+	// Serve the file's content
+	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
 }
 
 // discussionCreateHandler creates a discussion.
