@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/n30w/Darkspace/internal/dal"
@@ -1236,47 +1235,19 @@ func (app *application) submissionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-
-	r.ParseMultipartForm(10 << 20)
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	fileTypeStr := r.FormValue("filetype") // file type of string to type FileType
-	fileTypeInt, err := strconv.Atoi(fileTypeStr)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	filetype := models.FileType(fileTypeInt)
-	defer file.Close()
-
-	metadata := &models.Media{
-		FileName:           header.Filename,
-		AttributionsByType: make(map[string]string),
-		FileType:           filetype,
-	}
-
-	metadata.AttributionsByType["assignment"] = r.FormValue("assignmentid") // Set media attributions
-	metadata.AttributionsByType["user"] = r.FormValue("userid")
+	assignmentid := r.PathValue("assignmentId")
+	userid := r.PathValue("userId")
 
 	submission := &models.Submission{
-		AssignmentId: r.FormValue("assignmentid"),
+		AssignmentId: assignmentid,
 		User: models.User{
 			Entity: models.Entity{
-				ID: r.FormValue("userid"),
+				ID: userid,
 			},
 		},
 	}
-	submission, err = app.services.SubmissionService.CreateSubmission(submission) // Add submission into database and return model with ID
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	metadata.AttributionsByType["submission"] = submission.ID // Set media submission attribution with new submission ID
 
-	metadata, err = app.services.MediaService.AddSubmissionMedia(metadata) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	submission, err := app.services.SubmissionService.CreateSubmission(submission) // Add submission into database and return model with ID
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1308,6 +1279,52 @@ func (app *application) submissionUpdateHandler(
 	r *http.Request,
 ) {
 
+}
+
+func (app *application) submissionMediaUploadHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	submissionid := r.PathValue("id")
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Retrieve the file(s) from the form
+	files := r.MultipartForm.File["files"]
+
+	for _, fileHeader := range files {
+		// Open the uploaded file
+		file, err := fileHeader.Open()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer file.Close()
+		path, err := app.services.FileService.Save(fileHeader.Filename, file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		media := &models.Media{
+			FileName:           fileHeader.Filename,
+			AttributionsByType: make(map[string]string),
+			FileType:           GetFileType(fileHeader.Filename),
+			FilePath:           path,
+		}
+		media.AttributionsByType["submission"] = submissionid
+		media, err = app.services.MediaService.AddSubmissionMedia(media)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+	}
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
 
 func (app *application) addStudentHandler(

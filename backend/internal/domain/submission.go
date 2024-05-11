@@ -9,6 +9,7 @@ type SubmissionStore interface {
 		*models.Submission,
 		error,
 	)
+	InsertSubmissionIntoAssignment(sub *models.Submission) (*models.Submission, error)
 	UpdateSubmission(submission *models.Submission) error
 }
 
@@ -24,7 +25,13 @@ func (ss *SubmissionService) CreateSubmission(s *models.Submission) (
 	*models.Submission,
 	error,
 ) {
+	// Insert submission into submission table
 	s, err := ss.store.InsertSubmission(s)
+	if err != nil {
+		return nil, err
+	}
+	// Insert submission into submission_assignment table
+	s, err = ss.store.InsertSubmissionIntoAssignment(s)
 	if err != nil {
 		return nil, err
 	}

@@ -38,8 +38,6 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("POST /v1/course/{id}/banner/create", app.bannerCreateHandler)
 	router.HandleFunc("GET /v1/course/{id}/banner/read", app.bannerReadHandler)
 
-
-
 	// User CRUD operations
 	router.HandleFunc("POST /v1/user/create", app.userCreateHandler)
 	router.HandleFunc("GET /v1/user/read/{id}", app.userReadHandler)
@@ -118,20 +116,24 @@ func (app *application) routes() *http.ServeMux {
 
 	// Submission operations
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/create",
+		"POST /v1/course/assignment/{assignmentId}/submission/{userId}/create",
 		app.submissionCreateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/update",
+		"POST /v1/course/assignment/submission/{id}/update",
 		app.submissionUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/delete",
+		"POST /v1/course/assignment/submission/{id}/delete",
 		app.submissionUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/read",
+		"POST /v1/course/assignment/submission/{id}/read",
 		app.submissionUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/{id}/upload",
+		app.submissionMediaUploadHandler,
 	)
 
 	// Image operations

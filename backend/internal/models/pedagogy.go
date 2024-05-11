@@ -25,7 +25,7 @@ type Submission struct {
 	User           User
 	FileType       string
 	SubmissionTime time.Time
-	Media          string
+	Media          []string
 	Feedback       string
 	OnTime         bool
 }

@@ -12,9 +12,6 @@ export default function Home() {
   const initCourses: Course[] = [];
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const [courseArray, setCourseArray] = useState<Course[]>(initCourses);
-  const [courseBanners, setCourseBanners] = useState<Map<string, any>>(
-    new Map()
-  );
   const [navbarActive, setNavbarActive] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
   const router = useRouter();
@@ -49,25 +46,6 @@ export default function Home() {
 
     fetchCourses(token).catch(console.error);
   }, []);
-
-  const fetchBanner = async (bannerId: string) => {
-    try {
-      const res: Response = await fetch(
-        `http://localhost:6789/v1/course/${bannerId}/banner/read`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        console.log(data);
-        return data;
-      } else {
-        console.error("Failed to fetch courses:", res.statusText);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      return [];
-    }
-  };
 
   const handleIconClick = () => {
     setNavbarActive(!navbarActive);

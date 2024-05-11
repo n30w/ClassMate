@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS assignments (
 -- Submissions Table
 CREATE TABLE IF NOT EXISTS submissions (
    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-   file_type VARCHAR,
    submission_time TIMESTAMP WITHOUT TIME ZONE,
    on_time BOOLEAN,
    grade INT,

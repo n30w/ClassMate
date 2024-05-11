@@ -25,7 +25,8 @@ export interface Course {
   description: string;
   professor: string;
   location: string;
-  banner: string; // banner ID
+  banner: string;
+  assignments: Assignment[];
 }
 
 export interface Discussion {

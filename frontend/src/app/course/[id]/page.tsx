@@ -2,41 +2,17 @@
 
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
-import Discussions from "@/components/coursepage/Discussions";
-import {
-  Announcement,
-  Assignment,
-  Discussion,
-  User,
-  Course,
-} from "@/lib/types";
+import { Course } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import AddStudent from "./AddStudent";
 import { useState, useEffect } from "react";
 import AddButton from "@/components/buttons/AddButton";
+import Image from "next/image";
 
-// These data names must match what the API returns.
-interface HomepageData {
-  course_info: {
-    name: string;
-    teachers: User[];
-    assignments: Assignment[];
-    discussions: Discussion[];
-    announcements: Announcement[];
-    roster: User[];
-  };
-}
-
-// Dynamic route example found here:
-// https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#example
 export default function Page({ params }: { params: { id: string } }) {
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
-  let [data, setData] = useState<HomepageData>();
-  // const path = `http://localhost:6789/v1/course/homepage/${params.id}`;
-  // const res: HomepageData = fetch(path).then((response) => {
-  //   console.log(response.json());
-  // });
+  const [data, setData] = useState<Course | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,8 +22,8 @@ export default function Page({ params }: { params: { id: string } }) {
         if (!response.ok) {
           throw new Error("Failed to fetch data");
         }
-        const fetchedData: HomepageData = await response.json();
-        setData(fetchedData);
+        const { course }: { course: Course } = await response.json();
+        setData(course);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -55,7 +31,6 @@ export default function Page({ params }: { params: { id: string } }) {
 
     fetchData();
 
-    const token = localStorage.getItem("token");
     const permissions = localStorage.getItem("permissions");
     if (permissions === "1") {
       setIsTeacher(true);
@@ -67,16 +42,15 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <Navbar />
-      <div
-        style={{
-          backgroundImage: `url('/backgrounds/course-bg.jpg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          width: "100%",
-          height: "300px",
-          paddingTop: "16px",
-        }}
-      >
+      <div>
+        {data && (
+          <Image
+            src={`http://localhost:6789/v1/course/${data.banner}/banner/read`}
+            alt="Course Background"
+            layout="fill"
+            objectFit="cover"
+          />
+        )}
         {isTeacher && (
           <div className="flex justify-end mr-8">
             <AddButton
@@ -91,13 +65,10 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute bg-black bg-opacity-70 flex flex-col justify-center">
             {data && (
               <h1 className="text-white text-3xl font-bold pb-2 block text-opacity-100">
-                {data.course_info.name}
+                {data.name}
               </h1>
             )}
           </div>
-          {/* <div className="flex justify-end">
-            <Discussions />
-          </div> */}
         </div>
       </div>
       <div className="flex justify-around p-16">
@@ -108,10 +79,7 @@ export default function Page({ params }: { params: { id: string } }) {
         )}
         {data && (
           <div className="flex flex-col">
-            <Assignments
-              courseId={url}
-              entries={data.course_info.assignments}
-            />
+            <Assignments courseId={url} entries={data.assignments} />
           </div>
         )}
       </div>

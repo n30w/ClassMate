@@ -1124,7 +1124,7 @@ func (s *Store) InsertSubmission(
 	*models.Submission,
 	error,
 ) {
-	query := `INSERT INTO submissions (submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4, $5) RETURNING id`
+	query := `INSERT INTO submissions (submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	row := s.db.QueryRow(
 		query,
@@ -1140,6 +1140,16 @@ func (s *Store) InsertSubmission(
 		if err == sql.ErrNoRows {
 			return nil, ERR_RECORD_NOT_FOUND
 		}
+		return nil, err
+	}
+	return sub, nil
+}
+
+func (s *Store) InsertSubmissionIntoAssignment(sub *models.Submission) (*models.Submission, error) {
+	query := `INSERT INTO assignment_submissions (assignment_id, submission_id) VALUES ($1, $2)`
+
+	_, err := s.db.Exec(query, sub.AssignmentId, sub.ID)
+	if err != nil {
 		return nil, err
 	}
 	return sub, nil
