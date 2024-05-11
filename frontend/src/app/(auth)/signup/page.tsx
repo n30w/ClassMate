@@ -73,7 +73,10 @@ const SignUpForm = () => {
       if (res.status !== 400) {
         router.push("/login");
       } else {
+<<<<<<< Updated upstream
         setPasswordError(res.statusText);
+=======
+>>>>>>> Stashed changes
         console.error("Failed to create user:", res.statusText);
       }
     } catch (error) {

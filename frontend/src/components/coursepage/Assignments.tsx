@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
-import { useRouter, usePathname } from "next/navigation";
 import AssignmentDisplay from "./AssignmentDisplay";
 
 interface props {
@@ -14,8 +13,6 @@ interface props {
 
 const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isTeacher, setIsTeacher] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [token, setIsToken] = useState("");
@@ -29,8 +26,12 @@ const Assignments: React.FC<props> = (props: props) => {
     if (permissions === "1") {
       setIsTeacher(true);
     }
-    fetchAssignments();
-  }, [assignments]);
+    const handleSelectChange = (
+      event: React.ChangeEvent<HTMLSelectElement>
+    ) => {
+      setSelectedAssignment(event.target.value);
+    };
+  });
 
   const fetchAssignments = async () => {
     try {
@@ -50,27 +51,6 @@ const Assignments: React.FC<props> = (props: props) => {
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedAssignment(event.target.value);
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const files = Array.from(event.dataTransfer.files);
-    setUploadedFiles(files);
-  };
-
-  const handleFileInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (event.target.files) {
-      const files = Array.from(event.target.files);
-      setUploadedFiles(files);
-    }
-  };
-
-  const handleFileRemove = (index: number) => {
-    const newFiles = [...uploadedFiles];
-    newFiles.splice(index, 1);
-    setUploadedFiles(newFiles);
   };
 
   const postSubmission = async (submissionData: any) => {
@@ -99,20 +79,6 @@ const Assignments: React.FC<props> = (props: props) => {
       console.error("Error creating submission:", error);
     }
   };
-
-  // const readFileAsBase64 = (file: File): Promise<string> => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.onload = () => {
-  //       const base64String = reader.result as string;
-  //       // Extract the base64 content from the data URL
-  //       const base64Content = base64String.split(",")[1];
-  //       resolve(base64Content);
-  //     };
-  //     reader.onerror = (error) => reject(error);
-  //     reader.readAsDataURL(file);
-  //   });
-  // };
 
   const refreshData = async () => {
     setIsCreatingAssignment(false);
