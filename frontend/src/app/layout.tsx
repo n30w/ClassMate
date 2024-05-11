@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={neue.className}>{children}</body>
+      <body className={`${neue.className}`}>{children}</body>
     </html>
   );
 }

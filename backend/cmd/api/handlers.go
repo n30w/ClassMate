@@ -328,7 +328,11 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
+		app.serverError(
+			w,
+			r,
+			fmt.Errorf("%s is an invalid action", action),
+		) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -352,12 +356,18 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
+	err = app.services.UserService.UnenrollUserFromCourse(
+		input.UserId,
+		input.CourseId,
+	) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(
+		input.CourseId,
+		input.UserId,
+	) // delete user from course
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -581,7 +591,11 @@ func (app *application) announcementUpdateHandler(
 		return
 	}
 
-	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
+	msg, err := app.services.MessageService.UpdateMessage(
+		input.MsgId,
+		input.Action,
+		input.UpdatedField,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -884,7 +898,7 @@ func (app *application) assignmentCreateHandler(
 // one specific assignment, one must only request the UUID of an assignment.
 //
 // REQUEST: uuid
-// RESPONSE: assignment
+// RESPONSE: assignments
 func (app *application) assignmentReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -896,7 +910,9 @@ func (app *application) assignmentReadHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 	var assignments []models.Assignment
+
 	for _, id := range assignmentids {
 		assignment, err := app.services.AssignmentService.ReadAssignment(id)
 		if err != nil {
@@ -906,7 +922,7 @@ func (app *application) assignmentReadHandler(
 		assignments = append(assignments, *assignment)
 	}
 
-	res := jsonWrap{"assignment": assignments}
+	res := jsonWrap{"assignments": assignments}
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
@@ -935,7 +951,11 @@ func (app *application) assignmentUpdateHandler(
 		return
 	}
 
-	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
+	assignment, err := app.services.AssignmentService.UpdateAssignment(
+		input.Uuid,
+		input.UpdatedField,
+		input.Action,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1117,7 +1137,8 @@ func (app *application) submissionUpdateHandler(
 
 }
 
-func (app *application) submissionMediaUploadHandler(w http.ResponseWriter,
+func (app *application) submissionMediaUploadHandler(
+	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	submissionid := r.PathValue("id")

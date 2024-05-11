@@ -5,52 +5,27 @@ import CloseButton from "@/components/buttons/CloseButton";
 import { Assignment } from "@/lib/types";
 
 interface props {
+  assignment: Assignment;
   onClose: () => void;
-  assignment_id: string;
 }
 
-const AssignmentDisplay: React.FC<props> = (props: props) => {
-  const [assignment, setAssignment] = useState<Record<string, any> | null>(
-    null
-  );
-
-  useEffect(() => {
-    fetchAssignment();
-  }, []);
-
-  const fetchAssignment = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${props.assignment_id}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log("SINGLE ASSIGNMENT INFO: ", data);
-        setAssignment(data.assignment);
-      } else {
-        console.error("Failed to fetch assignments:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
-    }
-  };
-
+const AssignmentDisplay: React.FC<props> = ({ assignment, onClose }: props) => {
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     //Submission logic
-    props.onClose();
+    onClose();
   };
 
   const isPastDueDate =
     assignment && new Date(assignment.due_date) < new Date();
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
-        <CloseButton onClick={props.onClose} />
+        <CloseButton onClick={onClose} />
         <form className="justify-end" onSubmit={handleSubmit}>
           <h1 className="font-bold text-black text-2xl pb-8">
-            {assignment ? assignment.post.Title : ""}
+            {assignment ? assignment.title : ""}
           </h1>
           <h1 className="font-bold text-black text-xl pb-8">
             Due Date:{" "}
@@ -59,7 +34,7 @@ const AssignmentDisplay: React.FC<props> = (props: props) => {
               : ""}
           </h1>
           <h1 className="font-bold text-black text-l pb-8">
-            Description: {assignment ? assignment.post.Description : ""}
+            Description: {assignment ? assignment.description : ""}
           </h1>
           {!isPastDueDate ? (
             <div className="mb-4">

@@ -5,15 +5,33 @@ import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
 import AssignmentDisplay from "./AssignmentDisplay";
+import formattedDate from "@/lib/helpers/formattedDate";
 
 interface props {
   entries: Assignment[];
   courseId: string;
 }
 
-const Assignments: React.FC<props> = (props: props) => {
-  const [selectedAssignment, setSelectedAssignment] = useState("");
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
+  const [selectedAssignment, setSelectedAssignment] = useState({
+    id: "",
+    title: "",
+    due_date: "",
+    description: "",
+    created_at: "",
+    updated_at: "",
+    deleted_at: "",
+  });
+
+  const [assignments, setAssignments] = useState<Assignment[]>(entries);
+  /**
+   * assignmentMap maps assignment object values to their
+   * name pairs.
+   */
+  const [assignmentMap, setAssignmentMap] = useState<Map<string, Assignment>>(
+    new Map<string, Assignment>()
+  );
+
   const [isTeacher, setIsTeacher] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [token, setIsToken] = useState("");
@@ -24,32 +42,40 @@ const Assignments: React.FC<props> = (props: props) => {
     if (token) {
       setIsToken(token);
     }
+
     const permissions = localStorage.getItem("permissions");
     if (permissions === "1") {
       setIsTeacher(true);
     }
-    fetchAssignments();
-  }, [assignments]);
 
-  const fetchAssignments = async () => {
-    try {
+    const fetchAssignments = async (): Promise<Assignment[]> => {
       const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${props.courseId}`
+        `http://localhost:6789/v1/course/assignment/read/${courseId}`
       );
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data);
-        setAssignments(data.assignment);
-      } else {
-        console.error("Failed to fetch assignments:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
-    }
-  };
+      const { assignments }: { assignments: Assignment[] } =
+        await response.json();
+      setAssignments(assignments);
+      return assignments;
+    };
+
+    fetchAssignments()
+      .then((a: Assignment[]) => {
+        // Assign map's keys and values based on fetched assignments.
+        const newMap: Map<string, Assignment> = new Map<string, Assignment>();
+        for (let i = 0; i < a.length; i++) {
+          const el = a[i];
+          newMap.set(el.title, el);
+        }
+        setAssignmentMap(newMap);
+        console.log(newMap);
+      })
+      .catch(console.error);
+  }, []);
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedAssignment(event.target.value);
+    // Get the assignment by its UUID.
+    const value: Assignment = assignmentMap.get(event.target.value)!;
+    setSelectedAssignment(value);
     setSetIsViewingAssignment(true);
   };
 
@@ -58,50 +84,44 @@ const Assignments: React.FC<props> = (props: props) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-red-50">
+      {isTeacher && (
+        <AddButton
+          fullWidth={true}
+          text="Create Assignment"
+          onClick={() => {
+            setIsCreatingAssignment(true);
+          }}
+        />
+      )}
       <div className="flex">
-        {isTeacher && (
-          <AddButton
-            onClick={() => {
-              setIsCreatingAssignment(true);
-            }}
-          />
-        )}
-        <select
-          className="ml-16 p-2"
-          value={selectedAssignment}
-          onChange={handleSelectChange}
-        >
-          <option value="">Choose an assignment</option>
+        <ul className="w-full">
           {assignments &&
-            assignments.map((assignment: any, index: number) => (
-              <option key={index} value={assignment.id}>
-                {assignment.name}
-              </option>
+            assignments.map((assignment: Assignment, i: number) => (
+              <li
+                className="flex flex-col max-w-sm p-6 h-46 border shadow bg-gray-900 border-gray-700 hover:bg-gray-700"
+                key={i}
+              >
+                <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
+                <div className="mb-2 rounded-xl  bg-yellow-700 w-fit">
+                  <h6 className="text-xs tracking-wide text-white px-2 py-1">
+                    {formattedDate(assignment.due_date).toLocaleUpperCase()}
+                  </h6>
+                </div>
+                {/* <p className="font-normal tracking-wide text-gray-400">
+                  {truncateString(assignment.description, 50)}
+                </p> */}
+              </li>
             ))}
-        </select>
+        </ul>
       </div>
-      {selectedAssignment !== "" &&
-        assignments[parseInt(selectedAssignment)] && (
-          <>
-            <h2 className="text-white text-2xl font-bold mb-2 pt-4">
-              {assignments[parseInt(selectedAssignment)].title}
-            </h2>
-            <p className="text-white text-sm my-4">
-              Due Date: {assignments[parseInt(selectedAssignment)].duedate}
-            </p>
-            <p className="text-white text-lg font-light pb-8">
-              {assignments[parseInt(selectedAssignment)].description}
-            </p>
-          </>
-        )}
       {isCreatingAssignment && (
         <CreateAssignment
           onClose={() => {
             refreshData();
           }}
           token={token}
-          params={{ id: props.courseId }}
+          params={{ id: courseId }}
         />
       )}
       {isViewingAssignment && (
@@ -109,7 +129,7 @@ const Assignments: React.FC<props> = (props: props) => {
           onClose={() => {
             setSetIsViewingAssignment(false);
           }}
-          assignment_id={selectedAssignment}
+          assignment={selectedAssignment}
         />
       )}
     </div>

@@ -52,7 +52,7 @@ export default function Home() {
   };
 
   return (
-    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh" }} className="bg-slate-900">
       <nav
         style={{
           backgroundImage: `url('/backgrounds/dashboard-bg.jpeg')`,
@@ -61,7 +61,7 @@ export default function Home() {
         }}
       >
         <div className="relative">
-          <div className="absolute inset-0 bg-black opacity-70"></div>
+          <div className="absolute inset-0 opacity-70"></div>
           <div className="py-8 px-32 flex justify-between items-center relative z-10">
             <div className="flex items-center gap-4">
               <Image
@@ -105,7 +105,7 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="bg-black bg-cover bg-no-repeat">
+      <div className="bg-cover bg-no-repeat">
         (
         <div className="flex items-center justify-between py-8 px-32">
           <h1 className="font-bold text-4xl text-white">{currentTerm}</h1>
