@@ -21,6 +21,16 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "6789",
+        pathname: "*/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
