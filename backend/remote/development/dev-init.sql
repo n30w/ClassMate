@@ -252,19 +252,6 @@ INSERT INTO course_teachers (course_id, teacher_id) VALUES
                                                         ((SELECT id FROM courses WHERE title = 'Environmental Science'), (SELECT net_id FROM users WHERE full_name = 'Alice Jackson')),
                                                         ((SELECT id FROM courses WHERE title = 'Business Management'), (SELECT net_id FROM users WHERE full_name = 'Mike Miller'));
 
--- CREATE OR REPLACE FUNCTION sync_user_courses()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     INSERT INTO user_courses (user_net_id, course_id)
---     VALUES (NEW.teacher_id, NEW.course_id);
---     RETURN NEW;
--- END;
--- CREATE TRIGGER course_teachers_after_insert_trigger
--- AFTER INSERT ON course_teachers
--- FOR EACH ROW
--- EXECUTE FUNCTION sync_user_courses();
--- Further junction table entries to link data as per new structure need to be added here, for example linking courses to users, messages to courses, etc.
-
 SELECT * FROM courses;
 SELECT * FROM assignments;
 SELECT * FROM messages;
@@ -274,5 +261,4 @@ SELECT * FROM users;
 SELECT * FROM tokens;
 SELECT * FROM user_courses;
 SELECT * FROM course_teachers;
--- SELECT * FROM course_id;
 SELECT * FROM course_roster;
