@@ -1,13 +1,12 @@
 package domain
 
 import (
+	"github.com/n30w/Darkspace/internal/models"
+	"github.com/xuri/excelize/v2"
 	"io"
 	"path"
 	"strconv"
 	"strings"
-
-	"github.com/n30w/Darkspace/internal/models"
-	"github.com/xuri/excelize/v2"
 )
 
 type ExcelStore interface {
@@ -62,10 +61,10 @@ func (es *ExcelService) ReadSubmissions(path string) (
 	return submissions, nil
 }
 
-// WriteSubmissions writes to an Excel file which will be sent to the
-// teacher for their offline grading use. It writes to an Excel file.
-// p is the path to save the file to. The name of the file is automatically
-// generated. The path to the generated file is returned along with an error.
+// WriteSubmissions writes to an Excel file. This file will be sent to the
+// teacher for their offline grading use. p is the path which to save the file
+// to. The name of the file is automatically generated.
+// The path to the generated file is returned along with an error.
 func (es *ExcelService) WriteSubmissions(
 	p, fileName string,
 	submissions []models.Submission,
@@ -79,6 +78,15 @@ func (es *ExcelService) WriteSubmissions(
 	}
 
 	defer f.Close()
+
+	// Write Course ID and Assignment ID to template. Uses the
+	// fileName to retrieve the Course ID and Assignment ID.
+	caId := strings.Split(fileName, "-")
+	row := &[]interface{}{
+		caId[0],
+		caId[1],
+	}
+	err = es.store.AddRow(f, row, "G2")
 
 	// Write rows to template.
 	for i, submission := range submissions {
@@ -94,15 +102,6 @@ func (es *ExcelService) WriteSubmissions(
 			return "", err
 		}
 	}
-
-	// Write Course ID and Assignment ID to template. Uses the
-	// fileName to retrieve the Course ID and Assignment ID.
-	caId := strings.Split(fileName, "-")
-	row := &[]interface{}{
-		caId[0],
-		caId[1],
-	}
-	err = es.store.AddRow(f, row, "G2")
 
 	// Save the file to disk.
 	s, err := es.store.Save(f, savePath)

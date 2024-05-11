@@ -1147,6 +1147,8 @@ func (app *application) receiveOfflineGrades(
 
 	defer f.Close()
 
+	// Check file type.
+
 	// Save the file to disk.
 	path, err := app.services.FileService.Save(handler.Filename, f)
 	if err != nil {
