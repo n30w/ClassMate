@@ -10,9 +10,17 @@ import AddButton from "@/components/buttons/AddButton";
 import Image from "next/image";
 
 export default function Page({ params }: { params: { id: string } }) {
+  const initialCourse: Course = {
+    id: "",
+    name: "",
+    description: "",
+    professor: "",
+    banner: "",
+  };
+
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
-  const [data, setData] = useState<Course | null>(null);
+  const [data, setData] = useState<Course>(initialCourse);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,6 +32,7 @@ export default function Page({ params }: { params: { id: string } }) {
         }
         const { course }: { course: Course } = await response.json();
         setData(course);
+        console.log(data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -47,7 +56,8 @@ export default function Page({ params }: { params: { id: string } }) {
           <Image
             src={`http://localhost:6789/v1/course/${data.banner}/banner/read`}
             alt="Course Background"
-            layout="fill"
+            width={400}
+            height={400}
             objectFit="cover"
           />
         )}
@@ -79,7 +89,7 @@ export default function Page({ params }: { params: { id: string } }) {
         )}
         {data && (
           <div className="flex flex-col">
-            <Assignments courseId={url} entries={data.assignments} />
+            <Assignments courseId={url} entries={data.assignments!} />
           </div>
         )}
       </div>

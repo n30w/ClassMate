@@ -24,9 +24,8 @@ export interface Course {
   name: string;
   description: string;
   professor: string;
-  location: string;
   banner: string;
-  assignments: Assignment[];
+  assignments?: Assignment[];
 }
 
 export interface Discussion {
