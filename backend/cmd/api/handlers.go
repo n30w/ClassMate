@@ -337,11 +337,7 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(
-			w,
-			r,
-			fmt.Errorf("%s is an invalid action", action),
-		) //need to format error, input field is not one of the 3 options
+		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -365,24 +361,22 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.UserService.UnenrollUserFromCourse(
-		input.UserId,
-		input.CourseId,
-	) // delete course from user
+	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	_, err = app.services.CourseService.RemoveFromRoster(
-		input.CourseId,
-		input.UserId,
-	) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+<<<<<<< Updated upstream
 	courses, err := app.services.UserService.GetUserCourses(input.UserId)
+=======
+	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
+>>>>>>> Stashed changes
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -551,6 +545,7 @@ func (app *application) announcementCreateHandler(
 	}
 }
 
+<<<<<<< Updated upstream
 // REQUEST: announcement ID
 // RESPONSE: announcement
 func (app *application) announcementReadHandler(
@@ -582,12 +577,17 @@ func (app *application) announcementReadHandler(
 }
 
 // REQUEST: announcement ID, action (title, body), updated field
+=======
+// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
+>>>>>>> Stashed changes
 // RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	var input struct {
+		CourseId     string `json:"courseid"`
+		TeacherId    string `json:"teacherid"`
 		MsgId        string `json:"announcementid"`
 		Action       string `json:"action"`
 		UpdatedField string `json:"updatedfield"`
@@ -599,11 +599,7 @@ func (app *application) announcementUpdateHandler(
 		return
 	}
 
-	msg, err := app.services.MessageService.UpdateMessage(
-		input.MsgId,
-		input.Action,
-		input.UpdatedField,
-	)
+	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -701,8 +697,11 @@ func (app *application) userReadHandler(
 ) {
 	id := r.PathValue("id")
 
+	var err error
+	var user *models.User
+
 	// Perform a database lookup of user.
-	user, err := app.services.UserService.GetByID(id)
+	user, err = app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -726,8 +725,11 @@ func (app *application) userUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+<<<<<<< Updated upstream
 	id := r.PathValue("id")
 	fmt.Printf("id: %s", id)
+=======
+>>>>>>> Stashed changes
 }
 
 // userDeleteHandler deletes a user. A request must come from
@@ -769,6 +771,7 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+<<<<<<< Updated upstream
 	var input struct {
 		NetId    string `json:"netid"`
 		Password string `json:"password"`
@@ -843,6 +846,9 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		return
 	}
+=======
+
+>>>>>>> Stashed changes
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -868,7 +874,6 @@ func (app *application) assignmentCreateHandler(
 		DueDate     string   `json:"duedate"`
 		CourseId    string   `json:"courseid"`
 	}
-
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -912,6 +917,7 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 }
 
 // assignmentReadHandler relays assignment data back to the requester. To read
@@ -969,11 +975,7 @@ func (app *application) assignmentUpdateHandler(
 		return
 	}
 
-	assignment, err := app.services.AssignmentService.UpdateAssignment(
-		input.Uuid,
-		input.UpdatedField,
-		input.Action,
-	)
+	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -996,6 +998,7 @@ func (app *application) assignmentDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+<<<<<<< Updated upstream
 	var input struct {
 		Uuid string `json:"uuid"`
 	}
@@ -1017,6 +1020,8 @@ func (app *application) assignmentDeleteHandler(
 		return
 	}
 
+=======
+>>>>>>> Stashed changes
 }
 
 func (app *application) assignmentMediaUploadHandler(
@@ -1109,13 +1114,8 @@ func (app *application) discussionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		CourseId   string   `json:"courseid"`
-		PosterId   string   `json:"posterid"`
-		Discussion string   `json:"discussion"`
-		Media      []string `json:"media"`
-	}
 
+<<<<<<< Updated upstream
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1145,6 +1145,8 @@ func (app *application) discussionCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+=======
+>>>>>>> Stashed changes
 }
 
 // discussionReadHandler reads a discussion.
@@ -1182,18 +1184,17 @@ func (app *application) discussionDeleteHandler(
 }
 
 // Media handlers
-func (app *application) mediaCreateHandler(
-	w http.ResponseWriter,
+func (app *application) mediaCreateHandler(w http.ResponseWriter,
 	r *http.Request,
 ) {
 
 }
-func (app *application) mediaDeleteHandler(
-	w http.ResponseWriter,
+func (app *application) mediaDeleteHandler(w http.ResponseWriter,
 	r *http.Request,
 ) {
 
 }
+<<<<<<< Updated upstream
 
 // Comment handlers
 //
@@ -1392,3 +1393,5 @@ func (app *application) addStudentHandler(
 
 // 	w.Write(buf)
 // }
+=======
+>>>>>>> Stashed changes

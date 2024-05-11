@@ -13,9 +13,12 @@ interface props {
 
 const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isTeacher, setIsTeacher] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [token, setIsToken] = useState("");
+  const [isViewingAssignment, setSetIsViewingAssignment] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,12 +29,8 @@ const Assignments: React.FC<props> = (props: props) => {
     if (permissions === "1") {
       setIsTeacher(true);
     }
-    const handleSelectChange = (
-      event: React.ChangeEvent<HTMLSelectElement>
-    ) => {
-      setSelectedAssignment(event.target.value);
-    };
-  });
+    fetchAssignments();
+  }, [assignments]);
 
   const fetchAssignments = async () => {
     try {
@@ -131,6 +130,7 @@ const Assignments: React.FC<props> = (props: props) => {
           params={{ id: props.courseId }}
         />
       )}
+      {isViewingAssignment && <AssignmentDisplay onClose={() => {}} />}
     </div>
   );
 };
