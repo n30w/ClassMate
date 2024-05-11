@@ -44,9 +44,6 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("PATCH /v1/user/update/{id}", app.userUpdateHandler)
 	router.HandleFunc("POST /v1/user/delete/{id}", app.userDeleteHandler)
 
-	// A user posts something to a discussion
-	router.HandleFunc("/v1/user/post", app.userPostHandler)
-
 	// Login will require authorization, body will contain the credential info
 	router.HandleFunc("POST /v1/user/login", app.userLoginHandler)
 
@@ -73,47 +70,6 @@ func (app *application) routes() *http.ServeMux {
 		app.mediaDownloadHandler,
 	)
 
-	// Discussion CRUD operations
-	router.HandleFunc(
-		"/v1/course/discussion/create",
-		app.discussionCreateHandler,
-	)
-	router.HandleFunc("/v1/course/discussion/read", app.discussionReadHandler)
-	router.HandleFunc(
-		"PATCH /v1/course/discussion/update",
-		app.discussionUpdateHandler,
-	)
-	router.HandleFunc(
-		"/v1/course/discussion/delete",
-		app.discussionDeleteHandler,
-	)
-
-	// Media operations
-	router.HandleFunc(
-		"POST /v1/course/{post}/media/create",
-		app.mediaCreateHandler,
-	)
-	// router.HandleFunc(
-	// 	"POST /v1/course/{post}/media/delete",
-	// 	app.mediaDeleteHandler,
-	// )
-
-	// Authentication
-	// router.HandleFunc(
-	// 	"POST /v1/tokens/authentication",
-	// 	app.createAuthenticationTokenHandler,
-	// )
-
-	// Comment operations
-	router.HandleFunc(
-		"POST /v1/course/{post}/comment/create",
-		app.commentCreateHandler,
-	)
-	router.HandleFunc(
-		"POST /v1/course/{post}/comment/delete",
-		app.commentDeleteHandler,
-	)
-
 	// Submission operations
 	router.HandleFunc(
 		"POST /v1/course/assignment/{assignmentId}/submission/{userId}/create",
@@ -135,9 +91,6 @@ func (app *application) routes() *http.ServeMux {
 		"POST /v1/course/assignment/submission/{id}/upload",
 		app.submissionMediaUploadHandler,
 	)
-
-	// Image operations
-	// router.HandlerFunc("POST /v1/course/image", app.cousreImageHandler)
 
 	return router
 }

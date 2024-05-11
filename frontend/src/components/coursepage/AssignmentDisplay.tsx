@@ -6,10 +6,6 @@ import { Assignment } from "@/lib/types";
 
 interface props {
   onClose: () => void;
-  token: string;
-  params: {
-    id: string;
-  };
   assignment_id: string;
 }
 

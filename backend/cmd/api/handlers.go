@@ -120,23 +120,17 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.logger.Printf("received home request for token: %s", input.Token)
-
 	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	app.logger.Printf("retrieved netid: %s", netId)
-
 	courses, err := app.services.UserService.GetUserCourses(netId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	app.logger.Printf("retrieved courses: %v", courses)
 
 	res := jsonWrap{"courses": courses}
 
@@ -154,7 +148,6 @@ func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	app.logger.Printf("Reading course homepage...")
 
 	id := r.PathValue("id")
 
@@ -163,8 +156,6 @@ func (app *application) courseHomepageHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	app.logger.Printf("Returning course: %v", course)
 
 	res := jsonWrap{"course": course}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
@@ -371,12 +362,7 @@ func (app *application) courseDeleteHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-<<<<<<< Updated upstream
 	courses, err := app.services.UserService.GetUserCourses(input.UserId)
-=======
-	courses, err := app.services.UserService.RetrieveFromUser(input.UserId, "courses")
->>>>>>> Stashed changes
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -545,7 +531,6 @@ func (app *application) announcementCreateHandler(
 	}
 }
 
-<<<<<<< Updated upstream
 // REQUEST: announcement ID
 // RESPONSE: announcement
 func (app *application) announcementReadHandler(
@@ -577,9 +562,6 @@ func (app *application) announcementReadHandler(
 }
 
 // REQUEST: announcement ID, action (title, body), updated field
-=======
-// REQUEST: course ID, teacher ID, announcement ID, action (title, body), updated field
->>>>>>> Stashed changes
 // RESPONSE: announcement
 func (app *application) announcementUpdateHandler(
 	w http.ResponseWriter,
@@ -725,11 +707,8 @@ func (app *application) userUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-<<<<<<< Updated upstream
 	id := r.PathValue("id")
 	fmt.Printf("id: %s", id)
-=======
->>>>>>> Stashed changes
 }
 
 // userDeleteHandler deletes a user. A request must come from
@@ -744,21 +723,6 @@ func (app *application) userDeleteHandler(
 
 }
 
-// userPostHandler handles post requests. When a user posts
-// something to a discussion, this is the handler that is called.
-// A post consists of a body, media, and author. The request therefore
-// requires an author of who posted it, what discussion it exists under,
-// and if it is a reply or not. To find the author of who sent it,
-// we can check with middleware authorization headers.
-//
-// REQUEST: user post
-// RESPONSE: user post
-func (app *application) userPostHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-}
-
 // userLoginHandler handles login requests from any user. It requires
 // a username and a password. A login must occur from a genuine domain. This
 // means that the request comes from the frontend server rather than the
@@ -771,7 +735,6 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-<<<<<<< Updated upstream
 	var input struct {
 		NetId    string `json:"netid"`
 		Password string `json:"password"`
@@ -846,9 +809,6 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		return
 	}
-=======
-
->>>>>>> Stashed changes
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -998,7 +958,6 @@ func (app *application) assignmentDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-<<<<<<< Updated upstream
 	var input struct {
 		Uuid string `json:"uuid"`
 	}
@@ -1020,8 +979,6 @@ func (app *application) assignmentDeleteHandler(
 		return
 	}
 
-=======
->>>>>>> Stashed changes
 }
 
 func (app *application) assignmentMediaUploadHandler(
@@ -1104,133 +1061,6 @@ func (app *application) mediaDownloadHandler(
 
 	// Serve the file's content
 	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
-}
-
-// discussionCreateHandler creates a discussion.
-//
-// REQUEST: where (the discussion is being created), title, body, media, poster
-// RESPONSE: discussion data
-func (app *application) discussionCreateHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-<<<<<<< Updated upstream
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	post := models.Post{
-		Description: input.Discussion,
-		Owner:       input.PosterId,
-		Media:       input.Media,
-	}
-	msg := &models.Message{
-		Post: post,
-		Type: false,
-	}
-
-	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
-
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	res := jsonWrap{"discussion": msg}
-	err = app.writeJSON(w, http.StatusOK, res, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-=======
->>>>>>> Stashed changes
-}
-
-// discussionReadHandler reads a discussion.
-//
-// REQUEST: discussion uuid
-// RESPONSE: discussion
-func (app *application) discussionReadHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// discussionUpdateHandler updates a discussion's information. For example,
-// the title or body or media and author.
-//
-// REQUEST: discussion uuid + information to update
-// RESPONSE: discussion
-func (app *application) discussionUpdateHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// discussionDeleteHandler deletes a discussion.
-//
-// REQUEST: discussion uuid
-// RESPONSE: 200 or 500 response
-func (app *application) discussionDeleteHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// Media handlers
-func (app *application) mediaCreateHandler(w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-func (app *application) mediaDeleteHandler(w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-<<<<<<< Updated upstream
-
-// Comment handlers
-//
-// REQUEST: discussion/announcement uuid + comment + author netid
-// RESPONSE: comment
-func (app *application) commentCreateHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		Uuid    string `json:"uuid"`
-		Comment string `json:"comment"`
-		Netid   string `json:"netid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-}
-func (app *application) commentDeleteHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		Uuid  string `json:"uuid"`
-		Netid string `json:"netid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
 }
 
 // Submission handlers
@@ -1375,23 +1205,3 @@ func (app *application) addStudentHandler(
 		return
 	}
 }
-
-// func (app *application) courseImageHandler(
-// 	w http.ResponseWriter,
-// 	r *http.Request,
-// ) {
-// 	f := app.services.MediaService.
-// 	buf, err := os.ReadFile("sid.png")
-
-// 	if err != nil {
-
-// 		log.Fatal(err)
-// 	}
-
-// 	w.Header().Set("Content-Type", "image/png")
-// 	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
-
-// 	w.Write(buf)
-// }
-=======
->>>>>>> Stashed changes

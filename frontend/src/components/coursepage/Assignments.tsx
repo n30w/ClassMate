@@ -13,7 +13,6 @@ interface props {
 
 const Assignments: React.FC<props> = (props: props) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isTeacher, setIsTeacher] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
@@ -39,6 +38,7 @@ const Assignments: React.FC<props> = (props: props) => {
       );
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setAssignments(data.assignment);
       } else {
         console.error("Failed to fetch assignments:", response.statusText);
@@ -50,33 +50,7 @@ const Assignments: React.FC<props> = (props: props) => {
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedAssignment(event.target.value);
-  };
-
-  const postSubmission = async (submissionData: any) => {
-    try {
-      const formData = new FormData();
-      submissionData.forEach((file: File) => {
-        formData.append("files", file);
-      });
-      formData.append("submissiontime", new Date().toISOString());
-      formData.append("assignmentid", submissionData.assignmentid);
-      formData.append("userid", submissionData.userid);
-
-      const res: Response = await fetch(
-        "http://localhost:6789/v1/course/assignment/submission/create",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (res.ok) {
-      } else {
-        console.error("Failed to create submission:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error creating submission:", error);
-    }
+    setSetIsViewingAssignment(true);
   };
 
   const refreshData = async () => {
@@ -101,7 +75,7 @@ const Assignments: React.FC<props> = (props: props) => {
           <option value="">Choose an assignment</option>
           {assignments &&
             assignments.map((assignment: any, index: number) => (
-              <option key={index} value={index}>
+              <option key={index} value={assignment.id}>
                 {assignment.name}
               </option>
             ))}
@@ -130,7 +104,14 @@ const Assignments: React.FC<props> = (props: props) => {
           params={{ id: props.courseId }}
         />
       )}
-      {isViewingAssignment && <AssignmentDisplay onClose={() => {}} />}
+      {isViewingAssignment && (
+        <AssignmentDisplay
+          onClose={() => {
+            setSetIsViewingAssignment(false);
+          }}
+          assignment_id={selectedAssignment}
+        />
+      )}
     </div>
   );
 };
