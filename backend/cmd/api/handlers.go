@@ -1091,7 +1091,7 @@ func (app *application) sendOfflineTemplate(
 	}
 
 	// Generate file name for Excel.
-	fileName := fmt.Sprintf("%s-%s", courseId, assignmentId)
+	fileName := fmt.Sprintf("submissions_%s_%s", courseId, assignmentId)
 
 	// Prepare the Excel file for transit. WriteSubmissions
 	// saves the file to where it needs to be saved.
@@ -1176,21 +1176,3 @@ func (app *application) receiveOfflineGrades(
 		return
 	}
 }
-
-// func (app *application) courseImageHandler(
-// 	w http.ResponseWriter,
-// 	r *http.Request,
-// ) {
-// 	f := app.services.MediaService.
-// 	buf, err := os.ReadFile("sid.png")
-
-// 	if err != nil {
-
-// 		log.Fatal(err)
-// 	}
-
-// 	w.Header().Set("Content-Type", "image/png")
-// 	w.Header().Set("Content-Disposition", `attachment;filename="sid.png"`)
-
-// 	w.Write(buf)
-// }

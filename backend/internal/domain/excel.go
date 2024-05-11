@@ -33,20 +33,29 @@ func (es *ExcelService) ReadSubmissions(path string) (
 	error,
 ) {
 	var submissions []models.Submission
+
 	rows, err := es.store.Get(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// [1:] to ignore the first row,
-	// which is just column headers for data in the
-	// Excel template.
-	for _, row := range rows[1:] {
+	// Remove the first element from rows, using [1:]
+	// The first element is just column headers for data
+	// in the Excel template.
+	rows = rows[1:]
+
+	for _, row := range rows {
 		submission := models.Submission{}
-		submission.User.ID = row[0]
-		submission.Grade, _ = strconv.ParseFloat(row[1], 64)
-		submission.Feedback = row[2]
-		submission.ID = row[3]
+
+		// Set the appropriate values for each submission
+		// model. The slice values are dictated from
+		// the column headers in the Excel template file.
+		submission.User.FullName = row[0]
+		submission.User.ID = row[1]
+		submission.Grade, _ = strconv.ParseFloat(row[2], 64)
+		submission.Feedback = row[3]
+		submission.ID = row[4]
+
 		submissions = append(submissions, submission)
 	}
 
@@ -78,7 +87,9 @@ func (es *ExcelService) WriteSubmissions(
 		// Start in column A, increment downward. i+2 because
 		// i starts at 0, Excel rows start at 1, and the first
 		// row is used by column headers.
-		err = es.store.AddRow(f, row, "A"+strconv.Itoa(i+2))
+		start := "A" + strconv.Itoa(i+2)
+
+		err = es.store.AddRow(f, row, start)
 		if err != nil {
 			return "", err
 		}
@@ -103,6 +114,8 @@ func (es *ExcelService) WriteSubmissions(
 	return s, nil
 }
 
+// Save takes an Excelize Excel file and saves it to a specified
+// path, via to.
 func (es *ExcelService) Save(f *excelize.File, to string) (string, error) {
 	p, err := es.store.Save(f, to)
 	if err != nil {

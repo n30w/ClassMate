@@ -20,6 +20,25 @@ func NewExcelStore() *ExcelStore {
 	}
 }
 
+// Open opens an Excel file at a specified path. Uses variadic
+// parameters to accept an optional value. If the optional value
+// is not set, uses the struct default templatePath.
+func (es *ExcelStore) Open(path ...string) (*excelize.File, error) {
+	var p string
+	if len(path) >= 1 {
+		p = path[0]
+	} else {
+		p = es.excelTemplatePath
+	}
+
+	f, err := excelize.OpenFile(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 // Get retrieves all the data in a file. It takes optional
 // arguments. It is a slice, where index 0 is the path and
 // index 1 is the sheet name. Defaults to struct initials
@@ -39,7 +58,7 @@ func (es *ExcelStore) Get(path ...string) (
 	}
 
 	// Open the file
-	f, err := excelize.OpenFile(p)
+	f, err := es.Open(p)
 	if err != nil {
 		return nil, err
 	}
@@ -62,30 +81,12 @@ func (es *ExcelStore) Save(file *excelize.File, to string) (string, error) {
 		return "", nil
 	}
 
-	return "", nil
-}
-
-// Open opens an Excel file at a specified path. Uses variadic
-// parameters to accept an optional value. If the optional value
-// is not set, uses the struct default templatePath.
-func (es *ExcelStore) Open(path ...string) (*excelize.File, error) {
-	var p string
-	if len(path) >= 1 {
-		p = path[0]
-	} else {
-		p = es.excelTemplatePath
-	}
-
-	f, err := excelize.OpenFile(p)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return to, nil
 }
 
 // AddRow adds a row to an Excel sheet. It takes a row and a start.
-// Start is the starting cell on which to add.
+// Start is the starting cell from which to start adding cell values
+// horizontally across columns.
 func (es *ExcelStore) AddRow(
 	f *excelize.File, row *[]interface{},
 	start string,
