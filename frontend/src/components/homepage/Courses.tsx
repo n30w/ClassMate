@@ -8,7 +8,7 @@ interface props {
 
 const CourseItem: React.FC<props> = (props: props) => {
   // Banner path for API
-  const url = `http://localhost:6789/v1/api/course/${props.data.banner}/banner/read`;
+  const url = `http://localhost:6789/v1/course/${props.data.banner}/banner/read`;
   return (
     <div className="py-4 px-32" onClick={props.onClick}>
       <div>
