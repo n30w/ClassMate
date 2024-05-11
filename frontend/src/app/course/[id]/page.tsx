@@ -52,24 +52,6 @@ export default function Page({ params }: { params: { id: string } }) {
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <Navbar />
       <div>
-        {data && (
-          <Image
-            src={`http://localhost:6789/v1/course/${data.banner}/banner/read`}
-            alt="Course Background"
-            width={400}
-            height={400}
-          />
-        )}
-        {isTeacher && (
-          <div className="flex justify-end mr-8">
-            <AddButton
-              text={"Add Student"}
-              onClick={() => {
-                setIsAddingStudent(true);
-              }}
-            />
-          </div>
-        )}
         <div className="relative">
           <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute bg-black bg-opacity-70 flex flex-col justify-center">
             {data && (
@@ -79,7 +61,30 @@ export default function Page({ params }: { params: { id: string } }) {
             )}
           </div>
         </div>
+
+        {data.banner && (
+          <div className={"w-full h-[400px] flex"}>
+            <Image
+              src={`http://localhost:6789/v1/course/${data.banner}/banner/read`}
+              alt="Course Background"
+              className="w-full h-full"
+              style={{ objectFit: "cover" }}
+              width={400}
+              height={400}
+            />
+          </div>
+        )}
       </div>
+      {isTeacher && (
+        <div className="flex justify-end mr-8 mt-4">
+          <AddButton
+            text={"Add Student"}
+            onClick={() => {
+              setIsAddingStudent(true);
+            }}
+          />
+        </div>
+      )}
       <div className="flex justify-around p-16">
         {data && (
           <div className="flex flex-col w-96">
