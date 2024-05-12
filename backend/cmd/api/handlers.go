@@ -3,12 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"strconv"
-	"io"
 	"mime"
 	"net/http"
-	"os"
+
 	"path/filepath"
 	"time"
 

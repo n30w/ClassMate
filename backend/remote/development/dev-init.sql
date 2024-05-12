@@ -79,16 +79,6 @@ CREATE TABLE IF NOT EXISTS submissions (
                                            feedback VARCHAR
 );
 
-CREATE TABLE IF NOT EXISTS images (
-                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                          url VARCHAR NOT NULL
-   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-   submission_time TIMESTAMP WITHOUT TIME ZONE,
-   on_time BOOLEAN,
-   grade INT,
-   feedback VARCHAR
-);
-
 -----------------
 --- JUNCTIONS ---
 -----------------
