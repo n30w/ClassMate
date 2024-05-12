@@ -4,16 +4,16 @@ import "time"
 
 type Post struct {
 	Entity
-	Title       string
-	Description string
-	Media       []string
-	Date        string
-	Course      string
-	Owner       string
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Media       []string `json:"media,omitempty"`
+	Date        string   `json:"date,omitempty"`
+	Course      string   `json:"course,omitempty"`
+	Owner       string   `json:"owner,omitempty"`
 }
 
 type Assignment struct {
-	Post       `json:"post"`
+	Post
 	Submission []string  `json:"submission,omitempty"`
 	DueDate    time.Time `json:"due_date"`
 }

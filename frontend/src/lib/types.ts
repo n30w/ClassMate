@@ -5,22 +5,19 @@ export interface Entity {
   deleted_at: string;
 }
 
-export interface Announcement {
-  id: string;
+export interface Announcement extends Entity {
   title: string;
   date: string;
   description: string;
 }
 
-export interface Assignment {
-  id: string;
+export interface Assignment extends Entity {
   title: string;
-  duedate: string;
+  due_date: string;
   description: string;
 }
 
-export interface Course {
-  id: string;
+export interface Course extends Entity {
   name: string;
   description: string;
   professor: string;
@@ -33,8 +30,7 @@ export interface Discussion {
   description: string;
 }
 
-export interface User {
-  id: string;
+export interface User extends Entity {
   username: string;
   fullname: string;
 }
