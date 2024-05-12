@@ -928,33 +928,73 @@ func (app *application) assignmentReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-
-	courseid := r.PathValue("id")
-	assignmentids, err := app.services.AssignmentService.RetrieveAssignments(courseid)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	var input struct {
+		AssignmentId string `json:"assignmentid"`
+		token        string `json:"token"`
 	}
 
-	var assignments []models.Assignment
+	courseId := r.PathValue("id")
 
-	for _, id := range assignmentids {
-		assignment, err := app.services.AssignmentService.ReadAssignment(id)
+	switch r.Method {
+	// Retrieve multiple assignments if its a single GET request.
+	case http.MethodGet:
+		assignmentIds, err := app.services.AssignmentService.RetrieveAssignments(courseId)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
-		assignments = append(assignments, *assignment)
-	}
 
-	res := jsonWrap{"assignments": assignments}
+		var assignments []models.Assignment
 
-	err = app.writeJSON(w, http.StatusOK, res, nil)
-	if err != nil {
-		app.serverError(w, r, err)
+		for _, id := range assignmentIds {
+			assignment, err := app.services.AssignmentService.ReadAssignment(id)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+			assignments = append(assignments, *assignment)
+		}
+
+		res := jsonWrap{"assignments": assignments}
+
+		err = app.writeJSON(w, http.StatusOK, res, nil)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+	// If it's a post request, we can expect an input and body. Therefore,
+	// only retrieve a single Assignment.
+	case http.MethodPost:
+		err := app.readJSON(w, r, &input)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		assignment, err := app.services.AssignmentService.ReadAssignment(
+			input.
+				AssignmentId,
+		)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		res := jsonWrap{"assignment": assignment}
+
+		err = app.writeJSON(w, http.StatusOK, res, nil)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		return
+
+	// Bad dog.
+	default:
+		app.serverError(w, r, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
-
 }
 
 // assignmentUpdateHandler updates the information of an assignment.

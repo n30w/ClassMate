@@ -55,10 +55,20 @@ func (app *application) routes() *http.ServeMux {
 
 	// Assignment CRUD operations
 	router.HandleFunc(
-		"/v1/course/assignment/create",
+		"POST /v1/course/assignment/create",
 		app.assignmentCreateHandler,
 	)
-	router.HandleFunc("GET /v1/course/assignment/read/{id}", app.assignmentReadHandler)
+
+	// app.assignmentReadHandler switches its behavior based on the HTTP Method.
+	router.HandleFunc(
+		"/v1/course/assignment/read/{id}",
+		app.assignmentReadHandler,
+	)
+	//router.HandleFunc(
+	//	"POST /v1/course/assignment/read/{id}",
+	//	app.assignmentReadHandler,
+	//)
+	//
 	router.HandleFunc(
 		"PATCH /v1/course/assignment/update",
 		app.assignmentUpdateHandler,
@@ -67,14 +77,14 @@ func (app *application) routes() *http.ServeMux {
 		"POST /v1/course/assignment/delete",
 		app.assignmentDeleteHandler,
 	)
-	router.HandleFunc(
-		"POST /v1/course/assignment/{id}/upload",
-		app.assignmentMediaUploadHandler,
-	)
-	router.HandleFunc(
-		"GET /v1/course/download/{mediaId}",
-		app.mediaDownloadHandler,
-	)
+	//router.HandleFunc(
+	//	"POST /v1/course/assignment/{id}/upload",
+	//	app.assignmentMediaUploadHandler,
+	//)
+	//router.HandleFunc(
+	//	"GET /v1/course/download/{mediaId}",
+	//	app.mediaDownloadHandler,
+	//)
 
 	// Submission operations
 	router.HandleFunc(

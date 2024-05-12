@@ -7,6 +7,9 @@ import CreateAssignment from "./CreateAssignment";
 import AssignmentDisplay from "./AssignmentDisplay";
 import DateBadge from "@/components/badge/DateBadge";
 import truncateString from "@/lib/helpers/truncateString";
+import Router from "next/client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface props {
   entries: Assignment[];
@@ -86,6 +89,8 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
     setIsCreatingAssignment(false);
   };
 
+  const router = useRouter();
+
   return (
     <div className="w-full h-full">
       {isTeacher && (
@@ -100,13 +105,15 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
       <div className="w-full grid grid-cols-1 grid-rows-3 border-2 border-slate-300 border-opacity-10">
         {assignments ? (
           assignments.map((assignment: Assignment, i: number) => (
-            <div className="assignment-item hover:bg-gray-700" key={i}>
-              <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
-              <DateBadge date={assignment.due_date} />
-              <p className="font-normal tracking-wide text-gray-400">
-                {truncateString(assignment.description, 20)}
-              </p>
-            </div>
+            <Link href={`/course/${courseId}/assignments/${assignment.id}`}>
+              <div className="assignment-item hover:bg-gray-700" key={i}>
+                <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
+                <DateBadge date={assignment.due_date} />
+                <p className="font-normal tracking-wide text-gray-400">
+                  {truncateString(assignment.description, 20)}
+                </p>
+              </div>
+            </Link>
           ))
         ) : (
           <>

@@ -759,7 +759,7 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 	*models.Assignment,
 	error,
 ) {
-	assignment := &models.Assignment{}
+	assignment := models.NewAssignment()
 
 	query := `SELECT id, title, description, due_date FROM assignments WHERE id = $1`
 	row := s.db.QueryRow(query, assignmentid)
@@ -770,9 +770,8 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 		&assignment.Description,
 		&assignment.DueDate,
 	)
-
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ERR_RECORD_NOT_FOUND
 		}
 		return nil, err

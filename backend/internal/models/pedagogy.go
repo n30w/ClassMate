@@ -28,6 +28,10 @@ type Assignment struct {
 	DueDate    time.Time `json:"due_date"`
 }
 
+func NewAssignment() *Assignment {
+	return &Assignment{}
+}
+
 type Submission struct {
 	Entity
 	Grade          float64 `json:"grade,omitempty"`

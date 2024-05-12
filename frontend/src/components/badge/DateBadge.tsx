@@ -16,7 +16,7 @@ const DateBadge: React.FC<DateBadgeProps> = ({
 }: DateBadgeProps) => {
   return (
     <div
-      className={`mb-2 rounded-xl w-fit ${colorClass ? "bg-" + colorClass : "bg-yellow-700"}`}
+      className={`mb-2 rounded-xl w-fit ${colorClass ? colorClass : "bg-yellow-700"}`}
     >
       <h6 className="text-xs tracking-wide text-white px-2 py-1">
         {formattedDate(date).toLocaleUpperCase()}

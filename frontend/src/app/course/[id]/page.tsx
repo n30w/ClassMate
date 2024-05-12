@@ -53,7 +53,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <Navbar />
+      {/*<Navbar />*/}
       <div>
         <div className="relative">
           <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute  bg-opacity-70 flex flex-col justify-center">
