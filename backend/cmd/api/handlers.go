@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 	"io"
 	"mime"
 	"net/http"
@@ -12,94 +14,7 @@ import (
 
 	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/models"
-	"github.com/xuri/excelize/v2"
 )
-
-func (app *application) downloadExcelHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		CourseId string `json:"courseid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Get the Excel file with the user input data
-	file, err := app.services.ExcelService.CreateExcel(input.CourseId)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Set the headers necessary to get browsers to interpret the downloadable file
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set(
-		"Content-Disposition",
-		fmt.Sprintf(`attachment; filename="%s"`, "todo"),
-	) // TODO FIX ME
-	w.Header().Set("File-Name", fmt.Sprintf("%s"))
-	w.Header().Set("Content-Transfer-Encoding", "binary")
-	w.Header().Set("Expires", "0")
-	err = file.Write(w)
-	file.Close()
-}
-
-func (app *application) uploadExcelHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	r.ParseMultipartForm(10 << 20)
-	file, _, err := r.FormFile("excelfile")
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	defer file.Close()
-	// Read the Excel file content
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	// Create a temporary file to store the uploaded Excel file
-	tempFile, err := os.CreateTemp("temp-excel", "upload-*.xlsx")
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-	defer tempFile.Close()
-
-	// Write the Excel file content to the temporary file
-	_, err = tempFile.Write(fileBytes)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Open the Excel file using excelize
-	excelFile, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = app.services.ExcelService.ParseExcel(excelFile)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, nil, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-}
 
 // An input struct is used for ushering in data because it makes it explicit
 // as to what we are getting from the incoming request.
@@ -1268,6 +1183,7 @@ func (app *application) addStudentHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 	for _, course := range user.Courses {
 		if course == input.CourseId {
 			res := jsonWrap{"response": "User is already enrolled"}
@@ -1278,6 +1194,7 @@ func (app *application) addStudentHandler(
 			}
 		}
 	}
+
 	// User is not enrolled in the course
 	_, err = app.services.CourseService.AddToRoster(input.CourseId, input.NetId)
 	if err != nil {
@@ -1286,6 +1203,114 @@ func (app *application) addStudentHandler(
 	}
 
 	res := jsonWrap{"response": "user successfully added to course"}
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// sendOfflineTemplate receives a request from a user about
+// an offline grading template. It then prepares the template and sends
+// it back to the client who requested it.
+func (app *application) sendOfflineTemplate(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	var path string
+
+	courseId := r.PathValue("id")
+	assignmentId := r.PathValue("post")
+
+	// Get submissions of this assignment from database.
+	submissions, err := app.services.SubmissionService.GetSubmissions(assignmentId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Generate file name for Excel.
+	fileName := fmt.Sprintf("submissions_%s_%s", courseId, assignmentId)
+
+	// Prepare the Excel file for transit. WriteSubmissions
+	// saves the file to where it needs to be saved.
+	path, err = app.services.ExcelService.WriteSubmissions(
+		path,
+		fileName,
+		submissions,
+	)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// With this path, send over the file.
+	w.Header().Set(
+		"Content-Type",
+		"application/vnd.openxmlformats-officedocument.spreadsheet",
+	)
+
+	headerValue := fmt.Sprintf(`attachment; filename="%s.xlsx"`, fileName)
+
+	w.Header().Set(
+		"Content-Disposition",
+		headerValue,
+	)
+
+	err = app.services.ExcelService.SendFile(path, w)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// addOfflineGrading will receive an incoming template and will
+// sort the itemized template submissions and input them into
+// the database.
+func (app *application) receiveOfflineGrades(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	// Limits the upload size to 10MB.
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	f, handler, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	defer f.Close()
+
+	// Check file type.
+
+	// Save the file to disk.
+	path, err := app.services.FileService.Save(handler.Filename, f)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Get the submissions from the Excel file via path.
+	submissions, err := app.services.ExcelService.ReadSubmissions(path)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Update the submission records in the database.
+	err = app.services.SubmissionService.UpdateSubmissions(submissions)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// All is well.
+	res := jsonWrap{"response": "successfully updated submissions"}
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)

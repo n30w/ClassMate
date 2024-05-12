@@ -27,7 +27,10 @@ func (app *application) routes() *http.ServeMux {
 		app.announcementDeleteHandler,
 	)
 	// ID is message ID
-	router.HandleFunc("GET /v1/course/announcement/read/{id}", app.announcementReadHandler)
+	router.HandleFunc(
+		"GET /v1/course/announcement/read/{id}",
+		app.announcementReadHandler,
+	)
 	router.HandleFunc("POST /v1/course/addstudent", app.addStudentHandler)
 
 	// Course CRUD operations
@@ -57,6 +60,33 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc(
 		"POST /v1/course/assignment/create",
 		app.assignmentCreateHandler,
+	)
+	router.HandleFunc(
+		"GET /v1/course/assignment/read/{id}",
+		app.assignmentReadHandler,
+	)
+	router.HandleFunc(
+		"PATCH /v1/course/assignment/update",
+		app.assignmentUpdateHandler,
+	)
+	router.HandleFunc(
+		"POST /v1/course/assignment/delete",
+		app.assignmentDeleteHandler,
+	)
+
+	// Discussion CRUD operations
+	router.HandleFunc(
+		"/v1/course/discussion/create",
+		app.discussionCreateHandler,
+	)
+	router.HandleFunc("/v1/course/discussion/read", app.discussionReadHandler)
+	router.HandleFunc(
+		"PATCH /v1/course/discussion/update",
+		app.discussionUpdateHandler,
+	)
+	router.HandleFunc(
+		"/v1/course/discussion/delete",
+		app.discussionDeleteHandler,
 	)
 
 	// app.assignmentReadHandler switches its behavior based on the HTTP Method.
@@ -99,6 +129,23 @@ func (app *application) routes() *http.ServeMux {
 		"POST /v1/course/assignment/submission/{id}/read",
 		app.submissionUpdateHandler,
 	)
+
+	// Image operations
+	// router.HandlerFunc("POST /v1/course/image", app.courseImageHandler)
+
+	// Offline grading operations
+	// Subtle difference, one is a GET, one is a POST. The POST expects
+	// data to be sent along with request. The GET just sends back data.
+	// The system does not need to know the ID of the course or the ID
+	// of the assignment, because this should be inside the sheet
+	// of the Excel document, under columns G2 and H2.
+	router.HandleFunc(
+		"GET /v1/course/{id}/assignment/{post}/offline",
+		app.sendOfflineTemplate,
+	)
+	router.HandleFunc(
+		"POST /v1/course/{id}/assignment/{post}/offline",
+		app.receiveOfflineGrades,
 	router.HandleFunc(
 		"POST /v1/course/assignment/submission/{id}/upload",
 		app.submissionMediaUploadHandler,

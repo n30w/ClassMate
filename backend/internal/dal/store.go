@@ -41,6 +41,18 @@ type Store struct {
 	db *sql.DB
 }
 
+var err error
+
+func NewStore(db *sql.DB) *Store {
+	return &Store{
+		db: db,
+	}
+}
+
+func (s *Store) InsertMediaReference(media *models.Media) error {
+	return nil
+}
+
 func (s *Store) UploadMedia(
 	file multipart.File,
 	submission *models.Submission,
@@ -57,9 +69,59 @@ func (s *Store) GetSubmissionById(submissionId string) (
 	panic("implement me")
 }
 
+// GetSubmissions queries a junction table to retrieve all related
+// submissions for an assignment.
+func (s *Store) GetSubmissions(assignmentId string) (
+	[]models.Submission,
+	error,
+) {
+	var submissions []models.Submission
+	query := `  
+		SELECT s.id, s.grade, s.feedback, u.full_name, u.net_id
+        FROM submissions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.assignment_id = $1
+	`
+
+	rows, err := s.db.Query(query, assignmentId)
+	defer rows.Close()
+
+	for rows.Next() {
+		var sub models.Submission
+		err := rows.Scan(
+			&sub.ID,
+			&sub.Grade,
+			&sub.Feedback,
+			&sub.User.FullName,
+			&sub.User.ID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		submissions = append(submissions, sub)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return submissions, nil
+}
+
 func (s *Store) UpdateSubmission(submission *models.Submission) error {
-	//TODO implement me
-	panic("implement me")
+	// Change the submission data in the database using the submission ID.
+	query := `UPDATE submissions SET grade = $1, feedback = $2 WHERE id = $3`
+	_, err := s.db.Exec(
+		query,
+		submission.Grade,
+		submission.Feedback,
+		submission.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Store) SubmitAssignment(assignment *models.Assignment) (
@@ -77,14 +139,6 @@ func (s *Store) ChangeAssignment(
 ) (*models.Assignment, error) {
 	//TODO implement me
 	panic("implement me")
-}
-
-var err error
-
-func NewStore(db *sql.DB) *Store {
-	return &Store{
-		db: db,
-	}
 }
 
 // InsertUser inserts into the database using a user model.
@@ -450,6 +504,12 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // 	}
 
 // }
+func (s *Store) InsertBanner(courseid string, bannerurl string) (
+	string,
+	error,
+) {
+	return "", nil
+}
 
 // InsertCourse inserts a course into the database based on a model,
 // then returns a string value that is the UUID.

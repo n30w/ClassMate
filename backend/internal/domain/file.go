@@ -23,7 +23,6 @@ func NewFileService(store FileStore) *FileService { return &FileService{store: s
 // files from the handlers. It returns a path to where the
 // file was saved and an error.
 func (fs *FileService) Save(name string, in multipart.File) (string, error) {
-
 	f, p, err := fs.store.CreateFile(name)
 	if err != nil {
 		return "", err

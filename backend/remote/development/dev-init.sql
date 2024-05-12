@@ -71,6 +71,17 @@ CREATE TABLE IF NOT EXISTS assignments (
 
 -- Submissions Table
 CREATE TABLE IF NOT EXISTS submissions (
+                                           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                           file_type VARCHAR,
+                                           submission_time TIMESTAMP WITHOUT TIME ZONE,
+                                           on_time BOOLEAN,
+                                           grade FLOAT,
+                                           feedback VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS images (
+                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                          url VARCHAR NOT NULL
    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
    submission_time TIMESTAMP WITHOUT TIME ZONE,
    on_time BOOLEAN,
@@ -769,65 +780,13 @@ VALUES
 -- These student IDs must exist in your users table, so replace them with valid net_ids from your users table.
 
 
--- CREATE OR REPLACE FUNCTION sync_user_courses()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     INSERT INTO user_courses (user_net_id, course_id)
---     VALUES (NEW.teacher_id, NEW.course_id);
---     RETURN NEW;
--- END;
--- CREATE TRIGGER course_teachers_after_insert_trigger
--- AFTER INSERT ON course_teachers
--- FOR EACH ROW
--- EXECUTE FUNCTION sync_user_courses();
--- Further junction table entries to link data as per new structure need to be added here, for example linking courses to users, messages to courses, etc.
-SELECT
-   *
-FROM
-   courses;
-
-SELECT
-   *
-FROM
-   assignments;
-
-SELECT
-   *
-FROM
-   messages;
-
-SELECT
-   *
-FROM
-   projects;
-
-SELECT
-   *
-FROM
-   submissions;
-
-SELECT
-   *
-FROM
-   users;
-
-SELECT
-   *
-FROM
-   tokens;
-
-SELECT
-   *
-FROM
-   user_courses;
-
-SELECT
-   *
-FROM
-   course_teachers;
-
--- SELECT * FROM course_id;
-SELECT
-   *
-FROM
-   course_roster;
+SELECT * FROM courses;
+SELECT * FROM assignments;
+SELECT * FROM messages;
+SELECT * FROM projects;
+SELECT * FROM submissions;
+SELECT * FROM users;
+SELECT * FROM tokens;
+SELECT * FROM user_courses;
+SELECT * FROM course_teachers;
+SELECT * FROM course_roster;

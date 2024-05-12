@@ -65,11 +65,11 @@ func (as *AssignmentService) RetrieveAssignments(courseid string) (
 	[]string,
 	error,
 ) {
-	assignmentids, err := as.store.GetAssignmentsByCourse(courseid)
+	assignmentIds, err := as.store.GetAssignmentsByCourse(courseid)
 	if err != nil {
 		return nil, err
 	}
-	return assignmentids, nil
+	return assignmentIds, nil
 }
 
 func (as *AssignmentService) CreateAssignment(assignment *models.Assignment) (
