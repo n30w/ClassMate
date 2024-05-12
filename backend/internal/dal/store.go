@@ -643,13 +643,16 @@ func (s *Store) InsertMessage(
 	m *models.Message,
 	courseid string,
 ) error {
-	query := `INSERT INTO messages (title, description, type) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO messages (title, description, type, date) VALUES ($1, 
+$2, $3, $4) RETURNING id`
 	row := s.db.QueryRow(
 		query,
 		m.Title,
 		m.Description,
 		m.Type,
+		m.CreatedAt,
 	)
+
 	err := row.Scan(&m.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -660,7 +663,7 @@ func (s *Store) InsertMessage(
 	courseQuery := `INSERT INTO course_messages (course_id, message_id)
 VALUES ($1, $2)`
 
-	_, err = s.db.Exec(courseQuery, courseid, m.ID)
+	_, err = s.db.Exec(courseQuery, courseid, m.Post.ID)
 	if err != nil {
 		return err
 	}
@@ -674,14 +677,16 @@ func (s *Store) GetMessageById(messageid string) (
 ) {
 	message := &models.Message{}
 
-	query := `SELECT id, title, description, type FROM messages WHERE id = $1`
+	query := `SELECT id, title, description, type, 
+date FROM messages WHERE id = $1`
 	row := s.db.QueryRow(query, messageid)
 
 	err := row.Scan(
-		&message.ID,
+		&message.Post.ID,
 		&message.Title,
 		&message.Description,
 		&message.Type,
+		&message.Date,
 	)
 
 	if err != nil {
@@ -700,7 +705,7 @@ func (s *Store) DeleteMessage(m *models.Message) error {
         WHERE id = $1
     `
 
-	_, err := s.db.Exec(query, m.ID)
+	_, err := s.db.Exec(query, m.Post.ID)
 	if err != nil {
 		return err
 	}
@@ -711,11 +716,11 @@ func (s *Store) DeleteMessage(m *models.Message) error {
 func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 	query := `UPDATE messages SET title = $1 WHERE id = $2 RETURNING id, title, description, media, date, course, owner`
 
-	row := s.db.QueryRow(query, m.Title, m.ID)
+	row := s.db.QueryRow(query, m.Title, m.Post.ID)
 
 	updatedMessage := &models.Message{}
 	err := row.Scan(
-		&updatedMessage.ID,
+		&updatedMessage.Post.ID,
 		&updatedMessage.Title,
 		&updatedMessage.Description,
 		&updatedMessage.Media,
@@ -732,11 +737,11 @@ func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 	query := `UPDATE messages SET description = $1 WHERE id = $2 RETURNING id, title, description, media, date, course, owner`
 
-	row := s.db.QueryRow(query, m.Description, m.ID)
+	row := s.db.QueryRow(query, m.Description, m.Post.ID)
 
 	updatedMessage := &models.Message{}
 	err := row.Scan(
-		&updatedMessage.ID,
+		&updatedMessage.Post.ID,
 		&updatedMessage.Title,
 		&updatedMessage.Description,
 		&updatedMessage.Media,

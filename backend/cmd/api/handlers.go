@@ -523,23 +523,29 @@ func (app *application) announcementCreateHandler(
 		return
 	}
 
-	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	msg := &models.Message{
-		Post: models.Post{
-			Title:       input.Title,
-			Description: input.Description,
-			Owner:       netid,
-			Media:       input.Media,
-		},
-		Type: true,
-	}
-
-	msg, err = app.services.MessageService.CreateMessage(msg, cId)
+	//msg := &models.Message{
+	//	Post: models.Post{
+	//		Title:       input.Title,
+	//		Description: input.Description,
+	//		Owner:       netid,
+	//		Media:       input.Media,
+	//	},
+	//	Type: true,
+	//}
+	//
+	//msg, err = app.services.MessageService.CreateMessage(msg, cId)
+	msg, err := app.services.MessageService.CreateAnnouncement(
+		input.Title,
+		input.Description,
+		netId,
+		cId,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -561,12 +567,15 @@ func (app *application) announcementReadHandler(
 	r *http.Request,
 ) {
 	courseId := r.PathValue("id")
+
 	msgids, err := app.services.MessageService.RetrieveMessages(courseId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	var msgs []models.Message
+
 	for _, msgid := range msgids {
 		msg, err := app.services.MessageService.ReadMessage(msgid)
 		if err != nil {
@@ -576,7 +585,10 @@ func (app *application) announcementReadHandler(
 		msgs = append(msgs, *msg)
 	}
 
+	app.logger.Printf("retrieved announcements: %v", msgs)
+
 	res := jsonWrap{"announcements": msgs}
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)

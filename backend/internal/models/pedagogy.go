@@ -9,7 +9,17 @@ type Post struct {
 	Media       []string `json:"media,omitempty"`
 	Date        string   `json:"date,omitempty"`
 	Course      string   `json:"course,omitempty"`
+
+	// Owner is often the Net ID.
 	Owner       string   `json:"owner,omitempty"`
+}
+
+func NewPost(title, description, owner string) *Post {
+	return &Post{
+		Title:       title,
+		Description: description,
+		Owner:       owner,
+	}
 }
 
 type Assignment struct {
@@ -55,17 +65,24 @@ type Course struct {
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
+
+	// UUID of the banner
 	Banner      string     `json:"banner"`
 
-	// TODO write on time calculation method.
-	OnTime bool
+	OnTime bool `json:"on_time"`
 }
 
 type Message struct {
 	Post
-	ID       string
 	Comments []string
-	Type     bool // 0 if discussion, 1 if announcement
+	Type bool // false if discussion, true if announcement
+}
+
+func NewMessage(title, description, owner string, t bool) *Message {
+	return &Message{
+		Post: *NewPost(title, description, owner),
+		Type: t,
+	}
 }
 
 type Comment struct {
