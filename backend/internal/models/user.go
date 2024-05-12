@@ -8,10 +8,10 @@ import (
 // Credentials are user credentials gathered from the JSON request body.
 // They represent custom types that implement the credential interface method.
 type Credentials struct {
-	Username   Credential
-	Password   Credential
-	Email      Credential
-	Membership Credential
+	Username   Credential `json:"username,omitempty"`
+	Password   Credential `json:"password,omitempty"`
+	Email      Credential `json:"email,omitempty"`
+	Membership Credential `json:"membership,omitempty"`
 }
 
 // User represents the concept of a User in a database.
@@ -24,8 +24,10 @@ type User struct {
 	*AccessControl
 
 	// General user information.
-	FullName       string `json:"fullName,omitempty"`
+	FullName string `json:"full_name"`
+
 	ProfilePicture Media  `json:"profile_picture,omitempty"`
+
 	// Projects       []Project `json:"projects,omitempty"`
 	Courses []string `json:"courses,omitempty"`
 	Bio     string   `json:"bio,omitempty"`

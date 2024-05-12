@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -9,6 +10,7 @@ import (
 type FileStore interface {
 	CreateFile(path string) (*os.File, string, error)
 	CopyFile(f1 io.Writer, f2 io.Reader) error
+	fmt.Stringer
 }
 
 type FileService struct {
@@ -34,4 +36,19 @@ func (fs *FileService) Save(name string, in multipart.File) (string, error) {
 	}
 
 	return p, nil
+}
+
+// GetFile opens a file at the specified path and returns it.
+func (fs *FileService) GetFile(path string) (*os.File, error) {
+	// Open the file at the specified path
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func (fs *FileService) Path() string {
+	return fmt.Sprintf("%s", fs.store)
 }

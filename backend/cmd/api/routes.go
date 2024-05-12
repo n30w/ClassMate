@@ -36,11 +36,16 @@ func (app *application) routes() *http.ServeMux {
 	// Course CRUD operations
 	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
 	router.HandleFunc("GET /v1/course/read/{id}", app.courseReadHandler)
-	router.HandleFunc(
-		"PATCH /v1/course/update/{id}/{action}",
-		app.courseUpdateHandler,
-	)
+	router.HandleFunc("PATCH /v1/course/update/{id}/{action}", app.courseUpdateHandler)
 	router.HandleFunc("POST /v1/course/delete/{id}", app.courseDeleteHandler)
+	router.HandleFunc(
+		"POST /v1/course/{mediaId}/banner/create",
+		app.bannerCreateHandler,
+	)
+	router.HandleFunc(
+		"GET /v1/course/{mediaId}/banner/read",
+		app.bannerReadHandler,
+	)
 
 	// User CRUD operations
 	router.HandleFunc("POST /v1/user/create", app.userCreateHandler)
@@ -48,15 +53,12 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("PATCH /v1/user/update/{id}", app.userUpdateHandler)
 	router.HandleFunc("POST /v1/user/delete/{id}", app.userDeleteHandler)
 
-	// A user posts something to a discussion
-	router.HandleFunc("/v1/user/post", app.userPostHandler)
-
 	// Login will require authorization, body will contain the credential info
 	router.HandleFunc("POST /v1/user/login", app.userLoginHandler)
 
 	// Assignment CRUD operations
 	router.HandleFunc(
-		"/v1/course/assignment/create",
+		"POST /v1/course/assignment/create",
 		app.assignmentCreateHandler,
 	)
 	router.HandleFunc(
@@ -87,47 +89,44 @@ func (app *application) routes() *http.ServeMux {
 		app.discussionDeleteHandler,
 	)
 
-	// Media operations
+	// app.assignmentReadHandler switches its behavior based on the HTTP Method.
 	router.HandleFunc(
-		"POST /v1/course/{post}/media/create",
-		app.mediaCreateHandler,
-	)
-	router.HandleFunc(
-		"POST /v1/course/{post}/media/delete",
-		app.mediaDeleteHandler,
+		"/v1/course/assignment/read/{id}",
+		app.assignmentReadHandler,
 	)
 
-	// Authentication
-	// router.HandleFunc(
-	// 	"POST /v1/tokens/authentication",
-	// 	app.createAuthenticationTokenHandler,
-	// )
-
-	// Comment operations
 	router.HandleFunc(
-		"POST /v1/course/{post}/comment/create",
-		app.commentCreateHandler,
+		"PATCH /v1/course/assignment/update",
+		app.assignmentUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/{post}/comment/delete",
-		app.commentDeleteHandler,
+		"POST /v1/course/assignment/delete",
+		app.assignmentDeleteHandler,
 	)
+	//router.HandleFunc(
+	//	"POST /v1/course/assignment/{id}/upload",
+	//	app.assignmentMediaUploadHandler,
+	//)
+	//router.HandleFunc(
+	//	"GET /v1/course/download/{mediaId}",
+	//	app.mediaDownloadHandler,
+	//)
 
 	// Submission operations
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/create",
+		"POST /v1/course/assignment/{assignmentId}/submission/{userId}/create",
 		app.submissionCreateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/update",
+		"POST /v1/course/assignment/submission/{id}/update",
 		app.submissionUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/delete",
+		"POST /v1/course/assignment/submission/{id}/delete",
 		app.submissionUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/read",
+		"POST /v1/course/assignment/submission/{id}/read",
 		app.submissionUpdateHandler,
 	)
 
@@ -147,6 +146,9 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc(
 		"POST /v1/course/{id}/assignment/{post}/offline",
 		app.receiveOfflineGrades,
+	router.HandleFunc(
+		"POST /v1/course/assignment/submission/{id}/upload",
+		app.submissionMediaUploadHandler,
 	)
 
 	return router

@@ -31,16 +31,36 @@ type AssignmentService struct {
 
 func NewAssignmentService(a AssignmentStore) *AssignmentService { return &AssignmentService{store: a} }
 
-func (as *AssignmentService) ReadAssignment(assignmentid string) (
+// ReadAssignment uses an Assignment's ID to retrieve it from
+// the database. Options can also be passed in that specify
+// what types of data transformations can be done, for example
+// changing the date to a readable format.
+func (as *AssignmentService) ReadAssignment(
+	assignmentId string,
+	opts ...func(assignment *models.Assignment) error,
+) (
 	*models.Assignment,
 	error,
 ) {
-	assignment, err := as.store.GetAssignmentById(assignmentid)
+	assignment, err := as.store.GetAssignmentById(assignmentId)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			err := opt(assignment)
+			if err != nil {
+				return nil, fmt.Errorf("option transform error: ", err)
+			}
+		}
+	}
+
 	return assignment, nil
 }
+
+// RetrieveAssignments retrieves an assignment using a specific
+// Course ID. It returns a slice of all the assignments in a course.
 func (as *AssignmentService) RetrieveAssignments(courseid string) (
 	[]string,
 	error,

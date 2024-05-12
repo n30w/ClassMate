@@ -1,11 +1,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"io"
+	"mime"
+	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -22,22 +29,32 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Token string `json:"token"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	app.logger.Printf("token received: %s", input.Token)
+
+	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	courses, err := app.services.UserService.RetrieveFromUser(netid, "Courses")
+
+	app.logger.Printf("retrieved Net ID: %s", netId)
+
+	courses, err := app.services.UserService.GetUserCourses(netId)
 	if err != nil {
+		app.logger.Printf("ERROR: %v", err)
 		app.serverError(w, r, err)
 		return
 	}
+
+	app.logger.Printf("courses retrieved: %d", len(courses))
+	app.logger.Printf("courses retrieved: %v", courses)
 
 	res := jsonWrap{"courses": courses}
 
@@ -50,23 +67,35 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 // courseHomepageHandler returns data related to the homepage of a course.
 //
 // REQUEST: course id
-// RESPONSE:
+// RESPONSE: course + banner image
 func (app *application) courseHomepageHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
 	id := r.PathValue("id")
 
 	course, err := app.services.CourseService.RetrieveCourse(id)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 
-	res := jsonWrap{"course_info": course}
+	// Get the first couple people in the roster.
+	roster, err := app.services.CourseService.RetrieveRoster(id)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"course": course, "roster": roster}
+
+	app.logger.Printf("sending response: %+v", res)
 
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
 	}
 }
 
@@ -75,10 +104,10 @@ func (app *application) courseCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Creating course...")
 	var input struct {
-		Title     string `json:"title"`
-		Token     string `json:"token"`
-		BannerUrl string `json:"banner"`
+		Title string `json:"title"`
+		Token string `json:"token"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -92,6 +121,7 @@ func (app *application) courseCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Getting teacher id from token %s", teacherid)
 
 	teachers := []string{teacherid}
 
@@ -100,15 +130,12 @@ func (app *application) courseCreateHandler(
 		Teachers: teachers,
 	}
 
-	course, err = app.services.CourseService.CreateCourse(
-		course,
-		teacherid,
-		input.BannerUrl,
-	)
+	course, err = app.services.CourseService.CreateCourse(course, teacherid)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Created course: %v", course)
 
 	// Return success.
 	res := jsonWrap{"course": course}
@@ -120,7 +147,8 @@ func (app *application) courseCreateHandler(
 }
 
 // courseReadHandler relays information back to the requester
-// about a certain course.
+// about a certain course. This is hit when the frontend requests
+// the homepage of a specific course via ID.
 //
 // REQUEST: course ID
 // RESPONSE: course data
@@ -128,6 +156,8 @@ func (app *application) courseReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Reading course...")
+
 	var input struct {
 		CourseId string `json:"courseid"`
 	}
@@ -145,6 +175,9 @@ func (app *application) courseReadHandler(
 	}
 
 	res := jsonWrap{"course": course}
+
+	app.logger.Printf("sending response: %#v", res)
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -276,11 +309,7 @@ func (app *application) courseDeleteHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	courses, err := app.services.UserService.RetrieveFromUser(
-		input.UserId,
-		"courses",
-	)
+	courses, err := app.services.UserService.GetUserCourses(input.UserId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -292,6 +321,113 @@ func (app *application) courseDeleteHandler(
 		app.serverError(w, r, err)
 		return
 	}
+}
+
+// REQUEST: courseid + image file
+// RESPONSE: status
+func (app *application) bannerCreateHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	app.logger.Printf("Creating banner...")
+
+	courseid := r.PathValue("mediaId")
+	// Limit upload size to 10MB
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	f, handler, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	defer f.Close()
+
+	ft := GetFileType(handler.Filename)
+
+	if ft == models.NULL {
+		app.serverError(w, r, fmt.Errorf("invalid file type"))
+		return
+	}
+
+	fileName := courseid + "_banner." + ft.String()
+
+	// Save the file to disk
+	path, err := app.services.FileService.Save(fileName, f)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	app.logger.Printf("Saved banner: %s to disk...", fileName)
+
+	// Create metadata and add to database
+	metadata := &models.Media{
+		FileName:           handler.Filename,
+		AttributionsByType: make(map[string]string),
+		FileType:           ft,
+		FilePath:           path,
+	}
+
+	metadata.AttributionsByType["course"] = courseid
+
+	_, err = app.services.MediaService.AddBanner(metadata)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.logger.Printf("Created banner: %v", metadata)
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// REQUEST: banner id
+// RESPONSE: banner image
+func (app *application) bannerReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	bannerId := r.PathValue("mediaId")
+
+	app.logger.Printf("received Banner ID: %s", bannerId)
+
+	banner, err := app.services.MediaService.GetMedia(bannerId)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
+	app.logger.Printf("retrieved metadata: %v", banner)
+
+	// Set Content-Type header based on file extension
+	contentType := mime.TypeByExtension("." + banner.FileType.String())
+	if contentType == "" {
+		contentType = "application/octet-stream" // Default content type
+	}
+
+	app.logger.Printf("Setting content type to: %s", contentType)
+
+	contentDispositionValue := "inline"
+
+	filePath := banner.FilePath
+	if filePath == "" {
+		banner.FilePath = app.services.FileService.Path(
+		) + "/defaults/" + banner.FileName + "." + banner.FileType.String()
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", contentDispositionValue)
+
+	app.logger.Printf("File path: %s", banner.FilePath)
+
+	// Serve the file's content
+	http.ServeFile(w, r, banner.FilePath)
 }
 
 // REQUEST: course ID, teacher ID, announcement description
@@ -308,35 +444,43 @@ func (app *application) announcementCreateHandler(
 		Description string   `json:"description"`
 		Media       []string `json:"media"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	netid, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+
+	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	msg := &models.Message{
-		Post: models.Post{
-			Title:       input.Title,
-			Description: input.Description,
-			Owner:       netid,
-			Media:       input.Media,
-		},
-		Type: 1,
-	}
 
-	// msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
-	msg, err = app.services.MessageService.CreateMessage(msg, cId)
-
+	//msg := &models.Message{
+	//	Post: models.Post{
+	//		Title:       input.Title,
+	//		Description: input.Description,
+	//		Owner:       netid,
+	//		Media:       input.Media,
+	//	},
+	//	Type: true,
+	//}
+	//
+	//msg, err = app.services.MessageService.CreateMessage(msg, cId)
+	msg, err := app.services.MessageService.CreateAnnouncement(
+		input.Title,
+		input.Description,
+		netId,
+		cId,
+	)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
 	res := jsonWrap{"announcement": msg}
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -351,12 +495,15 @@ func (app *application) announcementReadHandler(
 	r *http.Request,
 ) {
 	courseId := r.PathValue("id")
+
 	msgids, err := app.services.MessageService.RetrieveMessages(courseId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	var msgs []models.Message
+
 	for _, msgid := range msgids {
 		msg, err := app.services.MessageService.ReadMessage(msgid)
 		if err != nil {
@@ -366,7 +513,10 @@ func (app *application) announcementReadHandler(
 		msgs = append(msgs, *msg)
 	}
 
+	app.logger.Printf("retrieved announcements: %v", msgs)
+
 	res := jsonWrap{"announcements": msgs}
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -381,6 +531,8 @@ func (app *application) announcementUpdateHandler(
 	r *http.Request,
 ) {
 	var input struct {
+		CourseId     string `json:"courseid"`
+		TeacherId    string `json:"teacherid"`
 		MsgId        string `json:"announcementid"`
 		Action       string `json:"action"`
 		UpdatedField string `json:"updatedfield"`
@@ -443,7 +595,7 @@ func (app *application) announcementDeleteHandler(
 // userCreateHandler creates a user.
 //
 // REQUEST: email, password, full name, netid, membership
-// RESPONSE: home page
+// RESPONSE: status
 func (app *application) userCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -481,11 +633,6 @@ func (app *application) userCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
-	// Here we would generate a session token, but not now.
-
-	// Send back home page.
-
 }
 
 // userReadHandler reads a specific user's data,
@@ -499,8 +646,11 @@ func (app *application) userReadHandler(
 ) {
 	id := r.PathValue("id")
 
+	var err error
+	var user *models.User
+
 	// Perform a database lookup of user.
-	user, err := app.services.UserService.GetByID(id)
+	user, err = app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -540,21 +690,6 @@ func (app *application) userDeleteHandler(
 
 }
 
-// userPostHandler handles post requests. When a user posts
-// something to a discussion, this is the handler that is called.
-// A post consists of a body, media, and author. The request therefore
-// requires an author of who posted it, what discussion it exists under,
-// and if it is a reply or not. To find the author of who sent it,
-// we can check with middleware authorization headers.
-//
-// REQUEST: user post
-// RESPONSE: user post
-func (app *application) userPostHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-}
-
 // userLoginHandler handles login requests from any user. It requires
 // a username and a password. A login must occur from a genuine domain. This
 // means that the request comes from the frontend server rather than the
@@ -567,37 +702,55 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var noToken bool
 	var input struct {
 		NetId    string `json:"netid"`
 		Password string `json:"password"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// fmt.Printf("%s %s", input.Email, input.Password)
-
-	// err = app.services.UserService.ValidateUser(input.Email, input.Password)
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
-	// Validate the data
-
-	// Check if user exists
-
-	// Generate new token
-	token, err1 := app.services.AuthenticationService.NewToken(input.NetId)
-	if err1 != nil {
-		app.serverError(w, r, err1)
+	// 	Validate credentials.
+	err = app.services.UserService.ValidateUser(input.NetId, input.Password)
+	if err != nil {
+		app.serverError(w, r, err)
 		return
 	}
 
-	membership, err2 := app.services.UserService.GetMembership(input.NetId)
-	if err2 != nil {
-		app.serverError(w, r, err2)
+	app.logger.Printf("user validated")
+
+	// If token exists, return token:
+	token, err := app.services.AuthenticationService.RetrieveToken(input.NetId)
+	if err != nil {
+		switch {
+		case errors.Is(err, dal.ERR_RECORD_NOT_FOUND):
+			app.logger.Printf("user token not found for %s", input.NetId)
+			noToken = true
+		default:
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	if noToken {
+		app.logger.Printf("generating user token...")
+		token, err = app.services.AuthenticationService.NewToken(input.NetId)
+	}
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.logger.Printf("Token: %v", token)
+
+	membership, err := app.services.UserService.GetMembership(input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -611,7 +764,6 @@ func (app *application) userLoginHandler(
 		app.serverError(w, r, err)
 		return
 	}
-
 }
 
 // Assignment handlers. Only teachers should be able to request the use of
@@ -629,7 +781,6 @@ func (app *application) assignmentCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Printf("AssignmentCreateHandler")
 	var input struct {
 		Title       string   `json:"title"`
 		Token       string   `json:"token"`
@@ -638,7 +789,6 @@ func (app *application) assignmentCreateHandler(
 		DueDate     string   `json:"duedate"`
 		CourseId    string   `json:"courseid"`
 	}
-
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -649,7 +799,6 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Printf("Assignment Authenticating token")
 
 	post := models.Post{
 		Title:       input.Title,
@@ -683,45 +832,85 @@ func (app *application) assignmentCreateHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 }
 
 // assignmentReadHandler relays assignment data back to the requester. To read
 // one specific assignment, one must only request the UUID of an assignment.
 //
 // REQUEST: uuid
-// RESPONSE: assignment
+// RESPONSE: assignments
 func (app *application) assignmentReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-
-	courseid := r.PathValue("id")
-	fmt.Printf("courseid: %s", courseid)
-	assignmentids, err := app.services.AssignmentService.RetrieveAssignments(courseid)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	var input struct {
+		AssignmentId string `json:"assignmentid"`
+		Token string `json:"token"`
 	}
-	fmt.Printf("Assignmentids: %v", assignmentids)
-	var assignments []models.Assignment
-	for _, id := range assignmentids {
-		assignment, err := app.services.AssignmentService.ReadAssignment(id)
+
+	courseId := r.PathValue("id")
+
+	switch r.Method {
+	// Retrieve multiple assignments if its a single GET request.
+	case http.MethodGet:
+		assignmentIds, err := app.services.AssignmentService.RetrieveAssignments(courseId)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
-		assignments = append(assignments, *assignment)
-	}
-	fmt.Printf("Assignments: %v", assignments)
 
-	res := jsonWrap{"assignment": assignments}
+		var assignments []models.Assignment
 
-	err = app.writeJSON(w, http.StatusOK, res, nil)
-	if err != nil {
-		app.serverError(w, r, err)
+		for _, id := range assignmentIds {
+			assignment, err := app.services.AssignmentService.ReadAssignment(id)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+			assignments = append(assignments, *assignment)
+		}
+
+		res := jsonWrap{"assignments": assignments}
+
+		err = app.writeJSON(w, http.StatusOK, res, nil)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+	// If it's a post request, we can expect an input and body. Therefore,
+	// only retrieve a single Assignment.
+	case http.MethodPost:
+		err := app.readJSON(w, r, &input)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		assignment, err := app.services.AssignmentService.ReadAssignment(
+			input.
+				AssignmentId,
+		)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		res := jsonWrap{"assignment": assignment}
+
+		err = app.writeJSON(w, http.StatusOK, res, nil)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		return
+
+	// Bad dog.
+	default:
+		app.serverError(w, r, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
-
 }
 
 // assignmentUpdateHandler updates the information of an assignment.
@@ -793,215 +982,116 @@ func (app *application) assignmentDeleteHandler(
 
 }
 
-// discussionCreateHandler creates a discussion.
-//
-// REQUEST: where (the discussion is being created), title, body, media, poster
-// RESPONSE: discussion data
-func (app *application) discussionCreateHandler(
+func (app *application) assignmentMediaUploadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		CourseId   string   `json:"courseid"`
-		PosterId   string   `json:"posterid"`
-		Discussion string   `json:"discussion"`
-		Media      []string `json:"media"`
-	}
-
-	err := app.readJSON(w, r, &input)
+	assignmentid := r.PathValue("id")
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	post := models.Post{
-		Description: input.Discussion,
-		Owner:       input.PosterId,
-		Media:       input.Media,
-	}
-	msg := &models.Message{
-		Post: post,
-		Type: 0,
-	}
+	// Retrieve the file(s) from the form
+	files := r.MultipartForm.File["files"]
 
-	msg, err = app.services.MessageService.CreateMessage(msg, input.CourseId)
+	for _, fileHeader := range files {
+		// Open the uploaded file
+		file, err := fileHeader.Open()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer file.Close()
+		path, err := app.services.FileService.Save(fileHeader.Filename, file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		media := &models.Media{
+			FileName:           fileHeader.Filename,
+			AttributionsByType: make(map[string]string),
+			FileType:           GetFileType(fileHeader.Filename),
+			FilePath:           path,
+		}
+		media.AttributionsByType["assignment"] = assignmentid
+		media, err = app.services.MediaService.AddAssignmentMedia(media)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+	}
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
 
+// REQUEST: media id
+// RESPONSE: assignment media
+func (app *application) mediaDownloadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	mediaid := r.PathValue("mediaId")
+	media, err := app.services.MediaService.GetMedia(mediaid)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	file, err := app.services.FileService.GetFile(media.FilePath)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+	defer file.Close()
+
+	// Get file information (size and name)
+	fileInfo, err := file.Stat()
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	res := jsonWrap{"discussion": msg}
-	err = app.writeJSON(w, http.StatusOK, res, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	// Set Content-Type header based on file extension
+	contentType := mime.TypeByExtension(filepath.Ext(fileInfo.Name()))
+	if contentType == "" {
+		contentType = "application/octet-stream" // Default content type
 	}
-}
+	w.Header().Set("Content-Type", contentType)
 
-// discussionReadHandler reads a discussion.
-//
-// REQUEST: discussion uuid
-// RESPONSE: discussion
-func (app *application) discussionReadHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// discussionUpdateHandler updates a discussion's information. For example,
-// the title or body or media and author.
-//
-// REQUEST: discussion uuid + information to update
-// RESPONSE: discussion
-func (app *application) discussionUpdateHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// discussionDeleteHandler deletes a discussion.
-//
-// REQUEST: discussion uuid
-// RESPONSE: 200 or 500 response
-func (app *application) discussionDeleteHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// Media handlers
-func (app *application) mediaCreateHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-func (app *application) mediaDeleteHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-
-}
-
-// Comment handlers
-//
-// REQUEST: discussion/announcement uuid + comment + author netid
-// RESPONSE: comment
-func (app *application) commentCreateHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		Uuid    string `json:"uuid"`
-		Comment string `json:"comment"`
-		Netid   string `json:"netid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-}
-func (app *application) commentDeleteHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	var input struct {
-		Uuid  string `json:"uuid"`
-		Netid string `json:"netid"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	// Serve the file's content
+	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
 }
 
 // Submission handlers
 //
-// REQUEST: assignmentid + userid + filetype + submissiontime
+// REQUEST: assignmentid + userid + filetype
 // RESPONSE: submission
 func (app *application) submissionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-
-	r.ParseMultipartForm(10 << 20)
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	fileTypeStr := r.FormValue("filetype")
-	fileTypeInt, err := strconv.Atoi(fileTypeStr)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	filetype := models.FileType(fileTypeInt)
-	defer file.Close()
-
-	createdAt, err := time.Parse("2006-01-02", r.FormValue("submissiontime"))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	media := &models.Media{
-		FileName: header.Filename,
-		Entity: models.Entity{
-			CreatedAt: createdAt,
-		},
-		AttributionsByType: make(map[string]string),
-		FileType:           filetype,
-	}
-
-	media.AttributionsByType["assignment"] = r.FormValue("assignmentid")
-	media.AttributionsByType["user"] = r.FormValue("userid")
-
-	submissionTime, err := time.Parse(
-		"2006-02-01",
-		r.FormValue("submissiontime"),
-	)
-
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	assignmentid := r.PathValue("assignmentId")
+	userid := r.PathValue("userId")
 
 	submission := &models.Submission{
-		AssignmentId: r.FormValue("assignmentid"),
+		AssignmentId: assignmentid,
 		User: models.User{
 			Entity: models.Entity{
-				ID: r.FormValue("userid"),
+				ID: userid,
 			},
 		},
-		SubmissionTime: submissionTime,
-		Media:          media,
 	}
 
-	submission, err = app.services.SubmissionService.CreateSubmission(submission)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	media, err = app.services.MediaService.UploadMedia(
-		file,
-		submission,
-	) // implement cloud storage of file and add reference to submission ID, return media struct (metadata)
+	submission, err := app.services.SubmissionService.CreateSubmission(submission) // Add submission into database and return model with ID
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
 	_, err = app.services.AssignmentService.UpdateAssignment(
+		// Submit assignment
 		submission.AssignmentId,
 		true,
 		"submit",
@@ -1011,7 +1101,7 @@ func (app *application) submissionCreateHandler(
 		return
 	}
 
-	res := jsonWrap{"submission": submission}
+	res := jsonWrap{"submission": submission} // Return submission
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1019,11 +1109,60 @@ func (app *application) submissionCreateHandler(
 	}
 }
 
+// SubmissionUpdateHandler handles multiple submisisons
+// REQUEST: submission id + action()
 func (app *application) submissionUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 
+}
+
+func (app *application) submissionMediaUploadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	submissionid := r.PathValue("id")
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Retrieve the file(s) from the form
+	files := r.MultipartForm.File["files"]
+
+	for _, fileHeader := range files {
+		// Open the uploaded file
+		file, err := fileHeader.Open()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer file.Close()
+		path, err := app.services.FileService.Save(fileHeader.Filename, file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		media := &models.Media{
+			FileName:           fileHeader.Filename,
+			AttributionsByType: make(map[string]string),
+			FileType:           GetFileType(fileHeader.Filename),
+			FilePath:           path,
+		}
+		media.AttributionsByType["submission"] = submissionid
+		media, err = app.services.MediaService.AddSubmissionMedia(media)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+	}
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
 
 func (app *application) addStudentHandler(

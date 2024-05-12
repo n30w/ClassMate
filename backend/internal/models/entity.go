@@ -14,7 +14,7 @@ type Entity struct {
 	// with the enumerated `id` field in the SQL database.
 	ID string `json:"id"`
 
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time    `json:"-"`
+	DeletedAt sql.NullTime `json:"-"`
 }

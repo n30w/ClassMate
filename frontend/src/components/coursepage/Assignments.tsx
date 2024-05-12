@@ -1,219 +1,164 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
-import { useRouter, usePathname } from "next/navigation";
+import AssignmentDisplay from "./AssignmentDisplay";
+import InfoBadge from "@/components/badge/InfoBadge";
+import truncateString from "@/lib/helpers/truncateString";
+import Router from "next/client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import formattedDate from "@/lib/helpers/formattedDate";
 
 interface props {
   entries: Assignment[];
   courseId: string;
 }
 
-const Assignments: React.FC<props> = (props: props) => {
-  const [selectedAssignment, setSelectedAssignment] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
+  const [selectedAssignment, setSelectedAssignment] = useState({
+    id: "",
+    title: "",
+    due_date: "",
+    description: "",
+    created_at: "",
+    updated_at: "",
+    deleted_at: "",
+  });
+
+  const [assignments, setAssignments] = useState<Assignment[]>(entries);
+  /**
+   * assignmentMap maps assignment object values to their
+   * name pairs.
+   */
+  const [assignmentMap, setAssignmentMap] = useState<Map<string, Assignment>>(
+    new Map<string, Assignment>(),
+  );
+
   const [isTeacher, setIsTeacher] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [token, setIsToken] = useState("");
+  const [isViewingAssignment, setSetIsViewingAssignment] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       setIsToken(token);
     }
+
     const permissions = localStorage.getItem("permissions");
     if (permissions === "1") {
       setIsTeacher(true);
     }
-    fetchAssignments();
-  }, [assignments]);
 
-  const fetchAssignments = async () => {
-    try {
+    const fetchAssignments = async (): Promise<Assignment[]> => {
+      const init: RequestInit = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
       const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${props.courseId}`
+        `http://localhost:6789/v1/course/assignment/read/${courseId}`,
       );
-      if (response.ok) {
-        const data = await response.json();
-        setAssignments(data.assignment);
-      } else {
-        console.error("Failed to fetch assignments:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
-    }
-  };
+      const { assignments }: { assignments: Assignment[] } =
+        await response.json();
+      setAssignments(assignments);
+      return assignments;
+    };
+
+    fetchAssignments()
+      .then((a: Assignment[]) => {
+        if (a) {
+          // Assign map's keys and values based on fetched assignments.
+          const newMap: Map<string, Assignment> = new Map<string, Assignment>();
+          for (let i = 0; i < a.length; i++) {
+            const el = a[i];
+            newMap.set(el.title, el);
+          }
+          setAssignmentMap(newMap);
+          console.log(newMap);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedAssignment(event.target.value);
+    // Get the assignment by its UUID.
+    const value: Assignment = assignmentMap.get(event.target.value)!;
+    setSelectedAssignment(value);
+    setSetIsViewingAssignment(true);
   };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const files = Array.from(event.dataTransfer.files);
-    setUploadedFiles(files);
-  };
-
-  const handleFileInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (event.target.files) {
-      const files = Array.from(event.target.files);
-      setUploadedFiles(files);
-    }
-  };
-
-  const handleFileRemove = (index: number) => {
-    const newFiles = [...uploadedFiles];
-    newFiles.splice(index, 1);
-    setUploadedFiles(newFiles);
-  };
-
-  const postSubmission = async (submissionData: any) => {
-    try {
-      const formData = new FormData();
-      submissionData.forEach((file: File) => {
-        formData.append("files", file);
-      });
-      formData.append("submissiontime", new Date().toISOString());
-      formData.append("assignmentid", submissionData.assignmentid);
-      formData.append("userid", submissionData.userid);
-
-      const res: Response = await fetch(
-        "http://localhost:6789/v1/course/assignment/submission/create",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (res.ok) {
-      } else {
-        console.error("Failed to create submission:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error creating submission:", error);
-    }
-  };
-
-  // const readFileAsBase64 = (file: File): Promise<string> => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.onload = () => {
-  //       const base64String = reader.result as string;
-  //       // Extract the base64 content from the data URL
-  //       const base64Content = base64String.split(",")[1];
-  //       resolve(base64Content);
-  //     };
-  //     reader.onerror = (error) => reject(error);
-  //     reader.readAsDataURL(file);
-  //   });
-  // };
 
   const refreshData = async () => {
     setIsCreatingAssignment(false);
-    await fetchAssignments();
   };
 
+  const router = useRouter();
+
   return (
-    <div className="w-full">
-      <div className="flex">
-        {isTeacher && (
-          <AddButton
-            onClick={() => {
-              setIsCreatingAssignment(true);
-            }}
-          />
-        )}
-        <select
-          className="ml-16 p-2"
-          value={selectedAssignment}
-          onChange={handleSelectChange}
-        >
-          <option value="">Choose an assignment</option>
-          {assignments &&
-            assignments.map((assignment: any, index: number) => (
-              <option key={index} value={index}>
-                {assignment.name}
-              </option>
-            ))}
-        </select>
-      </div>
-      {selectedAssignment !== "" &&
-        assignments[parseInt(selectedAssignment)] && (
+    <div className="w-full h-full">
+      {isTeacher && (
+        <AddButton
+          fullWidth={true}
+          text="Create Assignment"
+          onClick={() => {
+            setIsCreatingAssignment(true);
+          }}
+        />
+      )}
+      <div className="w-full grid grid-cols-1 grid-rows-3 border-2 border-slate-300 border-opacity-10">
+        {assignments ? (
+          assignments.map((assignment: Assignment, i: number) => (
+            <Link href={`/course/${courseId}/assignments/${assignment.id}`}>
+              <div className="assignment-item hover:bg-gray-700" key={i}>
+                <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
+                <InfoBadge
+                  text={formattedDate(assignment.due_date).toLocaleUpperCase()}
+                />
+                {assignment.description && (
+                  <p className="font-normal tracking-wide text-gray-400">
+                    {truncateString(assignment.description, 20)}
+                  </p>
+                )}
+              </div>
+            </Link>
+          ))
+        ) : (
           <>
-            <h2 className="text-white text-2xl font-bold mb-2 pt-4">
-              {assignments[parseInt(selectedAssignment)].title}
-            </h2>
-            <p className="text-white text-sm my-4">
-              Due Date: {assignments[parseInt(selectedAssignment)].duedate}
-            </p>
-            <p className="text-white text-lg font-light pb-8">
-              {assignments[parseInt(selectedAssignment)].description}
-            </p>
+            <div className={"assignment-item"}>
+              <p className={"text-hint"}> New assignments will appear here.</p>
+            </div>
+            <div className={"assignment-item"}></div>
           </>
         )}
-      <h2>File Upload</h2>
-      <div
-        onDrop={handleDrop}
-        onDragOver={(event) => event.preventDefault()}
-        style={{
-          border: "2px dashed #aaa",
-          borderRadius: "5px",
-          padding: "20px",
-          marginTop: "20px",
-          width: "550px",
-        }}
-      >
-        <p className="text-white text-l font-bold">File Upload</p>
-        <input
-          type="file"
-          id="file"
-          onChange={handleFileInputChange}
-          multiple
-          style={{ display: "none" }}
-        />
-        <button
-          className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-          onClick={() => postSubmission(uploadedFiles)}
-        >
-          Upload Files
-        </button>
       </div>
-      <div>
-        <h2 className="text-white text-l mt-8">Uploaded Files:</h2>
-        <ul>
-          {uploadedFiles.map((file, index) => (
-            <li className="text-white text-l mt-4" key={index}>
-              {file.name} - {file.size} bytes
-              <button
-                className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-2 flex items-center justify-center"
-                onClick={() => handleFileRemove(index)}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <button
-        className="rounded-full bg-white text-black text-sm font-light h-8 p-2 mt-8 flex items-center justify-center"
-        // onClick={handleFileUpload}
-      >
-        Submit
-      </button>
       {isCreatingAssignment && (
         <CreateAssignment
           onClose={() => {
             refreshData();
           }}
           token={token}
-          params={{ id: props.courseId }}
+          params={{ id: courseId }}
         />
       )}
+      {isViewingAssignment && !isTeacher && (
+        <AssignmentDisplay
+          onClose={() => {
+            setSetIsViewingAssignment(false);
+          }}
+          assignment={selectedAssignment}
+        />
+      )}
+      {/*{isViewingAssignment && isTeacher && (*/}
+      {/*  <TeacherViewAssignment*/}
+      {/*    onClose={() => {*/}
+      {/*      setSetIsViewingAssignment(false);*/}
+      {/*    }}*/}
+      {/*    assignmentid={selectedAssignment}*/}
+      {/*  />*/}
+      {/*)}*/}
     </div>
   );
 };

@@ -4,18 +4,32 @@ import "time"
 
 type Post struct {
 	Entity
-	Title       string
-	Description string
-	Media       []string
-	Date        string
-	Course      string
-	Owner       string
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Media       []string `json:"media,omitempty"`
+	Date        string   `json:"date,omitempty"`
+	Course      string   `json:"course,omitempty"`
+
+	// Owner is often the Net ID.
+	Owner       string   `json:"owner,omitempty"`
+}
+
+func NewPost(title, description, owner string) *Post {
+	return &Post{
+		Title:       title,
+		Description: description,
+		Owner:       owner,
+	}
 }
 
 type Assignment struct {
-	Post       `json:"post"`
+	Post
 	Submission []string  `json:"submission,omitempty"`
 	DueDate    time.Time `json:"due_date"`
+}
+
+func NewAssignment() *Assignment {
+	return &Assignment{}
 }
 
 type Submission struct {
@@ -25,7 +39,7 @@ type Submission struct {
 	User           User
 	FileType       string
 	SubmissionTime time.Time
-	Media          *Media
+	Media          []string
 	Feedback       string
 	OnTime         bool
 }
@@ -55,17 +69,24 @@ type Course struct {
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
+
+	// UUID of the banner
 	Banner      string     `json:"banner"`
 
-	// TODO write on time calculation method.
-	OnTime bool
+	OnTime bool `json:"on_time"`
 }
 
 type Message struct {
 	Post
-	ID       string
 	Comments []string
-	Type     uint8 // 0 if discussion, 1 if announcement
+	Type bool // false if discussion, true if announcement
+}
+
+func NewMessage(title, description, owner string, t bool) *Message {
+	return &Message{
+		Post: *NewPost(title, description, owner),
+		Type: t,
+	}
 }
 
 type Comment struct {

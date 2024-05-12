@@ -2,119 +2,159 @@
 
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
-import Discussions from "@/components/coursepage/Discussions";
-import {
-  Announcement,
-  Assignment,
-  Discussion,
-  User,
-  Course,
-} from "@/lib/types";
+import { Course, User } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import AddStudent from "./AddStudent";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
+import Image from "next/image";
+import InfoBadge from "@/components/badge/InfoBadge";
 
-// These data names must match what the API returns.
-interface HomepageData {
-  course_info: {
-    name: string;
-    teachers: User[];
-    assignments: Assignment[];
-    discussions: Discussion[];
-    announcements: Announcement[];
-    roster: User[];
-  };
-}
-
-// Dynamic route example found here:
-// https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#example
 export default function Page({ params }: { params: { id: string } }) {
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
-  let [data, setData] = useState<HomepageData>();
-  // const path = `http://localhost:6789/v1/course/homepage/${params.id}`;
-  // const res: HomepageData = fetch(path).then((response) => {
-  //   console.log(response.json());
-  // });
+  const [data, setData] = useState<Course>({
+    assignments: [],
+    roster: [],
+    id: "",
+    name: "",
+    description: "",
+    professor: "",
+    banner: "",
+    created_at: "",
+    updated_at: "",
+    deleted_at: "",
+  });
+  const [roster, setRoster] = useState<User[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const path = `http://localhost:6789/v1/course/homepage/${params.id}`;
-      try {
-        const response = await fetch(path);
-        if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        }
-        const fetchedData: HomepageData = await response.json();
-        setData(fetchedData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchData();
-
-    const token = localStorage.getItem("token");
     const permissions = localStorage.getItem("permissions");
     if (permissions === "1") {
       setIsTeacher(true);
     }
+
+    const fetchData = async () => {
+      const path = `http://localhost:6789/v1/course/homepage/${params.id}`;
+      const response = await fetch(path);
+      const { course, roster }: { course: Course; roster: User[] } =
+        await response.json();
+      return { course, roster };
+    };
+
+    fetchData()
+      .then(({ course, roster }) => {
+        setData(course);
+        setRoster(roster);
+      })
+      .catch(console.error);
   }, [params.id]);
 
   const url = params.id;
 
   return (
-    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
-      <Navbar />
-      <div
-        style={{
-          backgroundImage: `url('/backgrounds/course-bg.jpg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          width: "100%",
-          height: "300px",
-          paddingTop: "16px",
-        }}
-      >
-        {isTeacher && (
-          <div className="flex justify-end mr-8">
-            <AddButton
-              text={"Add Student"}
-              onClick={() => {
-                setIsAddingStudent(true);
-              }}
-            />
-          </div>
-        )}
+    <>
+      <div>
         <div className="relative">
-          <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute bg-black bg-opacity-70 flex flex-col justify-center">
+          <div className="bg-slate-900 py-4 px-8 ml-32 mt-32 h-32 w-fit absolute bg-opacity-70 flex flex-col justify-center text-white">
             {data && (
-              <h1 className="text-white text-3xl font-bold pb-2 block text-opacity-100">
-                {data.course_info.name}
-              </h1>
+              <>
+                <h1 className="text-4xl font-bold pb-2 block text-opacity-100">
+                  {data.name}
+                </h1>
+                <p>COURSE ID: {data.id}</p>
+              </>
             )}
           </div>
-          {/* <div className="flex justify-end">
-            <Discussions />
-          </div> */}
         </div>
-      </div>
-      <div className="flex justify-around p-16">
-        {data && (
-          <div className="flex flex-col w-96">
-            <Announcements courseId={url} />
-          </div>
-        )}
-        {data && (
-          <div className="flex flex-col">
-            <Assignments
-              courseId={url}
-              entries={data.course_info.assignments}
+
+        {data.banner && (
+          <div className={"w-full h-[400px] flex"}>
+            <Image
+              src={`http://localhost:6789/v1/course/${data.banner}/banner/read`}
+              alt="Course Background"
+              className="w-full h-full"
+              style={{ objectFit: "cover" }}
+              width={400}
+              height={400}
             />
           </div>
         )}
       </div>
+
+      {/* ANNOUNCEMENT AND ASSIGNMENTS Section*/}
+      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
+        <div className="flex justify-around col-span-2">
+          {data && (
+            <div className="flex flex-col w-full space-y-4">
+              <h2 className="text-white font-bold text-2xl">Announcements</h2>
+              <Announcements courseId={url} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-around">
+          {data && (
+            <div className="flex flex-col space-y-4">
+              <h2 className="text-white font-bold text-2xl">Assignments</h2>
+              <Assignments entries={data.assignments!} courseId={url} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ROSTER AND INSTRUCTOR section */}
+      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
+        <div className="flex justify-around">
+          {data && (
+            <div className="flex flex-col w-full space-y-4">
+              <h2 className="text-white font-bold text-2xl">Roster</h2>
+              {isTeacher && (
+                <AddButton
+                  text={"Add Student"}
+                  fullWidth={true}
+                  onClick={() => {
+                    setIsAddingStudent(true);
+                  }}
+                />
+              )}
+              <div
+                className={
+                  "w-full h-full grid grid-flow-row border-slate-200 border-opacity-10 border-2"
+                }
+              >
+                {roster ? (
+                  roster.map((user, i) => (
+                    <div
+                      className="roster-item hover:bg-gray-700 text-white text-md"
+                      key={i}
+                    >
+                      <h4 className="font-bold w-full">{user.full_name}</h4>
+                      <p>{user.email}</p>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className={"roster-item"}>
+                      <p className={"text-hint p-2"}>
+                        Students will appear here.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-around">
+          {data && (
+            <div className="flex flex-col space-y-4">
+              <h2 className="text-white font-bold text-2xl">Instructors</h2>
+              <div></div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {isAddingStudent && (
         <AddStudent
           onClose={() => {
@@ -123,6 +163,6 @@ export default function Page({ params }: { params: { id: string } }) {
           courseId={url}
         />
       )}
-    </div>
+    </>
   );
 }

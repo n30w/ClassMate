@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import CloseButton from "@/components/buttons/CloseButton";
+import { Course } from "@/lib/types";
 
 interface props {
   onClose: () => void;
@@ -10,11 +11,15 @@ interface props {
 
 const CreateCourse: React.FC<props> = (props: props) => {
   const token = localStorage.getItem("token");
+  const EmptyImageData = new Uint8Array(0);
+  const EmptyFile = new File([EmptyImageData], "empty-image.png", {
+    type: "image/png",
+  });
   const [courseData, setCourseData] = useState({
     title: "",
     token: token,
-    banner: "",
   });
+  const [bannerFile, setBannerFile] = useState(EmptyFile);
 
   const postNewCourse = async (courseData: any) => {
     try {
@@ -25,8 +30,10 @@ const CreateCourse: React.FC<props> = (props: props) => {
           body: JSON.stringify(courseData),
         }
       );
+      console.log(res.ok);
       if (res.ok) {
-        window.location.reload();
+        const course_id = await res.json();
+        return course_id;
       } else {
         console.error("Failed to create course:", res.statusText);
       }
@@ -35,18 +42,55 @@ const CreateCourse: React.FC<props> = (props: props) => {
     }
   };
 
-  const handleChange = (e: { target: { name: any; value: any } }) => {
-    const { name, value } = e.target;
-    setCourseData({
-      ...courseData,
-      [name]: value,
-    });
+  const postNewBanner = async (course: any) => {
+    try {
+      var data = new FormData();
+      data.append("file", bannerFile);
+      const res: Response = await fetch(
+        `http://localhost:6789/v1/course/${course.course.id}/banner/create`,
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+      if (res.ok) {
+      } else {
+        console.error("Failed to create course:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
   };
 
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, files, value } = e.target;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+      if (validTypes.includes(file.type)) {
+        setBannerFile(file);
+      } else {
+        e.target.value = "";
+        alert("Please select a valid image file (PNG or JPG).");
+      }
+    } else {
+      setCourseData({
+        ...courseData,
+        [name]: value,
+      });
+    }
+  };
+
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    props.onCourseCreate({ ...courseData });
-    postNewCourse(courseData);
+    // props.onCourseCreate({ ...courseData });
+    try {
+      const courseInfo = await postNewCourse(courseData);
+      postNewBanner(courseInfo);
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
+
     props.onClose();
   };
 
@@ -80,13 +124,12 @@ const CreateCourse: React.FC<props> = (props: props) => {
               htmlFor="banner"
               className="block text-lg font-medium text-gray-700 py-2"
             >
-              Course Image URL:
+              Course Image File:
             </label>
             <input
-              type="text"
+              type="file"
               id="banner"
               name="banner"
-              value={courseData.banner}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
               required

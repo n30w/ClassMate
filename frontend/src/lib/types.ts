@@ -1,22 +1,29 @@
-export interface Announcement {
+export interface Entity {
   id: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string;
+}
+
+export interface Announcement extends Entity {
   title: string;
   date: string;
   description: string;
 }
 
-export interface Assignment {
-  id: string;
+export interface Assignment extends Entity {
   title: string;
-  duedate: string;
+  due_date: string;
   description: string;
 }
 
-export interface Course {
-  id: string;
+export interface Course extends Entity {
   name: string;
+  description: string;
   professor: string;
-  location: string;
+  banner: string;
+  roster: string[];
+  assignments?: Assignment[];
 }
 
 export interface Discussion {
@@ -24,13 +31,21 @@ export interface Discussion {
   description: string;
 }
 
-export interface User {
-  id: string;
+export interface User extends Entity {
   username: string;
-  fullname: string;
+  full_name: string;
+  email: string;
 }
 
 export interface Token {
   authentication_token: { token: string };
   permissions: string;
+}
+
+export interface Submission {
+  userid: string;
+  assignmentid: string;
+  grade: string;
+  feedback: string;
+  file: any;
 }

@@ -73,7 +73,6 @@ const SignUpForm = () => {
       if (res.status !== 400) {
         router.push("/login");
       } else {
-        setPasswordError(res.statusText);
         console.error("Failed to create user:", res.statusText);
       }
     } catch (error) {
@@ -83,7 +82,7 @@ const SignUpForm = () => {
 
   return (
     <div className="flex h-screen">
-      <div className="h-screen bg-black py-8 px-32 w-1/2">
+      <div className="h-screen py-8 px-32 w-1/2">
         <div className="flex items-center">
           <Image
             src="/backgrounds/NYU-logo.png"

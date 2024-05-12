@@ -8,7 +8,6 @@ import (
 
 type CourseStore interface {
 	InsertCourse(c *models.Course) (string, error)
-	GetCourseByName(name string) (*models.Course, error)
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
@@ -18,7 +17,6 @@ type CourseStore interface {
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
 	InsertIntoUserCourses(c *models.Course, userid string) error
-	InsertBanner(courseid string, bannerurl string) (string, error)
 }
 
 type CourseService struct {
@@ -29,7 +27,7 @@ func NewCourseService(c CourseStore) *CourseService { return &CourseService{stor
 
 // CreateCourse creates a new course in the database,
 // then assigns a UUID to it. This is not an idempotent method!
-func (cs *CourseService) CreateCourse(c *models.Course, teacherid string, bannerurl string) (*models.Course, error) {
+func (cs *CourseService) CreateCourse(c *models.Course, teacherid string) (*models.Course, error) {
 	// Check if course already exists. Can also try and do fuzzy name matching.
 	duplicate, err := cs.store.CheckCourseProfessorDuplicate(c.Title, teacherid)
 	if err != nil {
@@ -48,12 +46,6 @@ func (cs *CourseService) CreateCourse(c *models.Course, teacherid string, banner
 		return nil, err
 	}
 	c.ID = id
-	bannerid, err := cs.store.InsertBanner(c.ID, bannerurl)
-	if err != nil {
-		return nil, err
-	}
-	c.Banner = bannerid
-
 	err = cs.store.InsertIntoUserCourses(c, teacherid)
 	if err != nil {
 		return nil, err
