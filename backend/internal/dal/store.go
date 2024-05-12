@@ -930,7 +930,7 @@ func (s *Store) InsertToken(t *models.Token) error {
 }
 
 func (s *Store) GetTokenFromNetId(t *models.Token) (*models.Token, error) {
-	query := `SELECT hash, expiry, scope FROM tokens WHERE net_id = $1;`
+	query := `SELECT hash, expiry, scope FROM tokens WHERE net_id = $1`
 
 	row := s.db.QueryRow(query, t.NetID)
 
