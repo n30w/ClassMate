@@ -20,27 +20,29 @@ func NewAuthenticationService(as AuthenticationStore) *AuthenticationService {
 }
 
 func (as *AuthenticationService) NewToken(netId string) (*models.Token, error) {
-
 	token, err := models.GenerateToken(netId, 24*time.Hour, "authentication")
 	if err != nil {
 		return nil, err
 	}
+
 	err = as.store.InsertToken(token)
 	if err != nil {
 		return nil, err
 	}
-	return token, nil
 
+	return token, nil
 }
 
 func (as *AuthenticationService) RetrieveToken(netId string) (*models.Token, error) {
 	t := &models.Token{
 		NetID: netId,
 	}
+
 	token, err := as.store.GetTokenFromNetId(t)
 	if err != nil {
 		return nil, err
 	}
+
 	return token, err
 }
 

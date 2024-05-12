@@ -8,7 +8,7 @@ import AddStudent from "./AddStudent";
 import { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import Image from "next/image";
-import DateBadge from "@/components/badge/DateBadge";
+import InfoBadge from "@/components/badge/InfoBadge";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -53,14 +53,16 @@ export default function Page({ params }: { params: { id: string } }) {
 
   return (
     <>
-      {/*<Navbar />*/}
       <div>
         <div className="relative">
-          <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute  bg-opacity-70 flex flex-col justify-center">
+          <div className="bg-slate-900 py-4 px-8 ml-32 mt-32 h-32 w-fit absolute bg-opacity-70 flex flex-col justify-center text-white">
             {data && (
-              <h1 className="text-white text-4xl font-bold pb-2 block text-opacity-100">
-                {data.name}
-              </h1>
+              <>
+                <h1 className="text-4xl font-bold pb-2 block text-opacity-100">
+                  {data.name}
+                </h1>
+                <p>COURSE ID: {data.id}</p>
+              </>
             )}
           </div>
         </div>

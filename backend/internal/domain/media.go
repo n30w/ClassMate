@@ -53,6 +53,7 @@ func (ms *MediaService) AddAssignmentMedia(
 	}
 	return media, nil
 }
+
 func (ms *MediaService) AddSubmissionMedia(
 	media *models.Media,
 ) (*models.Media, error) {
@@ -69,11 +70,20 @@ func (ms *MediaService) AddSubmissionMedia(
 
 // GetMedia retrieves a piece of media from a file system given a path.
 // It does two things: finds a piece of media in the database by its
-// path and, if it does find it, returns it as a sequence of bytes.
+// path and, if it does find it, returns it as a struct representation.
 func (ms *MediaService) GetMedia(id string) (*models.Media, error) {
-	media, err := ms.store.GetMediaById(id)
+	var media *models.Media
+	var err error
+
+	if id == models.DefaultImageId {
+		media = models.NewMedia("default_image", models.JPG)
+		return media, nil
+	}
+
+	media, err = ms.store.GetMediaById(id)
 	if err != nil {
 		return nil, err
 	}
+
 	return media, nil
 }

@@ -5,7 +5,7 @@ const Navbar: React.FC = () => {
     <nav>
       <div className="relative">
         <div className="absolute inset-0 opacity-70"></div>
-        <div className="py-8 px-32">
+        <div className="py-8 px-20">
           <div className="flex items-center gap-4">
             <h1 className="text-white text-2xl font-bold">
               <Link href={`/homepage`}>Darkspace</Link>

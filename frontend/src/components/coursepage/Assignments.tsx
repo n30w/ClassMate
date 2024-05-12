@@ -5,11 +5,12 @@ import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
 import AssignmentDisplay from "./AssignmentDisplay";
-import DateBadge from "@/components/badge/DateBadge";
+import InfoBadge from "@/components/badge/InfoBadge";
 import truncateString from "@/lib/helpers/truncateString";
 import Router from "next/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import formattedDate from "@/lib/helpers/formattedDate";
 
 interface props {
   entries: Assignment[];
@@ -53,6 +54,11 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
     }
 
     const fetchAssignments = async (): Promise<Assignment[]> => {
+      const init: RequestInit = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
       const response = await fetch(
         `http://localhost:6789/v1/course/assignment/read/${courseId}`,
       );
@@ -108,10 +114,14 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
             <Link href={`/course/${courseId}/assignments/${assignment.id}`}>
               <div className="assignment-item hover:bg-gray-700" key={i}>
                 <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
-                <DateBadge date={assignment.due_date} />
-                <p className="font-normal tracking-wide text-gray-400">
-                  {truncateString(assignment.description, 20)}
-                </p>
+                <InfoBadge
+                  text={formattedDate(assignment.due_date).toLocaleUpperCase()}
+                />
+                {assignment.description && (
+                  <p className="font-normal tracking-wide text-gray-400">
+                    {truncateString(assignment.description, 20)}
+                  </p>
+                )}
               </div>
             </Link>
           ))

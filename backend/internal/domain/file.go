@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -9,6 +10,7 @@ import (
 type FileStore interface {
 	CreateFile(path string) (*os.File, string, error)
 	CopyFile(f1 io.Writer, f2 io.Reader) error
+	fmt.Stringer
 }
 
 type FileService struct {
@@ -46,4 +48,8 @@ func (fs *FileService) GetFile(path string) (*os.File, error) {
 	}
 
 	return file, nil
+}
+
+func (fs *FileService) Path() string {
+	return fmt.Sprintf("%s", fs.store)
 }

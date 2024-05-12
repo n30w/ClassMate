@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -120,17 +121,25 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	app.logger.Printf("token received: %s", input.Token)
+
 	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	app.logger.Printf("retrieved Net ID: %s", netId)
+
 	courses, err := app.services.UserService.GetUserCourses(netId)
 	if err != nil {
+		app.logger.Printf("ERROR: %v", err)
 		app.serverError(w, r, err)
 		return
 	}
+
+	app.logger.Printf("courses retrieved: %d", len(courses))
+	app.logger.Printf("courses retrieved: %v", courses)
 
 	res := jsonWrap{"courses": courses}
 
@@ -465,23 +474,21 @@ func (app *application) bannerCreateHandler(
 }
 
 // REQUEST: banner id
-// RESPONSE: banner
+// RESPONSE: banner image
 func (app *application) bannerReadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	app.logger.Printf("Reading banner...")
-
 	bannerId := r.PathValue("mediaId")
 
-	app.logger.Printf("Retrieved bannerid from route: %s", bannerId)
+	app.logger.Printf("received Banner ID: %s", bannerId)
 
 	banner, err := app.services.MediaService.GetMedia(bannerId)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
 
-	app.logger.Printf("Retrieved Metadata: %v", banner)
+	app.logger.Printf("retrieved metadata: %v", banner)
 
 	// Set Content-Type header based on file extension
 	contentType := mime.TypeByExtension("." + banner.FileType.String())
@@ -492,6 +499,12 @@ func (app *application) bannerReadHandler(
 	app.logger.Printf("Setting content type to: %s", contentType)
 
 	contentDispositionValue := "inline"
+
+	filePath := banner.FilePath
+	if filePath == "" {
+		banner.FilePath = app.services.FileService.Path(
+		) + "/defaults/" + banner.FileName + "." + banner.FileType.String()
+	}
 
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Disposition", contentDispositionValue)
@@ -774,72 +787,60 @@ func (app *application) userLoginHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	var noToken bool
 	var input struct {
 		NetId    string `json:"netid"`
 		Password string `json:"password"`
 	}
+
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	// 	Validate credentials
+
+	// 	Validate credentials.
 	err = app.services.UserService.ValidateUser(input.NetId, input.Password)
 	if err != nil {
 		app.serverError(w, r, err)
-		err = app.writeJSON(
-			w, http.StatusCreated,
-			"wrong login information", nil,
-		)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
 		return
 	}
-	app.logger.Printf("Validated user, Now retrieving token...")
+
+	app.logger.Printf("user validated")
+
 	// If token exists, return token:
 	token, err := app.services.AuthenticationService.RetrieveToken(input.NetId)
-	if err != dal.ERR_RECORD_NOT_FOUND {
-
-		if err != nil {
+	if err != nil {
+		switch {
+		case errors.Is(err, dal.ERR_RECORD_NOT_FOUND):
+			app.logger.Printf("user token not found for %s", input.NetId)
+			noToken = true
+		default:
 			app.serverError(w, r, err)
 			return
 		}
-
-		app.logger.Printf("Retrieved token, Getting membership...")
-
-		membership, err := app.services.UserService.GetMembership(input.NetId)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-		wrapped := jsonWrap{"authentication_token": token, "permissions": membership}
-		err = app.writeJSON(
-			w, http.StatusCreated,
-			wrapped, nil,
-		)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-		return
-
 	}
 
-	// Otherwise, generate new token
-	token, err = app.services.AuthenticationService.NewToken(input.NetId)
+	if noToken {
+		app.logger.Printf("generating user token...")
+		token, err = app.services.AuthenticationService.NewToken(input.NetId)
+	}
+
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
 	app.logger.Printf("Token: %v", token)
-	membership, err2 := app.services.UserService.GetMembership(input.NetId)
-	if err2 != nil {
-		app.serverError(w, r, err2)
+
+	membership, err := app.services.UserService.GetMembership(input.NetId)
+	if err != nil {
+		app.serverError(w, r, err)
 		return
 	}
+
 	wrapped := jsonWrap{"authentication_token": token, "permissions": membership}
+
 	err = app.writeJSON(
 		w, http.StatusCreated,
 		wrapped, nil,
@@ -930,7 +931,7 @@ func (app *application) assignmentReadHandler(
 ) {
 	var input struct {
 		AssignmentId string `json:"assignmentid"`
-		token        string `json:"token"`
+		Token string `json:"token"`
 	}
 
 	courseId := r.PathValue("id")

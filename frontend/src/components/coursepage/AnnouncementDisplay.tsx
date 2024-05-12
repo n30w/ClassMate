@@ -1,5 +1,6 @@
 import { Announcement } from "@/lib/types";
-import DateBadge from "@/components/badge/DateBadge";
+import InfoBadge from "@/components/badge/InfoBadge";
+import formattedDate from "@/lib/helpers/formattedDate";
 
 interface props {
   announcements: Announcement[];
@@ -17,7 +18,10 @@ const AnnouncementDisplay: React.FC<props> = ({ announcements }: props) => {
             <h2 className="text-white text-3xl mb-1 font-bold">
               {announcement.title}
             </h2>
-            <DateBadge date={announcement.date} colorClass={"bg-blue-500"} />
+            <InfoBadge
+              text={formattedDate(announcement.date).toLocaleUpperCase()}
+              colorClass={"bg-blue-500"}
+            />
             <p className="text-white text-lg font-light">
               {announcement.description}
             </p>

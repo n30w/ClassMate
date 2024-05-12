@@ -172,11 +172,9 @@ CREATE TABLE IF NOT EXISTS message_media (
 -- Authentication Table
 CREATE TABLE IF NOT EXISTS tokens (
    hash bytea PRIMARY KEY,
-   net_id VARCHAR UNIQUE REFERENCES users(net_id) ON
-   DELETE
-      CASCADE,
-      expiry timestamp(0) with time zone NOT NULL,
-      scope text NOT NULL
+   net_id VARCHAR UNIQUE REFERENCES users(net_id) ON DELETE CASCADE,
+   expiry timestamp(0) with time zone NOT NULL,
+   scope text NOT NULL
 );
 
 -- Junction Table for Course and Media (One to One)
@@ -251,7 +249,7 @@ SET
 ALTER TABLE
    submissions
 ADD
-   COLUMN user_id INT REFERENCES users(id) ON
+   COLUMN user_id VARCHAR REFERENCES users(net_id) ON
 DELETE
    CASCADE;
 
@@ -517,7 +515,7 @@ VALUES
    (
       (
          SELECT
-            id
+            net_id
          FROM
             users
          WHERE
@@ -531,7 +529,7 @@ VALUES
    (
       (
          SELECT
-            id
+            net_id
          FROM
             users
          WHERE
@@ -545,7 +543,7 @@ VALUES
    (
       (
          SELECT
-            id
+            net_id
          FROM
             users
          WHERE
@@ -559,7 +557,7 @@ VALUES
    (
       (
          SELECT
-            id
+            net_id
          FROM
             users
          WHERE
@@ -573,7 +571,7 @@ VALUES
    (
       (
          SELECT
-            id
+            net_id
          FROM
             users
          WHERE

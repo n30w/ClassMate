@@ -14,14 +14,14 @@ export default function Page() {
   const [loginError, setLoginError] = useState<string>("");
   const router = useRouter();
   const [token, setToken] = useState("");
-
-  useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (t) {
-      setToken(t);
-      router.push(`/homepage`);
-    }
-  }, []);
+  //
+  // useEffect(() => {
+  //   const t = localStorage.getItem("token");
+  //   if (t) {
+  //     setToken(t);
+  //     router.push(`/homepage`);
+  //   }
+  // }, []);
 
   const loginUser = async () => {
     try {

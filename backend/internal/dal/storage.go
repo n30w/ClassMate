@@ -10,13 +10,26 @@ import (
 	"path"
 )
 
-type LocalVolume struct {
-	path string
+type volume struct {
+	path     string // path is the general URI path to the volume.
+	defaults string // defaults is where default resources are stored.
 }
 
-func NewLocalVolume(path string) *LocalVolume {
+// String prints out the volume's set path.
+func (v volume) String() string {
+	return v.path
+}
+
+type LocalVolume struct {
+	volume
+}
+
+func NewLocalVolume(p string) *LocalVolume {
 	return &LocalVolume{
-		path: path,
+		volume: volume{
+			path:     p,
+			defaults: p + "/default",
+		},
 	}
 }
 

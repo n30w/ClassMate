@@ -6,23 +6,21 @@ import React from "react";
  * @prop colorClass string in the format bg-[color]-[value]
  */
 interface DateBadgeProps {
-  date: string;
+  text: string;
   colorClass?: string;
 }
 
-const DateBadge: React.FC<DateBadgeProps> = ({
-  date,
+const InfoBadge: React.FC<DateBadgeProps> = ({
+  text,
   colorClass,
 }: DateBadgeProps) => {
   return (
     <div
-      className={`mb-2 rounded-xl w-fit ${colorClass ? colorClass : "bg-yellow-700"}`}
+      className={`mb-2 rounded-2xl w-fit ${colorClass ? colorClass : "bg-yellow-700"}`}
     >
-      <h6 className="text-xs tracking-wide text-white px-2 py-1">
-        {formattedDate(date).toLocaleUpperCase()}
-      </h6>
+      <p className="text-xs tracking-wide text-white px-2 py-1">{text}</p>
     </div>
   );
 };
 
-export default DateBadge;
+export default InfoBadge;

@@ -42,3 +42,17 @@ type Media struct {
 	FileType           FileType          `json:"file_type"`
 	FilePath           string            `json:"file_path"`
 }
+
+func NewMedia(fileName string, fileType FileType) *Media {
+	return &Media{
+		Entity:             Entity{},
+		FileName:           fileName,
+		AttributionsByType: nil,
+		FileType:           fileType,
+		FilePath:           "",
+	}
+}
+
+const (
+	DefaultImageId = "default_image"
+)

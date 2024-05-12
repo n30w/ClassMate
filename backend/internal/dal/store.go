@@ -116,12 +116,17 @@ func (s *Store) InsertUser(u *models.User) error {
 	return nil
 }
 
-// GetUserByID retrieve's a user by their Net ID.
+// GetUserByID retrieves a user by their Net ID. It returns a
+// struct with populated user information.
 func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
-	var p string
-	var e string
-	var m int
+	// First retrieve the user using their Net ID.
+	var (
+		p, e string
+		m    int
+	)
+
 	query := `SELECT net_id, full_name, password, email, membership FROM users WHERE net_id = $1`
+
 	row := s.db.QueryRow(query, u.ID)
 	if err := row.Scan(&u.ID, &u.FullName, &p, &e, &m); err != nil {
 		switch {
@@ -131,50 +136,38 @@ func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
 			return nil, err
 		}
 	}
-	var courses []string
-	query2 := `SELECT uc.course_id FROM users u JOIN user_courses uc ON u.net_id = uc.user_net_id WHERE u.net_id = $1`
-	rows, err := s.db.Query(query2, u.ID)
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		var courseID string
-		if err := rows.Scan(&courseID); err != nil {
-			return nil, err
-		}
-		courses = append(courses, courseID)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	u.Courses = courses
+
 	u.Password = password(p)
 	u.Email = email(e)
 	u.Membership = membership(m)
 
-	return u, nil
-}
+	// Now get their courses.
 
-func (s *Store) GetUserById_2(c models.Credential) (*models.User, error) {
-	u := &models.User{}
-	var e string
+	var courses []string
 
-	query := `SELECT net_id, password FROM users WHERE net_id = $1`
-	row := s.db.QueryRow(query, c.String())
-	if err := row.Scan(&u.ID, &e); err != nil {
+	query = `SELECT uc.course_id FROM users u JOIN user_courses uc ON u.
+net_id = uc.user_net_id WHERE u.net_id = $1`
+
+	rows, err := s.db.Query(query, u.ID)
+	if err != nil {
 		return nil, err
 	}
 
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, ERR_RECORD_NOT_FOUND
-		default:
+	for rows.Next() {
+		var courseID string
+
+		err := rows.Scan(&courseID)
+		if err != nil {
 			return nil, err
 		}
+		courses = append(courses, courseID)
 	}
 
-	u.Password = password(e)
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	u.Courses = courses
 
 	return u, nil
 }
@@ -372,12 +365,16 @@ func (s *Store) DeleteCourseFromUser(
 
 func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	courses := make([]models.Course, 0)
-	for _, courseID := range u.Courses {
-		coursequery := `SELECT id, title, banner_id FROM courses WHERE id = $1;`
-		row := s.db.QueryRow(coursequery, courseID)
-
+	for _, courseId := range u.Courses {
+		// bannerId may be null, so use NullString to check and use
+		// default value.
+		var bannerId sql.NullString
 		var course models.Course
-		err = row.Scan(&course.ID, &course.Title, &course.Banner)
+
+		query := `SELECT id, title, banner_id FROM courses WHERE id = $1;`
+		row := s.db.QueryRow(query, courseId)
+
+		err = row.Scan(&course.ID, &course.Title, &bannerId)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -387,9 +384,18 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 			}
 		}
 
-		teacherquery := `SELECT * FROM course_teachers WHERE course_id=$1`
+		if bannerId.Valid {
+			course.Banner = bannerId.String
+		} else {
+			course.Banner = models.DefaultImageId
+		}
 
-		rows, err := s.db.Query(teacherquery, courseID)
+		query = `SELECT * FROM course_teachers WHERE course_id=$1`
+
+		// Course ID variable for scanning return.
+		var ci string
+
+		rows, err := s.db.Query(query, courseId)
 		if err != nil {
 			return nil, err
 		}
@@ -399,7 +405,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 
 		for rows.Next() {
 			var teacherID string
-			if err := rows.Scan(&teacherID); err != nil {
+			if err := rows.Scan(&teacherID, &ci); err != nil {
 				return nil, err
 			}
 			teacherIDs = append(teacherIDs, teacherID)
@@ -407,7 +413,9 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
+
 		course.Teachers = teacherIDs
+
 		courses = append(courses, course)
 	}
 
@@ -548,6 +556,7 @@ func (s *Store) GetCourseByID(courseid string) (
 ) {
 	c := &models.Course{}
 	c.ID = courseid
+	var bannerId sql.NullString
 
 	query := `SELECT title, description, created_at, banner_id FROM courses WHERE id=$1`
 	rows, err := s.db.Query(query, courseid)
@@ -561,7 +570,7 @@ func (s *Store) GetCourseByID(courseid string) (
 			&c.Title,
 			&c.Description,
 			&c.CreatedAt,
-			&c.Banner,
+			&bannerId,
 		); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -570,6 +579,12 @@ func (s *Store) GetCourseByID(courseid string) (
 				return nil, err
 			}
 		}
+	}
+
+	if bannerId.Valid {
+		c.Banner = bannerId.String
+	} else {
+		c.Banner = models.DefaultImageId
 	}
 
 	err = rows.Err()
@@ -915,7 +930,8 @@ func (s *Store) InsertToken(t *models.Token) error {
 }
 
 func (s *Store) GetTokenFromNetId(t *models.Token) (*models.Token, error) {
-	query := `SELECT hash, expiry, scope FROM tokens WHERE hash = $1;`
+	query := `SELECT hash, expiry, scope FROM tokens WHERE net_id = $1;`
+
 	row := s.db.QueryRow(query, t.NetID)
 
 	err := row.Scan(
@@ -923,16 +939,16 @@ func (s *Store) GetTokenFromNetId(t *models.Token) (*models.Token, error) {
 		&t.Expiry,
 		&t.Scope,
 	)
-
 	if err != nil {
-		if err == sql.ErrNoRows {
+		switch err {
+		case sql.ErrNoRows:
 			return nil, ERR_RECORD_NOT_FOUND
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return t, nil
-
 }
 
 // DeleteTokenFrom deletes a user's authentication Token using their
@@ -1204,14 +1220,14 @@ func (s *Store) InsertMedia(
 	return m, nil
 }
 
-func (s *Store) GetMediaById(mediaid string) (
+func (s *Store) GetMediaById(mediaId string) (
 	*models.Media,
 	error,
 ) {
 	media := &models.Media{}
 
 	query := `SELECT id, type, path FROM media WHERE id = $1`
-	row := s.db.QueryRow(query, mediaid)
+	row := s.db.QueryRow(query, mediaId)
 
 	err := row.Scan(
 		&media.ID,
@@ -1220,7 +1236,7 @@ func (s *Store) GetMediaById(mediaid string) (
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ERR_RECORD_NOT_FOUND
 		}
 		return nil, err
