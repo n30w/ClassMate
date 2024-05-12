@@ -22,6 +22,7 @@ export interface Course extends Entity {
   description: string;
   professor: string;
   banner: string;
+  roster: string[];
   assignments?: Assignment[];
 }
 
@@ -32,7 +33,8 @@ export interface Discussion {
 
 export interface User extends Entity {
   username: string;
-  fullname: string;
+  full_name: string;
+  email: string;
 }
 
 export interface Token {

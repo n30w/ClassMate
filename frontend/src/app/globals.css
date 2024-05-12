@@ -4,11 +4,15 @@
 
 @layer components {
     .announcement-item {
-        @apply flex flex-col p-6 h-full border shadow bg-gray-900 border-gray-700
+        @apply flex flex-col w-full p-6 h-full border shadow bg-gray-900 border-gray-700
     }
 
     .assignment-item {
-        @apply flex flex-col w-56 p-3 h-full border shadow bg-gray-900 border-gray-700
+        @apply flex flex-col w-full p-3 h-full border shadow bg-gray-900 border-gray-700
+    }
+
+    .roster-item {
+        @apply inline-flex w-full p-2 h-full border shadow bg-gray-900 border-gray-700 align-middle space-x-2
     }
 
     .text-hint {

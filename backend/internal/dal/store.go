@@ -584,20 +584,25 @@ func (s *Store) GetRoster(courseid string) (
 	error,
 ) {
 	var roster []models.User
+	var e string
 
-	query := `SELECT users.net_id, users.email, users.full_name FROM users INNER JOIN courses ON courses.id = $1 AND users.net_id = ANY(courses.roster)`
+	query := `SELECT u.net_id, u.email, u.full_name FROM users u
+              JOIN course_roster cr ON u.net_id = cr.student_id
+              WHERE cr.course_id = $1`
 
 	rows, err := s.db.Query(query, courseid)
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Email, &user.FullName); err != nil {
+		if err := rows.Scan(&user.ID, &e, &user.FullName); err != nil {
 			return nil, err
 		}
+		user.Email = email(e)
 		roster = append(roster, user)
 	}
 

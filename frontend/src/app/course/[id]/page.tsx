@@ -2,17 +2,20 @@
 
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
-import { Course } from "@/lib/types";
+import { Course, User } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import AddStudent from "./AddStudent";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import Image from "next/image";
+import DateBadge from "@/components/badge/DateBadge";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
   const [data, setData] = useState<Course>({
+    assignments: [],
+    roster: [],
     id: "",
     name: "",
     description: "",
@@ -22,6 +25,7 @@ export default function Page({ params }: { params: { id: string } }) {
     updated_at: "",
     deleted_at: "",
   });
+  const [roster, setRoster] = useState<User[]>([]);
 
   useEffect(() => {
     const permissions = localStorage.getItem("permissions");
@@ -32,13 +36,15 @@ export default function Page({ params }: { params: { id: string } }) {
     const fetchData = async () => {
       const path = `http://localhost:6789/v1/course/homepage/${params.id}`;
       const response = await fetch(path);
-      const { course }: { course: Course } = await response.json();
-      return course;
+      const { course, roster }: { course: Course; roster: User[] } =
+        await response.json();
+      return { course, roster };
     };
 
     fetchData()
-      .then((c: Course) => {
-        setData(c);
+      .then(({ course, roster }) => {
+        setData(course);
+        setRoster(roster);
       })
       .catch(console.error);
   }, [params.id]);
@@ -46,7 +52,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const url = params.id;
 
   return (
-    <div style={{ minHeight: "100vh" }} className="bg-slate-900">
+    <>
       <Navbar />
       <div>
         <div className="relative">
@@ -94,12 +100,46 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       </div>
 
+      {/* ROSTER AND INSTRUCTOR section */}
       <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
         <div className="flex justify-around">
           {data && (
-            <div className="flex flex-col w-full">
+            <div className="flex flex-col w-full space-y-4">
               <h2 className="text-white font-bold text-2xl">Roster</h2>
-              <div></div>
+              {isTeacher && (
+                <AddButton
+                  text={"Add Student"}
+                  fullWidth={true}
+                  onClick={() => {
+                    setIsAddingStudent(true);
+                  }}
+                />
+              )}
+              <div
+                className={
+                  "w-full h-full grid grid-flow-row border-slate-200 border-opacity-10 border-2"
+                }
+              >
+                {roster ? (
+                  roster.map((user, i) => (
+                    <div
+                      className="roster-item hover:bg-gray-700 text-white text-md"
+                      key={i}
+                    >
+                      <h4 className="font-bold w-full">{user.full_name}</h4>
+                      <p>{user.email}</p>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className={"roster-item"}>
+                      <p className={"text-hint p-2"}>
+                        Students will appear here.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -113,17 +153,6 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {isTeacher && (
-        <div className="flex justify-end mr-8 mt-4 bg-red-100">
-          <AddButton
-            text={"Student"}
-            onClick={() => {
-              setIsAddingStudent(true);
-            }}
-          />
-        </div>
-      )}
-
       {isAddingStudent && (
         <AddStudent
           onClose={() => {
@@ -132,6 +161,6 @@ export default function Page({ params }: { params: { id: string } }) {
           courseId={url}
         />
       )}
-    </div>
+    </>
   );
 }

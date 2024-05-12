@@ -749,6 +749,28 @@ VALUES
       )
    );
 
+-- Insert a new course taught by user with net_id 'xyz789'
+INSERT INTO courses (id, title, description, created_at, updated_at)
+VALUES ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'Data Science Fundamentals', 'Introduction to Data Science concepts and Software', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Assuming the above insertion returns a course_id, we use it to insert into course_teachers
+-- Let's assume the new course ID is 'd51a5442-df82-4c27-a9c3-5018a3ec3e91' for demonstration purposes.
+-- Make sure to obtain the actual course ID from your database context or sequence.
+
+INSERT INTO course_teachers (course_id, teacher_id)
+VALUES ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'xyz789');
+
+-- Insert students into the course_roster for the new course 'Data Science Fundamentals'
+-- Add students by their net_id to the new course
+INSERT INTO course_roster (course_id, student_id)
+VALUES
+    ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'abc123'), -- Assuming 'abc123' is a student
+    ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'def456'), -- Assuming 'def456' is another student
+    ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'ghi987'); -- Assuming 'ghi987' is another student
+
+-- These student IDs must exist in your users table, so replace them with valid net_ids from your users table.
+
+
 -- CREATE OR REPLACE FUNCTION sync_user_courses()
 -- RETURNS TRIGGER AS $$
 -- BEGIN

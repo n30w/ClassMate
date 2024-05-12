@@ -157,7 +157,17 @@ func (app *application) courseHomepageHandler(
 		return
 	}
 
-	res := jsonWrap{"course": course}
+	// Get the first couple people in the roster.
+	roster, err := app.services.CourseService.RetrieveRoster(id)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"course": course, "roster": roster}
+
+	app.logger.Printf("sending response: %+v", res)
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -213,7 +223,8 @@ func (app *application) courseCreateHandler(
 }
 
 // courseReadHandler relays information back to the requester
-// about a certain course.
+// about a certain course. This is hit when the frontend requests
+// the homepage of a specific course via ID.
 //
 // REQUEST: course ID
 // RESPONSE: course data
@@ -238,9 +249,11 @@ func (app *application) courseReadHandler(
 		app.serverError(w, r, err)
 		return
 	}
-	app.logger.Printf("Returning course: %v", course)
 
 	res := jsonWrap{"course": course}
+
+	app.logger.Printf("sending response: %#v", res)
+
 	err = app.writeJSON(w, http.StatusOK, res, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -394,7 +407,7 @@ func (app *application) bannerCreateHandler(
 ) {
 	app.logger.Printf("Creating banner...")
 
-	courseid := r.PathValue("id")
+	courseid := r.PathValue("mediaId")
 	// Limit upload size to 10MB
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -459,7 +472,7 @@ func (app *application) bannerReadHandler(
 ) {
 	app.logger.Printf("Reading banner...")
 
-	bannerId := r.PathValue("id")
+	bannerId := r.PathValue("mediaId")
 
 	app.logger.Printf("Retrieved bannerid from route: %s", bannerId)
 

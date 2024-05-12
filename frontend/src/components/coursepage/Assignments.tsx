@@ -61,14 +61,16 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
 
     fetchAssignments()
       .then((a: Assignment[]) => {
-        // Assign map's keys and values based on fetched assignments.
-        const newMap: Map<string, Assignment> = new Map<string, Assignment>();
-        for (let i = 0; i < a.length; i++) {
-          const el = a[i];
-          newMap.set(el.title, el);
+        if (a) {
+          // Assign map's keys and values based on fetched assignments.
+          const newMap: Map<string, Assignment> = new Map<string, Assignment>();
+          for (let i = 0; i < a.length; i++) {
+            const el = a[i];
+            newMap.set(el.title, el);
+          }
+          setAssignmentMap(newMap);
+          console.log(newMap);
         }
-        setAssignmentMap(newMap);
-        console.log(newMap);
       })
       .catch(console.error);
   }, []);
@@ -102,7 +104,7 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
               <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
               <DateBadge date={assignment.due_date} />
               <p className="font-normal tracking-wide text-gray-400">
-                {truncateString(assignment.description, 50)}
+                {truncateString(assignment.description, 20)}
               </p>
             </div>
           ))
