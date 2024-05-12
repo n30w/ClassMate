@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
 import AssignmentDisplay from "./AssignmentDisplay";
-import formattedDate from "@/lib/helpers/formattedDate";
-import TeacherViewAssignment from "./TeacherViewAssignments";
+import DateBadge from "@/components/badge/DateBadge";
+import truncateString from "@/lib/helpers/truncateString";
 
 interface props {
   entries: Assignment[];
@@ -30,7 +30,7 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
    * name pairs.
    */
   const [assignmentMap, setAssignmentMap] = useState<Map<string, Assignment>>(
-    new Map<string, Assignment>()
+    new Map<string, Assignment>(),
   );
 
   const [isTeacher, setIsTeacher] = useState(false);
@@ -51,7 +51,7 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
 
     const fetchAssignments = async (): Promise<Assignment[]> => {
       const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${courseId}`
+        `http://localhost:6789/v1/course/assignment/read/${courseId}`,
       );
       const { assignments }: { assignments: Assignment[] } =
         await response.json();
@@ -85,7 +85,7 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
   };
 
   return (
-    <div className="w-full bg-red-50">
+    <div className="w-full h-full">
       {isTeacher && (
         <AddButton
           fullWidth={true}
@@ -95,26 +95,25 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
           }}
         />
       )}
-      <div className="flex">
-        <ul className="w-full">
-          {assignments &&
-            assignments.map((assignment: Assignment, i: number) => (
-              <li
-                className="flex flex-col max-w-sm p-6 h-46 border shadow bg-gray-900 border-gray-700 hover:bg-gray-700"
-                key={i}
-              >
-                <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
-                <div className="mb-2 rounded-xl  bg-yellow-700 w-fit">
-                  <h6 className="text-xs tracking-wide text-white px-2 py-1">
-                    {formattedDate(assignment.due_date).toLocaleUpperCase()}
-                  </h6>
-                </div>
-                {/* <p className="font-normal tracking-wide text-gray-400">
-                  {truncateString(assignment.description, 50)}
-                </p> */}
-              </li>
-            ))}
-        </ul>
+      <div className="w-full grid grid-cols-1 grid-rows-3 border-2 border-slate-300 border-opacity-10">
+        {assignments ? (
+          assignments.map((assignment: Assignment, i: number) => (
+            <div className="assignment-item hover:bg-gray-700" key={i}>
+              <h5 className="mb-2 text-lg text-white">{assignment.title}</h5>
+              <DateBadge date={assignment.due_date} />
+              <p className="font-normal tracking-wide text-gray-400">
+                {truncateString(assignment.description, 50)}
+              </p>
+            </div>
+          ))
+        ) : (
+          <>
+            <div className={"assignment-item"}>
+              <p className={"text-hint"}> New assignments will appear here.</p>
+            </div>
+            <div className={"assignment-item"}></div>
+          </>
+        )}
       </div>
       {isCreatingAssignment && (
         <CreateAssignment
@@ -133,14 +132,14 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
           assignment={selectedAssignment}
         />
       )}
-      {isViewingAssignment && isTeacher && (
-        <TeacherViewAssignment
-          onClose={() => {
-            setSetIsViewingAssignment(false);
-          }}
-          assignmentid={selectedAssignment}
-        />
-      )}
+      {/*{isViewingAssignment && isTeacher && (*/}
+      {/*  <TeacherViewAssignment*/}
+      {/*    onClose={() => {*/}
+      {/*      setSetIsViewingAssignment(false);*/}
+      {/*    }}*/}
+      {/*    assignmentid={selectedAssignment}*/}
+      {/*  />*/}
+      {/*)}*/}
     </div>
   );
 };

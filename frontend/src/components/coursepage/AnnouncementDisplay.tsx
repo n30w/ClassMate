@@ -1,4 +1,5 @@
 import { Announcement } from "@/lib/types";
+import DateBadge from "@/components/badge/DateBadge";
 
 interface props {
   announcements: Announcement[];
@@ -8,27 +9,30 @@ const AnnouncementDisplay: React.FC<props> = ({ announcements }: props) => {
   {
     /* Checks if announced is null. This won't work by checking if the array is greater than zero, because announced is a promise. */
   }
-  console.log(announcements);
   return (
-    <ul className="w-full bg-red-400 h-full">
+    <div className="w-full h-full grid grid-cols-1 grid-rows-3 border-slate-200 border-opacity-10 border-2">
       {announcements ? (
         announcements.map((announcement: Announcement, key: number) => (
-          <li
-            className="flex flex-col p-6 h-46 border shadow bg-gray-900 border-gray-700 hover:bg-gray-700"
-            key={key}
-          >
-            <h2 className="text-white text-3xl mb-1">{announcement.title}</h2>
-            <h3 className="text-white text-sm mb-2">{announcement.date}</h3>
+          <div className="announcement-item hover:bg-gray-700" key={key}>
+            <h2 className="text-white text-3xl mb-1 font-bold">
+              {announcement.title}
+            </h2>
+            <DateBadge date={announcement.date} colorClass={"rose-700"} />
             <p className="text-white text-lg font-light">
               {announcement.description}
             </p>
-          </li>
+          </div>
         ))
       ) : (
-        <p className="text-white">No announcements yet.</p>
+        <>
+          <div className={"announcement-item"}>
+            <p className="text-hint p-2">New announcements will appear here.</p>
+          </div>
+          <div className={"announcement-item"}></div>
+          <div className={"announcement-item"}></div>
+        </>
       )}
-      ;
-    </ul>
+    </div>
   );
 };
 

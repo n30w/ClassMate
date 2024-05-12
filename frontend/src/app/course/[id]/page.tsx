@@ -73,7 +73,8 @@ export default function Page({ params }: { params: { id: string } }) {
         )}
       </div>
 
-      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12">
+      {/* ANNOUNCEMENT AND ASSIGNMENTS Section*/}
+      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
         <div className="flex justify-around col-span-2">
           {data && (
             <div className="flex flex-col w-full space-y-4">
@@ -82,6 +83,7 @@ export default function Page({ params }: { params: { id: string } }) {
             </div>
           )}
         </div>
+
         <div className="flex justify-around">
           {data && (
             <div className="flex flex-col space-y-4">
@@ -92,7 +94,7 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12">
+      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
         <div className="flex justify-around">
           {data && (
             <div className="flex flex-col w-full">
