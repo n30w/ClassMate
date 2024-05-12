@@ -1,229 +1,194 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import CreateAssignment from "./CreateAssignment";
-import AddButton from "@/components/buttons/AddButton";
-import { Assignment, User } from "@/lib/types";
+import { Assignment, Submission } from "@/lib/types";
+import CloseButton from "../buttons/CloseButton";
 
 interface props {
-  onGradeAssignment: (gradeData: any) => void;
+  assignmentid: Assignment;
+  onClose: () => void;
 }
 
-const TeacherViewAssignment: React.FC<props> = (props: props) => {
-  const [selectedAssignment, setSelectedAssignment] = useState("");
+const TeacherViewAssignment: React.FC<props> = ({
+  assignmentid,
+  onClose,
+}: props) => {
+  const [assignment, setAssignment] = useState<Assignment>();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedStudent, setSelectedStudent] = useState("");
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
+  const [grade, setGrade] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [excelFile, setExcelFile] = useState(null);
 
   useEffect(() => {
-    fetchAssignments();
-    fetchUsers();
-  }, []);
+    fetchAssignmentDetails();
+    fetchSubmissions();
+  }, [assignmentid]);
 
-  const [gradeData, setGradeData] = useState({
-    id: "",
-    grade: "",
-    feedback: "",
-  });
-
-  const fetchAssignments = async () => {
+  const fetchAssignmentDetails = async () => {
     try {
-      const response = await fetch("/v1/assignment");
+      const response = await fetch(
+        `http://localhost:6789/v1/course/assignment/read/${assignmentid}`
+      );
       if (response.ok) {
         const data = await response.json();
-        setAssignments(data);
+        setAssignment(data.assignment);
+        console.log("ASSIGNMENT DETAILS: ", assignment);
       } else {
-        console.error("Failed to fetch assignments:", response.statusText);
+        console.error(
+          "Failed to fetch assignment details:",
+          response.statusText
+        );
       }
     } catch (error) {
-      console.error("Error fetching assignments:", error);
+      console.error("Error fetching assignment details:", error);
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchSubmissions = async () => {
     try {
-      const response = await fetch("/v1/users");
+      const response = await fetch(
+        `http://localhost:6789/v1/course/assignment/submission/${assignmentid}/read`
+      );
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
+        setSubmissions(data);
+        console.log("STUDENTS & SUBMISSIONS: ", submissions);
       } else {
-        console.error("Failed to fetch users:", response.statusText);
+        console.error(
+          "Failed to fetch student submissions:",
+          response.statusText
+        );
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching student submissions:", error);
     }
   };
 
-  const postNewGrade = async (gradeData: any) => {
-    try {
-      const res: Response = await fetch("/v1/assignment/grade", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(gradeData),
-      });
-      if (res.ok) {
-        const newGrade = await res.json();
-        newGrade.grade = gradeData.grade;
-        newGrade.id = gradeData.id;
-        newGrade.feedback.push(gradeData.feedback);
-        newGrade.archived = false;
-      } else {
-        console.error("Failed to grade assignment:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error grading assignment:", error);
-    }
+  const handleStudentSelect = (studentId: string) => {
+    setSelectedStudent(studentId);
   };
 
-  const handleChange = (e: { target: { name: any; value: any } }) => {
-    const { name, value } = e.target;
-    setGradeData({
-      ...gradeData,
-      [name]: value,
-    });
-  };
-
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-    const idNum = Date.now().toString();
-    const gradeDataWithId = { ...gradeData, id: idNum };
-
+  const handleGradeUpdate = async (grade: any, feedback: any) => {
     try {
-      const response = await fetch("/v1/assignment/grade", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(gradeDataWithId),
-      });
-
+      const response = await fetch(
+        `http://localhost:6789/v1/course/assignment/submission/${selectedStudent}/update`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            grade: grade,
+            feedback: feedback,
+          }),
+        }
+      );
       if (response.ok) {
-        console.log("Grade submitted successfully.");
+        console.log("Grade and feedback updated successfully");
       } else {
-        console.error("Failed to submit grade:", response.statusText);
+        console.error(
+          "Failed to update grade and feedback:",
+          response.statusText
+        );
       }
     } catch (error) {
-      console.error("Error submitting grade:", error);
+      console.error("Error updating grade and feedback:", error);
     }
-
-    setGradeData({
-      id: "",
-      grade: "",
-      feedback: "",
-    });
   };
 
-  const handleCreateAssignment = (assignmentData: any) => {
-    setAssignments([...assignments, assignmentData]);
+  const handleExcelUpload = (file: File) => {
+    // Handle uploading of Excel file
   };
 
-  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedAssignment(event.target.value);
-  };
-
-  const handleSelectStudentChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setSelectedStudent(event.target.value);
+  const handleExcelDownload = async () => {
+    // Handle downloading of Excel file
   };
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
-        <h1 className="text-white font-bold text-2xl">Assignments</h1>
-        <AddButton
-          onClick={() => {
-            setIsCreatingAssignment(true);
-          }}
-        />
-      </div>
-      <select value={selectedAssignment} onChange={handleSelectChange}>
-        <option value="">Choose an assignment</option>
-        {assignments.map((assignment, index) => (
-          <option key={index} value={index}>
-            {assignment.title}
-          </option>
-        ))}
-      </select>
-      <select value={selectedStudent} onChange={handleSelectStudentChange}>
-        <option value="">Choose a student</option>
-        {users.map((user, index) => (
-          <option key={index} value={index}>
-            {user.fullname}
-          </option>
-        ))}
-      </select>
-      {selectedAssignment !== "" &&
-        assignments[parseInt(selectedAssignment)] && (
-          <>
-            <h2 className="text-white text-2xl font-bold mb-2 pt-4">
-              {assignments[parseInt(selectedAssignment)].title}
-            </h2>
-            <p className="text-white text-sm my-4">
-              Due Date: {assignments[parseInt(selectedAssignment)].duedate}
+    <div className="fixed inset-0 flex items-center justify-center bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-lg px-32 py-16 justify-end">
+        <CloseButton onClick={onClose} />
+        {assignment && (
+          <div>
+            <h1 className="font-bold text-black text-2xl pb-8">
+              {assignment.title}
+            </h1>
+            <p className="font-bold text-black text-xl pb-8">
+              Due Date: {assignment.due_date}
             </p>
-            <p className="text-white text-lg font-light pb-8">
-              {assignments[parseInt(selectedAssignment)].description}
+            <p className="font-bold text-black text-l pb-8">
+              Description: {assignment.description}
             </p>
-          </>
+          </div>
         )}
-      <h2>Grade Assignment:</h2>
-      <form className="justify-end" onSubmit={handleSubmit}>
-        <h1 className="font-bold text-black text-2xl pb-8">Grade Assignment</h1>
-        <div className="mb-2">
-          <label
-            htmlFor="grade"
-            className="block text-lg font-medium text-gray-700 py-2"
-          >
-            Grade:
-          </label>
-          <input
-            type="range"
-            id="grade"
-            name="grade"
-            min="0"
-            max="100"
-            step="1"
-            value={gradeData.grade}
-            onChange={handleChange}
-            className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <label
-            htmlFor="feedback"
-            className="block text-lg font-medium text-gray-700 py-2"
-          >
-            Feedback:
-          </label>
-          <input
-            type="text"
-            id="feedback"
-            name="feedback"
-            value={gradeData.feedback}
-            onChange={handleChange}
-            className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
-          />
-        </div>
+
+        <select onChange={(e) => handleStudentSelect(e.target.value)}>
+          <option value="">Select Student</option>
+          {submissions.map((submission) => (
+            <option key={submission.userid} value={submission.userid}>
+              {submission.userid}
+            </option>
+          ))}
+        </select>
+
+        {selectedStudent && (
+          <div>
+            {/* Display student's submitted file and allow download */}
+            <p>Student's File: {/* Display student's file here */}</p>
+            <button
+              onClick={/* Download student's file */}
+              className="w-full inline-flex justify-center mt-8 px-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 py-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Download File
+            </button>
+
+            <label htmlFor="grade" className="font-bold text-black text-l pb-8">
+              Grade:
+            </label>
+            <input
+              type="text"
+              id="grade"
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+            />
+
+            <label
+              htmlFor="feedback"
+              className="font-bold text-black text-l pb-8"
+            >
+              Feedback:
+            </label>
+            <textarea
+              id="feedback"
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+            ></textarea>
+
+            {grade && feedback && (
+              <button
+                onClick={handleGradeUpdate(grade, feedback)}
+                className="w-full inline-flex justify-center mt-8 px-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 py-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Update Grade & Feedback
+              </button>
+            )}
+          </div>
+        )}
+
+        <label htmlFor="excelFile" className="font-bold text-black text-l pb-8">
+          Upload Excel File:
+        </label>
+        <input
+          type="file"
+          id="excelFile"
+          onChange={(e) => handleExcelUpload(e.target.files[0])}
+        />
+
         <button
-          type="submit"
+          onClick={handleExcelDownload}
           className="w-full inline-flex justify-center mt-8 px-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 py-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          Save
+          Download Excel
         </button>
-      </form>
-      {isCreatingAssignment && (
-        <CreateAssignment
-          onClose={() => {
-            setIsCreatingAssignment(false);
-          }}
-          onCourseCreate={handleCreateAssignment}
-        />
-      )}
+      </div>
     </div>
   );
 };

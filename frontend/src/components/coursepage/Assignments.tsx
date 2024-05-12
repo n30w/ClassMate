@@ -6,6 +6,7 @@ import { Assignment } from "@/lib/types";
 import CreateAssignment from "./CreateAssignment";
 import AssignmentDisplay from "./AssignmentDisplay";
 import formattedDate from "@/lib/helpers/formattedDate";
+import TeacherViewAssignment from "./TeacherViewAssignments";
 
 interface props {
   entries: Assignment[];
@@ -124,12 +125,20 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
           params={{ id: courseId }}
         />
       )}
-      {isViewingAssignment && (
+      {isViewingAssignment && !isTeacher && (
         <AssignmentDisplay
           onClose={() => {
             setSetIsViewingAssignment(false);
           }}
           assignment={selectedAssignment}
+        />
+      )}
+      {isViewingAssignment && isTeacher && (
+        <TeacherViewAssignment
+          onClose={() => {
+            setSetIsViewingAssignment(false);
+          }}
+          assignmentid={selectedAssignment}
         />
       )}
     </div>

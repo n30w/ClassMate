@@ -39,3 +39,11 @@ export interface Token {
   authentication_token: { token: string };
   permissions: string;
 }
+
+export interface Submission {
+  userid: string;
+  assignmentid: string;
+  grade: string;
+  feedback: string;
+  file: any;
+}
