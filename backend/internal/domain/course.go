@@ -8,7 +8,6 @@ import (
 
 type CourseStore interface {
 	InsertCourse(c *models.Course) (string, error)
-	GetCourseByName(name string) (*models.Course, error)
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error

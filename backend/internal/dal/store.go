@@ -207,42 +207,6 @@ func (s *Store) GetUserByEmail(c models.Credential) (*models.User, error) {
 	return u, nil
 }
 
-// func (s *Store) GetUserByUsername(username models.Credential) (
-// 	*models.User,
-// 	error,
-// ) {
-// 	u := &models.User{}
-
-// 	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
-// 	rows, err := s.db.Query(query, username.String())
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var e string
-
-// 	for rows.Next() {
-// 		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
-// 			switch {
-// 			case errors.Is(err, sql.ErrNoRows):
-// 				return nil, ERR_RECORD_NOT_FOUND
-// 			default:
-// 				return nil, err
-// 			}
-// 		}
-// 	}
-
-// 	err = rows.Err()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	u.Email = email(e)
-
-// 	return u, nil
-// }
-
 func (s *Store) DeleteUserByNetID(netId string) (int64, error) {
 	query := `DELETE FROM users WHERE net_id = $1`
 	var result sql.Result
@@ -555,37 +519,6 @@ func (s *Store) CheckCourseProfessorDuplicate(
 
 }
 
-func (s *Store) GetCourseByName(name string) (
-	*models.Course,
-	error,
-) {
-	c := &models.Course{}
-
-	query := `SELECT id, description, created_at FROM courses WHERE title=$1`
-	rows, err := s.db.Query(query, name)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		if err := rows.Scan(&c.ID, &c.Description, &c.CreatedAt); err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ERR_RECORD_NOT_FOUND
-			default:
-				return nil, err
-			}
-		}
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
 func (s *Store) GetMessagesByCourse(courseid string) ([]string, error) {
 	query := `SELECT message_id FROM course_messages WHERE course_id = $1`
 	rows, err := s.db.Query(query, courseid)

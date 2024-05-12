@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/n30w/Darkspace/internal/models"
 )
 
@@ -9,7 +10,6 @@ type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(u *models.User) (*models.User, error)
 	GetUserByEmail(c models.Credential) (*models.User, error)
-	// GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
 	GetMembershipById(netid string) (*models.Credential, error)
 	GetUserCourses(u *models.User) ([]models.Course, error)
