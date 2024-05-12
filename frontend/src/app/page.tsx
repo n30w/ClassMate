@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,15 @@ export default function Page() {
   });
   const [loginError, setLoginError] = useState<string>("");
   const router = useRouter();
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    if (t) {
+      setToken(t);
+      router.push(`/homepage`);
+    }
+  }, []);
 
   const loginUser = async () => {
     try {
