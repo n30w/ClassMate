@@ -10,6 +10,8 @@ import (
 	"path"
 )
 
+const darkspaceDirectory = "darkspace_volume"
+
 type volume struct {
 	path     string // path is the general URI path to the volume.
 	defaults string // defaults is where default resources are stored.
@@ -25,17 +27,21 @@ type LocalVolume struct {
 }
 
 func NewLocalVolume(p string) *LocalVolume {
-	return &LocalVolume{
+	v := &LocalVolume{
 		volume: volume{
-			path:     p,
-			defaults: p + "/default",
+			path: path.Join(p, darkspaceDirectory),
 		},
 	}
+
+	v.defaults = path.Join(v.path, "defaults")
+
+	return v
 }
 
 // CreateFile makes a new file and returns it. Does not automatically close!
 func (lv *LocalVolume) CreateFile(name string) (*os.File, string, error) {
 	p := path.Join(lv.path, name)
+
 	f, err := os.Create(p)
 	if err != nil {
 		return nil, "", err

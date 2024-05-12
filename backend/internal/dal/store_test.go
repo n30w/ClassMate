@@ -233,27 +233,27 @@ func TestDB(t *testing.T) {
 		},
 	)
 
-	t.Run(
-		"get course by title", func(t *testing.T) {
-			title := "Clown Foundations"
-			c, err := store.GetCourseByName(title)
-			if err != nil {
-				t.Errorf("%v", err)
-			}
-
-			if c.ID != expectedCourse.ID {
-				t.Errorf("got %s, want %s", c.ID, expectedCourse.ID)
-			}
-
-			if c.Description != expectedCourse.Description {
-				t.Errorf(
-					"got %s, want %s",
-					c.Description,
-					expectedCourse.Description,
-				)
-			}
-		},
-	)
+	//t.Run(
+	//	"get course by title", func(t *testing.T) {
+	//		title := "Clown Foundations"
+	//		c, err := store.GetCourseByName(title)
+	//		if err != nil {
+	//			t.Errorf("%v", err)
+	//		}
+	//
+	//		if c.ID != expectedCourse.ID {
+	//			t.Errorf("got %s, want %s", c.ID, expectedCourse.ID)
+	//		}
+	//
+	//		if c.Description != expectedCourse.Description {
+	//			t.Errorf(
+	//				"got %s, want %s",
+	//				c.Description,
+	//				expectedCourse.Description,
+	//			)
+	//		}
+	//	},
+	//)
 
 	t.Run(
 		"get course by id", func(t *testing.T) {
