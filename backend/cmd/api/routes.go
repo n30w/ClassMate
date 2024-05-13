@@ -12,10 +12,10 @@ func (app *application) routes() *http.ServeMux {
 
 	router.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 	router.HandleFunc("POST /v1/home", app.homeHandler)
-	router.HandleFunc("GET /v1/course/homepage/{id}", app.courseHomepageHandler)
+	router.HandleFunc("GET /v1/course/{id}/homepage", app.courseHomepageHandler)
 
 	router.HandleFunc(
-		"POST /v1/course/announcement/create/{id}",
+		"POST /v1/course/{id}/announcement/create",
 		app.announcementCreateHandler,
 	)
 	router.HandleFunc(
@@ -28,16 +28,15 @@ func (app *application) routes() *http.ServeMux {
 	)
 	// ID is message ID
 	router.HandleFunc(
-		"GET /v1/course/announcement/read/{id}",
+		"GET /v1/course/{id}/announcement/read",
 		app.announcementReadHandler,
 	)
 	router.HandleFunc("POST /v1/course/addstudent", app.addStudentHandler)
 
 	// Course CRUD operations
 	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
-	router.HandleFunc("GET /v1/course/read/{id}", app.courseReadHandler)
-	router.HandleFunc("PATCH /v1/course/update/{id}/{action}", app.courseUpdateHandler)
-	router.HandleFunc("POST /v1/course/delete/{id}", app.courseDeleteHandler)
+	router.HandleFunc("GET /v1/course/{id}/read/", app.courseReadHandler)
+	router.HandleFunc("POST /v1/course/{id}/delete", app.courseDeleteHandler)
 
 	router.HandleFunc(
 		"POST /v1/course/{mediaId}/banner/create",
@@ -63,7 +62,7 @@ func (app *application) routes() *http.ServeMux {
 		app.assignmentCreateHandler,
 	)
 	router.HandleFunc(
-		"GET /v1/course/assignment/read/{id}",
+		"GET /v1/course/{courseId}/assignment/read",
 		app.assignmentReadHandler,
 	)
 	router.HandleFunc(
@@ -71,13 +70,13 @@ func (app *application) routes() *http.ServeMux {
 		app.assignmentUpdateHandler,
 	)
 	router.HandleFunc(
-		"DELETE /v1/course/assignment/{id}/delete",
+		"DELETE /v1/course/assignment/{assignmentId}/delete",
 		app.assignmentDeleteHandler,
 	)
 
 	// app.assignmentReadHandler switches its behavior based on the HTTP Method.
 	router.HandleFunc(
-		"/v1/course/assignment/read/{id}",
+		"/v1/course/{courseId}/assignment/read",
 		app.assignmentReadHandler,
 	)
 
@@ -86,7 +85,7 @@ func (app *application) routes() *http.ServeMux {
 	//	app.assignmentMediaUploadHandler,
 	//)
 	router.HandleFunc(
-		"GET /v1/course/download/{mediaId}",
+		"GET /v1/course/{courseId}/download/{mediaId}",
 		app.mediaDownloadHandler,
 	)
 
@@ -105,7 +104,7 @@ func (app *application) routes() *http.ServeMux {
 	)
 	// Read submission from teacher view
 	router.HandleFunc(
-		"GET /v1/course/assignment/{assignmentId}/submission/{userId}/read",
+		"GET /v1/course/{courseId}/assignment/{assignmentId}/submission/{userId}/read",
 		app.teachersubmissionReadHandler,
 	)
 	// Read submission from student view

@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"log"
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/n30w/Darkspace/internal/dal"
 	"github.com/n30w/Darkspace/internal/domain"
-	"log"
-	"os"
 )
 
 const version = "1.0.0"
@@ -90,8 +91,9 @@ func main() {
 	volume := os.Getenv("LOCAL_STORAGE_DIRECTORY")
 
 	store := dal.NewStore(db)
-	excelStore := dal.NewExcelStore()
 	fileStore := dal.NewLocalVolume(volume)
+
+	excelStore := dal.NewExcelStore(fileStore.Template())
 
 	app := &application{
 		config:   cfg,

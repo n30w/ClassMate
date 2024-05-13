@@ -16,7 +16,7 @@ type AssignmentStore interface {
 	)
 	InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error)
 	InsertAssignment(assignment *models.Assignment) (*models.Assignment, error)
-	DeleteAssignment(assignment *models.Assignment) error
+	DeleteAssignmentByID(assignmentid string) error
 	ChangeAssignment(
 		assignment *models.Assignment,
 		updatedfield string,
@@ -126,11 +126,7 @@ func (as *AssignmentService) UpdateAssignment(
 }
 
 func (as *AssignmentService) DeleteAssignment(assignmentid string) error {
-	assignment, err := as.store.GetAssignmentById(assignmentid)
-	if err != nil {
-		return err
-	}
-	err = as.store.DeleteAssignment(assignment)
+	err := as.store.DeleteAssignmentByID(assignmentid)
 	if err != nil {
 		return err
 	}

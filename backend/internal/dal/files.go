@@ -5,19 +5,32 @@ package dal
 
 import (
 	"encoding/csv"
+	"os"
+	"path"
+
 	"github.com/n30w/Darkspace/internal/models"
 	"github.com/xuri/excelize/v2"
-	"os"
 )
+
+const excelTemplateName = "grade-offline-template.xlsx"
+const excelTemplateSheetName = "submissions"
 
 type ExcelStore struct {
 	excelTemplatePath, excelTemplateSheetName, excelTemplateName string
 }
 
-func NewExcelStore() *ExcelStore {
-	return &ExcelStore{
-		excelTemplateSheetName: "submissions",
+// NewExcelStore returns an Excel store. it accepts a template
+// path, which is the path of the template directory using
+// the volume's directory.
+func NewExcelStore(templatePath string) *ExcelStore {
+	e := &ExcelStore{
+		excelTemplateSheetName: excelTemplateSheetName,
+		excelTemplateName:      excelTemplateName,
 	}
+
+	e.excelTemplatePath = path.Join(templatePath, e.excelTemplateName)
+
+	return e
 }
 
 // Open opens an Excel file at a specified path. Uses variadic
@@ -78,7 +91,7 @@ func (es *ExcelStore) Get(path ...string) (
 func (es *ExcelStore) Save(file *excelize.File, to string) (string, error) {
 	err := file.SaveAs(to)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return to, nil

@@ -71,9 +71,8 @@ func (es *ExcelService) WriteSubmissions(
 	p, fileName string,
 	submissions []*models.Submission,
 ) (string, error) {
-	fmt.Printf("writing submissions \n")
 	savePath := path.Join(p, fileName)
-	fmt.Printf("Saving to path: %s \n", savePath)
+
 	// Open template.
 	f, err := es.store.Open()
 	if err != nil {
@@ -86,9 +85,12 @@ func (es *ExcelService) WriteSubmissions(
 	// fileName to retrieve the Course ID and Assignment ID.
 	caId := strings.Split(fileName, "_")
 	row := &[]interface{}{
-		caId[0],
 		caId[1],
+		caId[2],
 	}
+
+	fmt.Printf("writing submissions \n")
+
 	err = es.store.AddRow(f, row, "G2")
 
 	// Write rows to template.
@@ -106,6 +108,7 @@ func (es *ExcelService) WriteSubmissions(
 		}
 	}
 
+	fmt.Printf("Saving to path: %s \n", savePath)
 	// Save the file to disk.
 	s, err := es.store.Save(f, savePath)
 	if err != nil {

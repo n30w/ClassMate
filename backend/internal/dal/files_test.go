@@ -19,7 +19,7 @@ var templatePath = excelStorePath + excelFileName
 func TestExcelStore_Open(t *testing.T) {
 	es := NewExcelStore()
 
-	f, err := es.Open(excelStorePath)
+	f, err := es.Open(templatePath)
 	if err != nil {
 		t.Errorf("%+v", err)
 	}
@@ -54,6 +54,7 @@ func TestExcelStore_Save(t *testing.T) {
 	}
 
 	fileName := "TestExcelStore_Save.xlsx"
+
 	want := excelOutputPath + fileName
 	got, err := es.Save(f, want)
 	if err != nil {
@@ -98,9 +99,15 @@ func TestExcelStore_AddRow(t *testing.T) {
 	newSavePath := excelOutputPath + fileName
 
 	p, err := es.Save(f, newSavePath)
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 
 	// Read the changes back.
 	got, err = es.Get(p)
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 
 	err = multiDimComp(got, want)
 	if err != nil {

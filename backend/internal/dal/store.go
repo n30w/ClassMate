@@ -348,27 +348,21 @@ func (s *Store) DeleteUserByNetID(netId string) (int64, error) {
 	return rows, nil
 }
 
-func (s *Store) DeleteCourseByID(id string) (int64, error) {
+func (s *Store) DeleteCourseByID(id string) error {
 	query := `DELETE FROM courses WHERE id = $1`
-	var result sql.Result
 	var err error
 
-	result, err = s.db.Exec(query, id)
+	_, err = s.db.Exec(query, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return 0, ERR_RECORD_NOT_FOUND
+			return ERR_RECORD_NOT_FOUND
 		default:
-			return 0, err
+			return err
 		}
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-
-	return rows, nil
+	return nil
 }
 
 func (s *Store) DeleteCourseByTitle(title string) (int64, error) {
@@ -417,7 +411,7 @@ func (s *Store) DeleteMediaByID(id string) (int64, error) {
 	return rows, nil
 }
 
-func (s *Store) DeleteAssignmentByID(id string) (int64, error) {
+func (s *Store) DeleteAssignmentByID(id string) error {
 	query := `DELETE FROM assignments WHERE id = $1`
 	var result sql.Result
 	var err error
@@ -426,41 +420,35 @@ func (s *Store) DeleteAssignmentByID(id string) (int64, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return 0, ERR_RECORD_NOT_FOUND
+			return ERR_RECORD_NOT_FOUND
 		default:
-			return 0, err
+			return err
 		}
 	}
 
-	rows, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return rows, nil
+	return nil
 }
 
-func (s *Store) DeleteSubmissionByID(id string) (int64, error) {
+func (s *Store) DeleteSubmissionByID(id string) error {
 	query := `DELETE FROM submissions WHERE id = $1`
-	var result sql.Result
 	var err error
 
-	result, err = s.db.Exec(query, id)
+	_, err = s.db.Exec(query, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return 0, ERR_RECORD_NOT_FOUND
+			return ERR_RECORD_NOT_FOUND
 		default:
-			return 0, err
+			return err
 		}
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-
-	return rows, nil
+	return nil
 }
 
 func (s *Store) DeleteCourseFromUser(

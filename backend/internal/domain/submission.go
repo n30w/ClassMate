@@ -18,6 +18,7 @@ type SubmissionStore interface {
 	InsertSubmissionIntoAssignment(sub *models.Submission) (*models.Submission, error)
 	InsertSubmissionIntoUser(sub *models.Submission) (*models.Submission, error)
 	UpdateSubmission(submission *models.Submission) error
+	DeleteSubmissionByID(id string) error
 }
 
 type SubmissionService struct {
@@ -70,11 +71,12 @@ func (ss *SubmissionService) GradeSubmission(grade int, feedback string, submiss
 	return submission, nil
 }
 
-func (ss *SubmissionService) DeleteSubmission(id string) (
-	*models.Submission,
-	error,
-) {
-	return nil, nil
+func (ss *SubmissionService) DeleteSubmission(id string) error {
+	err := ss.store.DeleteSubmissionByID(id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ss *SubmissionService) GetSubmission(id string) (

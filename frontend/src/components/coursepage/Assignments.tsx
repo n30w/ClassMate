@@ -34,7 +34,7 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
    * name pairs.
    */
   const [assignmentMap, setAssignmentMap] = useState<Map<string, Assignment>>(
-    new Map<string, Assignment>(),
+    new Map<string, Assignment>()
   );
 
   const [isTeacher, setIsTeacher] = useState(false);
@@ -60,7 +60,7 @@ const Assignments: React.FC<props> = ({ entries, courseId }: props) => {
         },
       };
       const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${courseId}`,
+        `http://localhost:6789/v1/course/${courseId}/assignment/read`
       );
       const { assignments }: { assignments: Assignment[] } =
         await response.json();

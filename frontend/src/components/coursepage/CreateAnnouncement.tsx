@@ -33,7 +33,7 @@ const CreateAnnouncement: React.FC<props> = (props) => {
     e.preventDefault();
     const postNewAnnouncement = async (announcementData: any) => {
       const res: Response = await fetch(
-        `http://localhost:6789/v1/course/announcement/create/${announcementData.courseId}`,
+        `http://localhost:6789/v1/course/${announcementData.courseId}/announcement/create`,
         {
           method: "POST",
           body: JSON.stringify({

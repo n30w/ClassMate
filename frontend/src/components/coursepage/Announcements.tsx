@@ -29,7 +29,7 @@ const Announcements: React.FC<props> = ({ courseId }: props) => {
 
   async function fetchAnnouncements() {
     const response = await fetch(
-      `http://localhost:6789/v1/course/announcement/read/${courseId}`
+      `http://localhost:6789/v1/course/${courseId}/announcement/read`
     );
     const { announcements } = await response.json();
     setAnnouncements(announcements);

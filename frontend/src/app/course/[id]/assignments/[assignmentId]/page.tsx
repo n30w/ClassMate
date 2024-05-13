@@ -48,7 +48,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
 
     const fetchAssignment = async (): Promise<Assignment> => {
       const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/read/${params.assignmentId}`,
+        `http://localhost:6789/v1/course/${courseId}/assignment/read`,
         {
           method: "POST",
           body: JSON.stringify({
@@ -62,7 +62,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
     };
 
     const fetchData = async () => {
-      const path = `http://localhost:6789/v1/course/homepage/${courseId}`;
+      const path = `http://localhost:6789/v1/course/${courseId}/homepage`;
       const response = await fetch(path);
       const { roster }: { roster: User[] } = await response.json();
       return { roster };
@@ -115,7 +115,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
       submission.Media.forEach(async (mediaId: string) => {
         try {
           const res: any = await fetch(
-            `http://localhost:6789/v1/course/download/${mediaId}`
+            `http://localhost:6789/v1/course/${courseId}/download/${mediaId}`
           );
           const contentDisposition = res.headers.get("Content-Disposition");
           console.log("CONTENT DIS: ", contentDisposition);

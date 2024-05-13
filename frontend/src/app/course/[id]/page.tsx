@@ -2,7 +2,7 @@
 
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
-import { Course, User } from "@/lib/types";
+import { Assignment, Course, User } from "@/lib/types";
 import AddStudent from "./AddStudent";
 import { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
@@ -25,6 +25,7 @@ export default function Page({ params }: { params: { id: string } }) {
     deleted_at: "",
   });
   const [roster, setRoster] = useState<User[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
 
   useEffect(() => {
     const permissions = localStorage.getItem("permissions");
@@ -33,7 +34,7 @@ export default function Page({ params }: { params: { id: string } }) {
     }
 
     const fetchData = async () => {
-      const path = `http://localhost:6789/v1/course/homepage/${params.id}`;
+      const path = `http://localhost:6789/v1/course/${params.id}/homepage`;
       const response = await fetch(path);
       const { course, roster }: { course: Course; roster: User[] } =
         await response.json();
@@ -44,6 +45,7 @@ export default function Page({ params }: { params: { id: string } }) {
       .then(({ course, roster }) => {
         setData(course);
         setRoster(roster);
+        console.log("SUCCESSFULLY GOT DATA", data);
       })
       .catch(console.error);
   }, [params.id]);
@@ -53,7 +55,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const handleDeleteCourse = async () => {
     try {
       const response = await fetch(
-        `http://localhost:6789/v1/course/delete/${params.id}`,
+        `http://localhost:6789/v1/course/${params.id}/delete`,
         {
           method: "DELETE",
         }

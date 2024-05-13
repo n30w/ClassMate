@@ -11,7 +11,7 @@ type CourseStore interface {
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
 	ChangeCourseName(c *models.Course, name string) error
-	DeleteCourse(c *models.Course) error
+	DeleteCourseByID(courseid string) error
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
 	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
@@ -128,11 +128,7 @@ func (cs *CourseService) UpdateCourseName(
 }
 
 func (cs *CourseService) DeleteCourse(courseid string) error {
-	c, err := cs.store.GetCourseByID(courseid)
-	if err != nil {
-		return err
-	}
-	err = cs.store.DeleteCourse(c)
+	err := cs.store.DeleteCourseByID(courseid)
 	if err != nil {
 		return err
 	}
