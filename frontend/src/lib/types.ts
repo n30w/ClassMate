@@ -48,4 +48,5 @@ export interface Submission {
   grade: string;
   feedback: string;
   file: any;
+  file_path: string;
 }

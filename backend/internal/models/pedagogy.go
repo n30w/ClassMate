@@ -11,7 +11,7 @@ type Post struct {
 	Course      string   `json:"course,omitempty"`
 
 	// Owner is often the Net ID.
-	Owner       string   `json:"owner,omitempty"`
+	Owner string `json:"owner,omitempty"`
 }
 
 func NewPost(title, description, owner string) *Post {
@@ -37,11 +37,14 @@ type Submission struct {
 	Grade          float64 `json:"grade,omitempty"`
 	AssignmentId   string
 	User           User
-	FileType       string
 	SubmissionTime time.Time
 	Media          []string
 	Feedback       string
 	OnTime         bool
+}
+
+func NewSubmission() *Submission {
+	return &Submission{}
 }
 
 // IsOnTime checks if an assignment's submission time is
@@ -71,7 +74,7 @@ type Course struct {
 	Archived    bool       `json:"archived"`
 
 	// UUID of the banner
-	Banner      string     `json:"banner"`
+	Banner string `json:"banner"`
 
 	OnTime bool `json:"on_time"`
 }
@@ -79,7 +82,7 @@ type Course struct {
 type Message struct {
 	Post
 	Comments []string
-	Type bool // false if discussion, true if announcement
+	Type     bool // false if discussion, true if announcement
 }
 
 func NewMessage(title, description, owner string, t bool) *Message {

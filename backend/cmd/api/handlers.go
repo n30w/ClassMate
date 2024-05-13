@@ -262,11 +262,7 @@ func (app *application) courseUpdateHandler(
 		}
 
 	default:
-		app.serverError(
-			w,
-			r,
-			fmt.Errorf("%s is an invalid action", action),
-		) //need to format error, input field is not one of the 3 options
+		app.serverError(w, r, fmt.Errorf("%s is an invalid action", action)) //need to format error, input field is not one of the 3 options
 	}
 
 }
@@ -290,18 +286,12 @@ func (app *application) courseDeleteHandler(
 		return
 	}
 
-	err = app.services.UserService.UnenrollUserFromCourse(
-		input.UserId,
-		input.CourseId,
-	) // delete course from user
+	err = app.services.UserService.UnenrollUserFromCourse(input.UserId, input.CourseId) // delete course from user
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	_, err = app.services.CourseService.RemoveFromRoster(
-		input.CourseId,
-		input.UserId,
-	) // delete user from course
+	_, err = app.services.CourseService.RemoveFromRoster(input.CourseId, input.UserId) // delete user from course
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -414,8 +404,7 @@ func (app *application) bannerReadHandler(
 
 	filePath := banner.FilePath
 	if filePath == "" {
-		banner.FilePath = app.services.FileService.Path(
-		) + "/defaults/" + banner.FileName + "." + banner.FileType.String()
+		banner.FilePath = app.services.FileService.Path() + "/defaults/" + banner.FileName + "." + banner.FileType.String()
 	}
 
 	w.Header().Set("Content-Type", contentType)
@@ -541,11 +530,7 @@ func (app *application) announcementUpdateHandler(
 		return
 	}
 
-	msg, err := app.services.MessageService.UpdateMessage(
-		input.MsgId,
-		input.Action,
-		input.UpdatedField,
-	)
+	msg, err := app.services.MessageService.UpdateMessage(input.MsgId, input.Action, input.UpdatedField)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -647,6 +632,7 @@ func (app *application) userReadHandler(
 	var user *models.User
 
 	// Perform a database lookup of user.
+	user, err = app.services.UserService.GetByID(id)
 	user, err = app.services.UserService.GetByID(id)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -778,6 +764,7 @@ func (app *application) assignmentCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Creating assignment...")
 	var input struct {
 		Title       string   `json:"title"`
 		Token       string   `json:"token"`
@@ -843,7 +830,7 @@ func (app *application) assignmentReadHandler(
 ) {
 	var input struct {
 		AssignmentId string `json:"assignmentid"`
-		Token string `json:"token"`
+		Token        string `json:"token"`
 	}
 
 	courseId := r.PathValue("id")
@@ -929,11 +916,7 @@ func (app *application) assignmentUpdateHandler(
 		return
 	}
 
-	assignment, err := app.services.AssignmentService.UpdateAssignment(
-		input.Uuid,
-		input.UpdatedField,
-		input.Action,
-	)
+	assignment, err := app.services.AssignmentService.UpdateAssignment(input.Uuid, input.UpdatedField, input.Action)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1033,6 +1016,7 @@ func (app *application) mediaDownloadHandler(
 	r *http.Request,
 ) {
 	mediaid := r.PathValue("mediaId")
+	app.logger.Printf("Downloading media...")
 	media, err := app.services.MediaService.GetMedia(mediaid)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1055,44 +1039,62 @@ func (app *application) mediaDownloadHandler(
 	if contentType == "" {
 		contentType = "application/octet-stream" // Default content type
 	}
+	contentDisposition := fmt.Sprintf(`attachment; filename="%s"`, fileInfo.Name())
 	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", contentDisposition)
+	app.logger.Printf("Content-Type: %s", contentType)
 
+	app.logger.Printf("Content-Disposition: %s", contentDisposition)
 	// Serve the file's content
-	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
+	// http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
+	app.logger.Printf("file path: %s", media.FilePath)
+	http.ServeFile(w, r, media.FilePath)
 }
 
 // Submission handlers
 //
-// REQUEST: assignmentid + userid + filetype
+// REQUEST: assignmentid + userid
 // RESPONSE: submission
 func (app *application) submissionCreateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	assignmentid := r.PathValue("assignmentId")
-	userid := r.PathValue("userId")
 
-	submission := &models.Submission{
-		AssignmentId: assignmentid,
-		User: models.User{
-			Entity: models.Entity{
-				ID: userid,
-			},
-		},
+	var input struct {
+		Token string `json:"token"`
 	}
 
-	submission, err := app.services.SubmissionService.CreateSubmission(submission) // Add submission into database and return model with ID
+	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	_, err = app.services.AssignmentService.UpdateAssignment(
-		// Submit assignment
-		submission.AssignmentId,
-		true,
-		"submit",
-	) // assignment is now completed
+	userId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	submission := &models.Submission{
+		AssignmentId: assignmentid,
+		User: models.User{
+			Entity: models.Entity{
+				ID: userId,
+			},
+		},
+	}
+
+	assignment, err := app.services.AssignmentService.ReadAssignment(assignmentid)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	submission.OnTime = submission.IsOnTime(assignment.DueDate)
+	app.logger.Printf("Creating submission...")
+	// Add submission into database and return submission with ID
+	submission, err = app.services.SubmissionService.CreateSubmission(submission)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -1106,19 +1108,118 @@ func (app *application) submissionCreateHandler(
 	}
 }
 
+// teachersubmissionReadHandler reads a submission from teacher view
+// REQUEST: netid + assignmentid
+// RESPONSE: submission
+func (app *application) teachersubmissionReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	assignmentId := r.PathValue("assignmentId")
+	userId := r.PathValue("userId")
+	app.logger.Printf("Reading student (%s) submission as teacher", userId)
+
+	submission, err := app.services.SubmissionService.GetUserSubmission(userId, assignmentId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"submission": submission} // Return submission
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+}
+
+// StudentsubmissionReadHandler reads a submission from student view
+// REQUEST: assignmentid + token
+// RESPONSE: submission
+func (app *application) studentsubmissionReadHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	assignmentId := r.PathValue("assignmentId")
+
+	var input struct {
+		Token string `json:"token"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	userId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	submission, err := app.services.SubmissionService.GetUserSubmission(userId, assignmentId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	res := jsonWrap{"submission": submission} // Return submission
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+}
+
 // SubmissionUpdateHandler handles multiple submisisons
-// REQUEST: submission id + action()
+// REQUEST: submission id + feedback + grade
 func (app *application) submissionUpdateHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	submissionid := r.PathValue("id")
+	app.logger.Printf("Updating submission...")
+	var input struct {
+		Grade    int    `json:"grade"`
+		Feedback string `json:"feedback"`
+	}
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
+	submission, err := app.services.SubmissionService.GradeSubmission(input.Grade, input.Feedback, submissionid)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	res := jsonWrap{"submission": submission} // Return submission
+	err = app.writeJSON(w, http.StatusOK, res, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
+// SubmissionDeleteHandler deletes a submission
+// REQUEST: netid + assignmentid
+// RESPONSE: 200 or 404
+func (app *application) submissionDeleteHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	panic("implement me")
 }
 
 func (app *application) submissionMediaUploadHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	app.logger.Printf("Uploading submission media...")
 	submissionid := r.PathValue("id")
 	// Parse the multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10 MB maximum form size
@@ -1129,16 +1230,18 @@ func (app *application) submissionMediaUploadHandler(
 
 	// Retrieve the file(s) from the form
 	files := r.MultipartForm.File["files"]
-
+	app.logger.Printf("Saving submission media...")
 	for _, fileHeader := range files {
 		// Open the uploaded file
+
 		file, err := fileHeader.Open()
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
 		defer file.Close()
-		path, err := app.services.FileService.Save(fileHeader.Filename, file)
+		fileName := fileHeader.Filename
+		path, err := app.services.FileService.Save(fileName, file)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
@@ -1219,12 +1322,15 @@ func (app *application) sendOfflineTemplate(
 	courseId := r.PathValue("id")
 	assignmentId := r.PathValue("post")
 
+	app.logger.Printf("Retrieving Submissions with assignment id: %s and course id: %s", assignmentId, courseId)
+
 	// Get submissions of this assignment from database.
 	submissions, err := app.services.SubmissionService.GetSubmissions(assignmentId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Retrieved submissions: %v", submissions)
 
 	// Generate file name for Excel.
 	fileName := fmt.Sprintf("submissions_%s_%s", courseId, assignmentId)
@@ -1240,6 +1346,7 @@ func (app *application) sendOfflineTemplate(
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Saved excel file to %s", path)
 
 	// With this path, send over the file.
 	w.Header().Set(

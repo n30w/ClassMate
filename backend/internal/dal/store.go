@@ -61,33 +61,113 @@ func (s *Store) UploadMedia(
 	panic("implement me")
 }
 
+func (s *Store) GetSubmissionMedia(submission *models.Submission) (*models.Submission, error) {
+	query := `SELECT media_id FROM submission_media WHERE submission_id=$1`
+	rows, err := s.db.Query(query, submission.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	// List of media
+	for rows.Next() {
+		var mediaid string
+		err := rows.Scan(
+			&mediaid,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		submission.Media = append(submission.Media, mediaid)
+	}
+	fmt.Printf("Gettin")
+	return submission, nil
+}
+
 func (s *Store) GetSubmissionById(submissionId string) (
 	*models.Submission,
 	error,
 ) {
-	//TODO implement me
-	panic("implement me")
+	sub := models.NewSubmission()
+	fmt.Printf("getting submission by id %s \n", submissionId)
+	query := `SELECT id, submission_time, on_time, grade, feedback FROM submissions WHERE id=$1`
+
+	row := s.db.QueryRow(query, submissionId)
+
+	err = row.Scan(&sub.ID, &sub.SubmissionTime, &sub.OnTime, &sub.Grade, &sub.Feedback)
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
+}
+
+func (s *Store) GetSubmissionIdByUserAndAssignment(userId string, assignmentId string) (string, error) {
+	// Retrieve list of submissions by user
+	query := `SELECT submission_id FROM user_submissions WHERE user_net_id=$1`
+
+	rows, err := s.db.Query(query, userId)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	// List of submissions from user
+	var submissions []string
+	for rows.Next() {
+		var submission string
+		err := rows.Scan(
+			&submission,
+		)
+		if err != nil {
+			return "", fmt.Errorf("error scanning row: %v", err)
+		}
+		submissions = append(submissions, submission)
+	}
+	fmt.Printf("Submission ids related to use: %s\n", submissions)
+	fmt.Printf("Assignment id:%s\n", assignmentId)
+
+	if err = rows.Err(); err != nil {
+		return "", fmt.Errorf("error iterating rows: %v", err)
+	}
+	var submissionid string
+	for _, id := range submissions {
+		query = `SELECT submission_id FROM assignment_submissions WHERE assignment_id=$1 AND submission_id=$2`
+		row := s.db.QueryRow(query, assignmentId, id)
+		err = row.Scan(&submissionid)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				continue
+			default:
+				return "", err
+			}
+		}
+	}
+	return submissionid, nil
 }
 
 // GetSubmissions queries a junction table to retrieve all related
 // submissions for an assignment.
 func (s *Store) GetSubmissions(assignmentId string) (
-	[]models.Submission,
+	[]*models.Submission,
 	error,
 ) {
-	var submissions []models.Submission
+	var submissions []*models.Submission
 	query := `  
 		SELECT s.id, s.grade, s.feedback, u.full_name, u.net_id
-        FROM submissions s
-        JOIN users u ON s.user_id = u.id
-        WHERE s.assignment_id = $1
+		FROM submissions s
+		JOIN assignment_submissions a ON s.id = a.submission_id
+		JOIN users u ON s.user_id = u.net_id
+		WHERE a.assignment_id = $1
 	`
 
 	rows, err := s.db.Query(query, assignmentId)
+	if err != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
 
 	for rows.Next() {
-		var sub models.Submission
+		sub := models.NewSubmission()
 		err := rows.Scan(
 			&sub.ID,
 			&sub.Grade,
@@ -110,26 +190,16 @@ func (s *Store) GetSubmissions(assignmentId string) (
 
 func (s *Store) UpdateSubmission(submission *models.Submission) error {
 	// Change the submission data in the database using the submission ID.
+	fmt.Printf("Updating submission with grade: %f, feedback: %s", submission.Grade, submission.Feedback)
 	query := `UPDATE submissions SET grade = $1, feedback = $2 WHERE id = $3`
 	_, err := s.db.Exec(
-		query,
-		submission.Grade,
-		submission.Feedback,
-		submission.ID,
+		query, submission.Grade, submission.Feedback, submission.ID,
 	)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (s *Store) SubmitAssignment(assignment *models.Assignment) (
-	*models.Assignment,
-	error,
-) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (s *Store) ChangeAssignment(
@@ -1146,10 +1216,10 @@ func (s *Store) InsertSubmission(
 
 	row := s.db.QueryRow(
 		query,
-		sub.SubmissionTime,
-		sub.IsOnTime,
-		sub.Grade,
-		sub.Feedback,
+		&sub.SubmissionTime,
+		&sub.OnTime,
+		&sub.Grade,
+		&sub.Feedback,
 	)
 	err := row.Scan(
 		&sub.ID,
@@ -1167,6 +1237,15 @@ func (s *Store) InsertSubmissionIntoAssignment(sub *models.Submission) (*models.
 	query := `INSERT INTO assignment_submissions (assignment_id, submission_id) VALUES ($1, $2)`
 
 	_, err := s.db.Exec(query, sub.AssignmentId, sub.ID)
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
+}
+func (s *Store) InsertSubmissionIntoUser(sub *models.Submission) (*models.Submission, error) {
+	query := `INSERT INTO user_submissions (user_net_id, submission_id) VALUES ($1, $2)`
+
+	_, err := s.db.Exec(query, sub.User.ID, sub.ID)
 	if err != nil {
 		return nil, err
 	}

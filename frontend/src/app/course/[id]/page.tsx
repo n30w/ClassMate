@@ -3,12 +3,11 @@
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
 import { Course, User } from "@/lib/types";
-import Navbar from "@/components/Navbar";
 import AddStudent from "./AddStudent";
 import { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import Image from "next/image";
-import InfoBadge from "@/components/badge/InfoBadge";
+import router from "next/router";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -50,6 +49,25 @@ export default function Page({ params }: { params: { id: string } }) {
   }, [params.id]);
 
   const url = params.id;
+
+  const handleDeleteCourse = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:6789/v1/course/delete/${params.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        router.push("/");
+      } else {
+        console.error("Failed to delete course");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
 
   return (
     <>
@@ -162,6 +180,16 @@ export default function Page({ params }: { params: { id: string } }) {
           }}
           courseId={url}
         />
+      )}
+      {isTeacher && (
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={handleDeleteCourse}
+            className="bg-red-500 hover:bg-red-700 active:bg-red-900 text-white font-bold py-2 px-4 rounded"
+          >
+            Delete Course
+          </button>
+        </div>
       )}
     </>
   );

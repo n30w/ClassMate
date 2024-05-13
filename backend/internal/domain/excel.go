@@ -1,12 +1,14 @@
 package domain
 
 import (
-	"github.com/n30w/Darkspace/internal/models"
-	"github.com/xuri/excelize/v2"
+	"fmt"
 	"io"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/n30w/Darkspace/internal/models"
+	"github.com/xuri/excelize/v2"
 )
 
 type ExcelStore interface {
@@ -67,10 +69,11 @@ func (es *ExcelService) ReadSubmissions(path string) (
 // The path to the generated file is returned along with an error.
 func (es *ExcelService) WriteSubmissions(
 	p, fileName string,
-	submissions []models.Submission,
+	submissions []*models.Submission,
 ) (string, error) {
+	fmt.Printf("writing submissions \n")
 	savePath := path.Join(p, fileName)
-
+	fmt.Printf("Saving to path: %s \n", savePath)
 	// Open template.
 	f, err := es.store.Open()
 	if err != nil {
@@ -81,7 +84,7 @@ func (es *ExcelService) WriteSubmissions(
 
 	// Write Course ID and Assignment ID to template. Uses the
 	// fileName to retrieve the Course ID and Assignment ID.
-	caId := strings.Split(fileName, "-")
+	caId := strings.Split(fileName, "_")
 	row := &[]interface{}{
 		caId[0],
 		caId[1],
@@ -127,6 +130,8 @@ func (es *ExcelService) Save(f *excelize.File, to string) (string, error) {
 // SendFile writes an Excel file to an io.Writer interface. For our
 // use case, this will be an HTTP stream.
 func (es *ExcelService) SendFile(path string, w io.Writer) error {
+	fmt.Printf("sending file \n")
+
 	f, err := es.store.Open(path)
 	if err != nil {
 		return err

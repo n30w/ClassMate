@@ -17,7 +17,6 @@ type AssignmentStore interface {
 	InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error)
 	InsertAssignment(assignment *models.Assignment) (*models.Assignment, error)
 	DeleteAssignment(assignment *models.Assignment) error
-	SubmitAssignment(assignment *models.Assignment) (*models.Assignment, error)
 	ChangeAssignment(
 		assignment *models.Assignment,
 		updatedfield string,
@@ -104,19 +103,8 @@ func (as *AssignmentService) UpdateAssignment(
 	if err != nil {
 		return nil, err
 	}
-	if action == "submit" {
-		if _, ok := updatedfield.(bool); !ok {
-			return nil, fmt.Errorf(
-				"updated field is not of type bool, it is of type %T",
-				updatedfield,
-			)
-		}
-		assignment, err := as.store.SubmitAssignment(assignment)
-		if err != nil {
-			return nil, err
-		}
-		return assignment, nil
-	} else if action == "body" || action == "title" || action == "duedate" {
+
+	if action == "body" || action == "title" || action == "duedate" {
 		if _, ok := updatedfield.(string); !ok {
 			return nil, fmt.Errorf(
 				"updated field is not of type string, it is of type %T",

@@ -104,6 +104,17 @@ CREATE TABLE IF NOT EXISTS user_assignments (
       PRIMARY KEY (user_net_id, assignment_id)
 );
 
+-- Junction Table for Users and Submissions (Many-to-Many)
+CREATE TABLE IF NOT EXISTS user_submissions (
+   user_net_id VARCHAR REFERENCES users(net_id) ON
+   DELETE
+      CASCADE,
+      submission_id UUID REFERENCES submissions(id) ON
+   DELETE
+      CASCADE,
+      PRIMARY KEY (user_net_id, submission_id)
+);
+
 -- Junction Table for Courses and Messages (Many-to-Many)
 CREATE TABLE IF NOT EXISTS course_messages (
    course_id UUID REFERENCES courses(id) ON
@@ -328,7 +339,7 @@ VALUES
       'Jane Doe'
    );
 
--- Insert dummy courses
+-- Insert dummy courses  
 -- Removed the net_id column since it's now intended to be managed through a junction table or direct reference in projects, not stored directly in courses
 INSERT INTO
    courses (title, description, created_at, updated_at)
@@ -752,12 +763,14 @@ VALUES
 INSERT INTO courses (id, title, description, created_at, updated_at)
 VALUES ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'Data Science Fundamentals', 'Introduction to Data Science concepts and Software', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- Assuming the above insertion returns a course_id, we use it to insert into course_teachers
+-- Assuming the above insertion returns a course_id, we use it to insert into course_teachers and user_courses
 -- Let's assume the new course ID is 'd51a5442-df82-4c27-a9c3-5018a3ec3e91' for demonstration purposes.
 -- Make sure to obtain the actual course ID from your database context or sequence.
 
 INSERT INTO course_teachers (course_id, teacher_id)
 VALUES ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'xyz789');
+INSERT INTO user_courses (user_id, course_id)
+VALUES ('xyz789', '018f677f-1bf6-7b6a-aa02-1e2cff5c1c22')
 
 -- Insert students into the course_roster for the new course 'Data Science Fundamentals'
 -- Add students by their net_id to the new course
