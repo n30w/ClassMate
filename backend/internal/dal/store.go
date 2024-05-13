@@ -89,11 +89,15 @@ func (s *Store) GetSubmissionById(submissionId string) (
 ) {
 	sub := models.NewSubmission()
 	fmt.Printf("getting submission by id %s \n", submissionId)
-	query := `SELECT id, submission_time, on_time, grade, feedback FROM submissions WHERE id=$1`
+	query := `SELECT id, submission_time, on_time, grade, feedback, user_id 
+FROM submissions WHERE id=$1`
 
 	row := s.db.QueryRow(query, submissionId)
 
-	err = row.Scan(&sub.ID, &sub.SubmissionTime, &sub.OnTime, &sub.Grade, &sub.Feedback)
+	err = row.Scan(
+		&sub.ID, &sub.SubmissionTime, &sub.OnTime, &sub.Grade,
+		&sub.Feedback, &sub.User.ID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -189,18 +193,19 @@ func (s *Store) GetSubmissions(assignmentId string) (
 }
 
 // UpdateSubmission returns the submission model that was input.
-func (s *Store) UpdateSubmission(submission *models.Submission) (*models.Submission, error) {
+func (s *Store) UpdateSubmission(submission *models.Submission) error {
 	// Change the submission data in the database using the submission ID.
-	fmt.Printf("Updating submission with grade: %f, feedback: %s with submission id: %s", submission.Grade, submission.Feedback, submission.ID)
-	query := `UPDATE submissions SET grade = $1, feedback = $2 WHERE id = $3`
+	query := `UPDATE submissions SET grade = $1, 
+feedback = $2 WHERE id = $3 AND user_id = $4`
 	_, err := s.db.Exec(
 		query, submission.Grade, submission.Feedback, submission.ID,
+		submission.User.ID,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return submission, nil
+	return nil
 }
 
 func (s *Store) ChangeAssignment(
