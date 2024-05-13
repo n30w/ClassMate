@@ -21,14 +21,17 @@ const AnnouncementDisplay: React.FC<props> = ({ announcements }: props) => {
   const handleDeleteAnnouncement = async (announcementId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:6789/v1/course/announcement/delete/${announcementId}`,
+        `http://localhost:6789/v1/course/announcement/${announcementId}/delete`,
         {
           method: "DELETE",
+          headers: {
+            "Access-Control-Request-Method": "POST",
+          },
         }
       );
-
       if (response.ok) {
-        console.log("Announcement successfully deleted!");
+        window.location.reload();
+        console.log("Announcement deleted successfully");
       } else {
         console.error("Failed to delete announcement");
       }
@@ -42,9 +45,19 @@ const AnnouncementDisplay: React.FC<props> = ({ announcements }: props) => {
       {announcements ? (
         announcements.map((announcement: Announcement, i: number) => (
           <div className="announcement-item hover:bg-gray-700" key={i}>
-            <h2 className="text-white text-3xl mb-1 font-bold">
-              {announcement.title}
-            </h2>
+            <div className="flex justify-between">
+              <h2 className="text-white text-3xl mb-1 font-bold">
+                {announcement.title}
+              </h2>
+              {isTeacher && (
+                <button
+                  onClick={() => handleDeleteAnnouncement(announcement.id)}
+                  className="text-white bg-red-500 hover:bg-red-700 active:bg-red-900 font-bold py-2 px-4 rounded mt-2 w-32"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
             <InfoBadge
               text={formattedDate(announcement.date).toLocaleUpperCase()}
               colorClass={"bg-blue-500"}
@@ -52,14 +65,6 @@ const AnnouncementDisplay: React.FC<props> = ({ announcements }: props) => {
             <p className="text-white text-lg font-light">
               {announcement.description}
             </p>
-            {isTeacher && (
-              <button
-                onClick={() => handleDeleteAnnouncement(announcement.id)}
-                className="text-white bg-red-500 hover:bg-red-700 active:bg-red-900 font-bold py-2 px-4 rounded mt-2"
-              >
-                Delete
-              </button>
-            )}
           </div>
         ))
       ) : (

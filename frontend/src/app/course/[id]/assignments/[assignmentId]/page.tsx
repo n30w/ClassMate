@@ -27,6 +27,8 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
   const [uploadedExcel, setUploadedExcel] = useState<File>();
   const [studentsSubmission, setStudentsSubmission] = useState<Submission>();
   const [successMessage, setSuccessMessage] = useState("");
+  const [message, setMessage] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         {
           method: "POST",
           body: JSON.stringify({
-            assignmentId: params.assignmentId,
+            assignment_id: params.assignmentId,
             token: token,
           }),
         }
@@ -81,6 +83,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         }
       );
       const { submission }: { submission: Submission } = await response.json();
+      console.log(submission);
       return submission;
     };
 
@@ -99,7 +102,6 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
     studentReadSubmission()
       .then((value: Submission) => {
         setStudentsSubmission(value);
-        console.log("STUDENT'S SUBMISSION: ", studentsSubmission);
       })
       .catch(console.error);
   }, [courseId]);
@@ -107,7 +109,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
   const downloadSubmission = (selectedStudent: string) => {
     const fetchSubmission = async () => {
       const response: any = await fetch(
-        `http://localhost:6789/v1/course/assignment/${params.assignmentId}/submission/${selectedStudent}/read`
+        `http://localhost:6789/v1/course/${courseId}/assignment/${params.assignmentId}/submission/${selectedStudent}/read`
       );
 
       const { submission } = await response.json();
@@ -165,6 +167,8 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
   const handleUploadButtonClick = async () => {
     const subID = await makeSubmission();
     await submitMediaFile(subID);
+    setGrade(0);
+    setFeedback("");
   };
 
   const makeSubmission = async () => {
@@ -233,6 +237,13 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         }),
       }
     );
+    if (response.ok) {
+      setGrade(0);
+      setFeedback("");
+      console.log("Submission updated successfully");
+    } else {
+      console.error("Failed to update submission");
+    }
   };
 
   const uploadExcel = async (uploadedExcel: any) => {
@@ -256,7 +267,6 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         `http://localhost:6789/v1/course/${courseId}/assignment/${params.assignmentId}/offline`
       );
       const contentDisposition = res.headers.get("Content-Disposition");
-      console.log("CONTENT DIS: ", contentDisposition);
       let filename = "file";
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="(.+)"/);
@@ -266,7 +276,6 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
       }
       const contentType =
         res.headers.get("Content-Type") || "application/octet-stream";
-      console.log("CONTENT TYPE: ", contentType);
       const blob = await res.blob();
       const link = document.createElement("a");
 
@@ -295,7 +304,6 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ) {
         setUploadedExcel(file);
-        console.log("UPLOADED EXCEL: ", file);
       }
     }
   };
@@ -314,7 +322,6 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         {
           method: "DELETE",
           headers: {
-            // "Access-Control-Allow-Headers": "Content-Type, Authorization",
             "Access-Control-Request-Method": "POST",
           },
         }
@@ -359,7 +366,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
             {isTeacher && (
               <div>
                 <div className={"misc-item h-32"}>
-                  <h2>Grade</h2>
+                  <h2>Grading: {selectedStudent}</h2>
                   <input
                     type="number"
                     id="grade"
@@ -396,55 +403,59 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
                 </button>
               </div>
             )}
-            {!isTeacher && (
+            {!isTeacher && studentsSubmission && (
               <div>
-                <div className={"misc-item h-32"}>
+                <div className={"misc-item h-fit"}>
                   <h2>Grade</h2>
                   <InfoBadge
-                    text={formattedDate(
-                      viewAssignment.due_date
-                    ).toLocaleUpperCase()}
+                    text={studentsSubmission.grade}
+                    colorClass="bg-green-500"
                   />
                 </div>
-                <div className={"misc-item h-32"}>
+                <div className={"misc-item h-fit"}>
                   <h2>Feedback</h2>
-                  <InfoBadge
-                    text={formattedDate(
-                      viewAssignment.due_date
-                    ).toLocaleUpperCase()}
-                  />
+                  <p>{studentsSubmission.feedback}</p>
                 </div>
               </div>
             )}
           </div>
-          {roster && !isTeacher && !submittedFile && (
-            <>
-              <div className="flex flex-col">
-                <label
-                  htmlFor="fileUpload"
-                  className="text-white text-2xl mb-8"
-                >
-                  Upload your submission:
-                </label>
-                <input
-                  type="file"
-                  id="fileUpload"
-                  multiple
-                  onChange={handleFileUpload}
-                  required
-                />
-                <button
-                  onClick={() => {
-                    handleUploadButtonClick();
-                    setSubmittedFile(true);
-                  }}
-                  className="bg-white text-black font-bold py-2 px-4 rounded"
-                >
-                  Upload File
-                </button>
-              </div>
-            </>
+          {message && (
+            <div className={"roster-item"}>
+              <p className={"text-hint p-2"}>{message}</p>
+            </div>
           )}
+          {roster &&
+            !isTeacher &&
+            !message &&
+            !submittedFile &&
+            !studentsSubmission && (
+              <>
+                <div className="flex flex-col">
+                  <label
+                    htmlFor="fileUpload"
+                    className="text-white text-2xl mb-8"
+                  >
+                    Upload your submission:
+                  </label>
+                  <input
+                    type="file"
+                    id="fileUpload"
+                    multiple
+                    onChange={handleFileUpload}
+                    required
+                  />
+                  <button
+                    onClick={() => {
+                      handleUploadButtonClick();
+                      setSubmittedFile(true);
+                    }}
+                    className="bg-white text-black font-bold py-2 px-4 rounded"
+                  >
+                    Upload File
+                  </button>
+                </div>
+              </>
+            )}
           {roster && isTeacher && (
             <>
               <div>
@@ -452,7 +463,10 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
                   <div
                     className="roster-item hover:bg-gray-700 text-white text-md h-fit"
                     key={i}
-                    onClick={() => downloadSubmission(user.id)}
+                    onClick={() => {
+                      setSelectedStudent(user.full_name);
+                      downloadSubmission(user.id);
+                    }}
                   >
                     <h4 className="font-bold w-full">{user.full_name}</h4>
                     <p>{user.id}</p>

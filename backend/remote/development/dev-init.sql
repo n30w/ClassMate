@@ -781,7 +781,10 @@ INSERT INTO course_teachers (course_id, teacher_id)
 VALUES ('018f677f-1bf6-7b6a-aa02-1e2cff5c1c22', 'xyz789');
 
 INSERT INTO user_courses (user_net_id, course_id)
-VALUES ('xyz789', '018f677f-1bf6-7b6a-aa02-1e2cff5c1c22');
+VALUES ('xyz789', '018f677f-1bf6-7b6a-aa02-1e2cff5c1c22'),
+('abc123', '018f677f-1bf6-7b6a-aa02-1e2cff5c1c22'),
+('def456', '018f677f-1bf6-7b6a-aa02-1e2cff5c1c22'),
+('ghi987', '018f677f-1bf6-7b6a-aa02-1e2cff5c1c22');
 
 -- Insert students into the course_roster for the new course 'Data Science Fundamentals'
 -- Add students by their net_id to the new course

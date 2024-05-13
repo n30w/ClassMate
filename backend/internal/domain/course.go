@@ -10,10 +10,8 @@ type CourseStore interface {
 	InsertCourse(c *models.Course) (string, error)
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
-	ChangeCourseName(c *models.Course, name string) error
 	DeleteCourseByID(courseid string) error
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
-	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
 	InsertIntoUserCourses(c *models.Course, userid string) error
@@ -99,32 +97,16 @@ func (cs *CourseService) AddToRoster(
 func (cs *CourseService) RemoveFromRoster(
 	courseid string,
 	userid string,
-) (*models.Course, error) {
+) error {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	c, err = cs.store.RemoveStudent(c, userid)
+	_, err = cs.store.RemoveStudent(c, userid)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return c, nil
-}
-
-func (cs *CourseService) UpdateCourseName(
-	courseid string,
-	name string,
-) (*models.Course, error) {
-	c, err := cs.store.GetCourseByID(courseid)
-	if err != nil {
-		return nil, err
-	}
-
-	err = cs.store.ChangeCourseName(c, name)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	return nil
 }
 
 func (cs *CourseService) DeleteCourse(courseid string) error {

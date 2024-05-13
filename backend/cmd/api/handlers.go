@@ -183,23 +183,16 @@ func (app *application) courseDeleteHandler(
 	r *http.Request,
 ) {
 	courseid := r.PathValue("id")
-	var input struct {
-		Token string `json:"token"`
-	}
+	token := r.Header.Get("Authorization")
 
-	err := app.readJSON(w, r, &input)
+	app.logger.Printf("Course delete handler, deleting course: %s, with user token: %s...", courseid, token)
+
+	netId, err := app.services.AuthenticationService.GetNetIdFromToken(token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	fmt.Printf("%s", courseid)
-
-	netId, err := app.services.AuthenticationService.GetNetIdFromToken(input.Token)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	app.logger.Printf("Course delete handler, getting user by userid: %s...", netId)
 
 	user, err := app.services.UserService.GetByID(netId)
 	if err != nil {
@@ -211,22 +204,22 @@ func (app *application) courseDeleteHandler(
 	teacher := dal.Membership(1)
 
 	if user.Membership == student { // if student, unenroll from course
+		app.logger.Printf("Course delete handler, unenrolling student from course...")
+
 		err = app.services.UserService.UnenrollUserFromCourse(netId, courseid) // delete course from user
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
-		_, err = app.services.CourseService.RemoveFromRoster(courseid, netId) // delete user from course
+		err = app.services.CourseService.RemoveFromRoster(courseid, netId) // delete user from course
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
-		_, err = app.services.CourseService.RemoveFromRoster(courseid, netId) // delete user from course
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
+
 	} else if user.Membership == teacher { // if teacher, delete course from database
+		app.logger.Printf("Course delete handler, deleting course from Darkspace...")
+
 		err = app.services.CourseService.DeleteCourse(courseid)
 		if err != nil {
 			app.serverError(w, r, err)
@@ -476,23 +469,16 @@ func (app *application) announcementDeleteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var input struct {
-		CourseId  string `json:"courseid"`
-		TeacherId string `json:"teacherid"`
-		MsgId     string `json:"announcementid"`
-	}
 
-	err := app.readJSON(w, r, &input)
+	announcementId := r.PathValue("announcementId")
+
+	err := app.services.MessageService.DeleteMessage(announcementId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+	app.logger.Printf("Announcement delete handler, deleting announcement: %s...", announcementId)
 
-	err = app.services.MessageService.DeleteMessage(input.MsgId)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
 	err = app.writeJSON(w, http.StatusOK, nil, nil)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -1085,6 +1071,7 @@ func (app *application) studentsubmissionReadHandler(
 		app.serverError(w, r, err)
 		return
 	}
+
 	app.logger.Printf("Student submission read handler, got student's submission: %+v", submission)
 
 	res := jsonWrap{"submission": submission} // Return submission
@@ -1245,6 +1232,25 @@ func (app *application) addStudentHandler(
 	}
 }
 
+func (app *application) deleteStudentHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	netId := r.PathValue("netId")
+	courseId := r.PathValue("courseId")
+
+	err := app.services.CourseService.RemoveFromRoster(courseId, netId)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	err = app.writeJSON(w, http.StatusOK, nil, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
 // sendOfflineTemplate receives a request from a user about
 // an offline grading template. It then prepares the template and sends
 // it back to the client who requested it.
@@ -1338,6 +1344,7 @@ func (app *application) receiveOfflineGrades(
 		app.serverError(w, r, err)
 		return
 	}
+
 	app.logger.Printf("Receive offline grades, saving excel file to disk with path: %s...", path)
 
 	// Get the submissions from the Excel file via path.
@@ -1346,6 +1353,7 @@ func (app *application) receiveOfflineGrades(
 		app.serverError(w, r, err)
 		return
 	}
+
 	app.logger.Printf("Receive offline grades, retrieving submissions from excel file :%+v", submissions)
 
 	// Update the submission records in the database.
@@ -1354,6 +1362,7 @@ func (app *application) receiveOfflineGrades(
 		app.serverError(w, r, err)
 		return
 	}
+
 	app.logger.Printf("Receive offline grades, updated submissions...")
 
 	for _, submission := range submissions {

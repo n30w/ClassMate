@@ -43,8 +43,8 @@ export interface Token {
 }
 
 export interface Submission {
-  userid: string;
-  assignmentid: string;
+  user_id: string;
+  assignment_id: string;
   grade: string;
   feedback: string;
   file: any;

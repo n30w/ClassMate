@@ -11,7 +11,7 @@ import (
 type MessageStore interface {
 	InsertMessage(m *models.Message, courseid string) error
 	GetMessageById(messageid string) (*models.Message, error)
-	DeleteMessage(m *models.Message) error
+	DeleteMessageByID(messageid string) error
 	ChangeMessageTitle(m *models.Message) (*models.Message, error)
 	ChangeMessageBody(m *models.Message) (*models.Message, error)
 	GetMessagesByCourse(courseid string) ([]string, error)
@@ -74,11 +74,7 @@ func (ms *MessageService) UpdateMessage(messageid string, action string, updated
 
 func (ms *MessageService) DeleteMessage(messageid string) error {
 
-	msg, err := ms.store.GetMessageById(messageid)
-	if err != nil {
-		return err
-	}
-	err = ms.store.DeleteMessage(msg)
+	err := ms.store.DeleteMessageByID(messageid)
 	if err != nil {
 		return err
 	}

@@ -35,11 +35,11 @@ func NewAssignment() *Assignment {
 type Submission struct {
 	Entity
 	Grade          float64 `json:"grade,omitempty"`
-	AssignmentId   string
+	AssignmentId   string  `json:"assignment_id"`
 	User           User
 	SubmissionTime time.Time
 	Media          []string
-	Feedback       string
+	Feedback       string `json:"feedback"`
 	OnTime         bool
 }
 
@@ -75,8 +75,6 @@ type Course struct {
 
 	// UUID of the banner
 	Banner string `json:"banner"`
-
-	OnTime bool `json:"on_time"`
 }
 
 type Message struct {

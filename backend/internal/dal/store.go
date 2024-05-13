@@ -188,7 +188,8 @@ func (s *Store) GetSubmissions(assignmentId string) (
 	return submissions, nil
 }
 
-func (s *Store) UpdateSubmission(submission *models.Submission) error {
+// UpdateSubmission returns the submission model that was input.
+func (s *Store) UpdateSubmission(submission *models.Submission) (*models.Submission, error) {
 	// Change the submission data in the database using the submission ID.
 	fmt.Printf("Updating submission with grade: %f, feedback: %s with submission id: %s", submission.Grade, submission.Feedback, submission.ID)
 	query := `UPDATE submissions SET grade = $1, feedback = $2 WHERE id = $3`
@@ -196,10 +197,10 @@ func (s *Store) UpdateSubmission(submission *models.Submission) error {
 		query, submission.Grade, submission.Feedback, submission.ID,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return submission, nil
 }
 
 func (s *Store) ChangeAssignment(
@@ -760,18 +761,6 @@ func (s *Store) DeleteCourse(c *models.Course) error {
 	return nil
 }
 
-func (s *Store) ChangeCourseName(c *models.Course, name string) error {
-	query := `UPDATE courses SET title = $1 WHERE id = $2`
-
-	_, err := s.db.Exec(query, name, c.ID)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Store) InsertMessage(
 	m *models.Message,
 	courseid string,
@@ -831,16 +820,18 @@ date FROM messages WHERE id = $1`
 
 	return message, nil
 }
+func (s *Store) DeleteMessageByID(id string) error {
+	query := `DELETE FROM messages WHERE id = $1`
+	var err error
 
-func (s *Store) DeleteMessage(m *models.Message) error {
-	query := `
-        DELETE FROM messages
-        WHERE id = $1
-    `
-
-	_, err := s.db.Exec(query, m.Post.ID)
+	_, err = s.db.Exec(query, id)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ERR_RECORD_NOT_FOUND
+		default:
+			return err
+		}
 	}
 
 	return nil
@@ -1184,9 +1175,15 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (
 	*models.Course,
 	error,
 ) {
-	query := `UPDATE courses SET roster = array_remove(roster, $1) WHERE id = $2`
+	query := `DELETE FROM course_roster WHERE student_id=$1 AND course_id=$2`
 
 	_, err := s.db.Exec(query, userid, c.ID)
+	if err != nil {
+		return nil, err
+	}
+	query = `DELETE FROM user_courses WHERE user_net_id=$1 AND course_id=$2`
+
+	_, err = s.db.Exec(query, userid, c.ID)
 	if err != nil {
 		return nil, err
 	}

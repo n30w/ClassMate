@@ -17,7 +17,7 @@ type SubmissionStore interface {
 	)
 	InsertSubmissionIntoAssignment(sub *models.Submission) (*models.Submission, error)
 	InsertSubmissionIntoUser(sub *models.Submission) (*models.Submission, error)
-	UpdateSubmission(submission *models.Submission) error
+	UpdateSubmission(submission *models.Submission) (*models.Submission, error)
 	DeleteSubmissionByID(id string) error
 }
 
@@ -64,7 +64,7 @@ func (ss *SubmissionService) GradeSubmission(grade int, feedback string, submiss
 	submission.Grade = float64(grade)
 	submission.Feedback = feedback
 
-	err = ss.store.UpdateSubmission(submission)
+	_, err = ss.store.UpdateSubmission(submission)
 	if err != nil {
 		return nil, err
 	}
@@ -141,10 +141,23 @@ func (ss *SubmissionService) GetSubmissions(assignmentId string) (
 func (ss *SubmissionService) UpdateSubmissions(
 	submissions []models.Submission,
 ) error {
+	var toDelete []*models.Submission
+
 	// You can technically do this in one go, but not sure
 	// how to write that query...
 	for _, submission := range submissions {
-		err := ss.store.UpdateSubmission(&submission)
+		s, err := ss.store.UpdateSubmission(&submission)
+		if err != nil {
+			return err
+		}
+
+		toDelete = append(toDelete, s)
+	}
+
+	// Since the update creates new rows, delete the old
+	// rows in the database.
+	for _, submission := range toDelete {
+		err := ss.store.DeleteSubmissionByID(submission.ID)
 		if err != nil {
 			return err
 		}

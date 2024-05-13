@@ -23,7 +23,7 @@ func (app *application) routes() *http.ServeMux {
 		app.announcementUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/announcement/delete",
+		"DELETE /v1/course/announcement/{announcementId}/delete",
 		app.announcementDeleteHandler,
 	)
 	// ID is message ID
@@ -32,11 +32,12 @@ func (app *application) routes() *http.ServeMux {
 		app.announcementReadHandler,
 	)
 	router.HandleFunc("POST /v1/course/addstudent", app.addStudentHandler)
+	router.HandleFunc("DELETE /v1/course/{courseId}/{netId}/deletestudent", app.deleteStudentHandler)
 
 	// Course CRUD operations
 	router.HandleFunc("POST /v1/course/create", app.courseCreateHandler)
 	router.HandleFunc("GET /v1/course/{id}/read/", app.courseReadHandler)
-	router.HandleFunc("POST /v1/course/{id}/delete", app.courseDeleteHandler)
+	router.HandleFunc("DELETE /v1/course/{id}/delete", app.courseDeleteHandler)
 
 	router.HandleFunc(
 		"POST /v1/course/{mediaId}/banner/create",
@@ -51,7 +52,7 @@ func (app *application) routes() *http.ServeMux {
 	router.HandleFunc("POST /v1/user/create", app.userCreateHandler)
 	router.HandleFunc("GET /v1/user/read/{id}", app.userReadHandler)
 	router.HandleFunc("PATCH /v1/user/update/{id}", app.userUpdateHandler)
-	router.HandleFunc("POST /v1/user/delete/{id}", app.userDeleteHandler)
+	router.HandleFunc("DELETE /v1/user/delete/{id}", app.userDeleteHandler)
 
 	// Login will require authorization, body will contain the credential info
 	router.HandleFunc("POST /v1/user/login", app.userLoginHandler)
@@ -99,7 +100,7 @@ func (app *application) routes() *http.ServeMux {
 		app.submissionUpdateHandler,
 	)
 	router.HandleFunc(
-		"POST /v1/course/assignment/submission/{id}/delete",
+		"DELETE /v1/course/assignment/submission/{id}/delete",
 		app.submissionDeleteHandler,
 	)
 	// Read submission from teacher view

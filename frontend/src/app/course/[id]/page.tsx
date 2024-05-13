@@ -7,7 +7,7 @@ import AddStudent from "./AddStudent";
 import { useEffect, useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 import Image from "next/image";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -25,12 +25,18 @@ export default function Page({ params }: { params: { id: string } }) {
     deleted_at: "",
   });
   const [roster, setRoster] = useState<User[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [token, setToken] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const permissions = localStorage.getItem("permissions");
     if (permissions === "1") {
       setIsTeacher(true);
+    }
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      setToken(token);
     }
 
     const fetchData = async () => {
@@ -53,18 +59,45 @@ export default function Page({ params }: { params: { id: string } }) {
   const url = params.id;
 
   const handleDeleteCourse = async () => {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", `${token}`);
+    headers.append("Access-Control-Request-Method", "POST");
     try {
       const response = await fetch(
         `http://localhost:6789/v1/course/${params.id}/delete`,
         {
           method: "DELETE",
+          headers: headers,
         }
       );
-
       if (response.ok) {
-        router.push("/");
+        router.push("/homepage");
+        console.log("Course deleted successfully");
       } else {
         console.error("Failed to delete course");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
+
+  const handleDeleteStudent = async (netId: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:6789/v1/course/${params.id}/${netId}/deletestudent`,
+        {
+          method: "DELETE",
+          headers: {
+            "Access-Control-Request-Method": "POST",
+          },
+        }
+      );
+      if (response.ok) {
+        window.location.reload();
+        console.log("Student deleted successfully");
+      } else {
+        console.error("Failed to delete student");
       }
     } catch (error) {
       console.error("Network error:", error);
@@ -150,6 +183,14 @@ export default function Page({ params }: { params: { id: string } }) {
                     >
                       <h4 className="font-bold w-full">{user.full_name}</h4>
                       <p>{user.email}</p>
+                      {isTeacher && (
+                        <button
+                          onClick={() => handleDeleteStudent(user.id)}
+                          className="text-white bg-red-500 hover:bg-red-700 active:bg-red-900 font-bold py-2 px-4 rounded mt-2 w-32"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (
