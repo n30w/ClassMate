@@ -743,7 +743,7 @@ func (app *application) assignmentReadHandler(
 	r *http.Request,
 ) {
 	var input struct {
-		AssignmentId string `json:"assignmentId"`
+		AssignmentId string `json:"assignment_id"`
 		Token        string `json:"token"`
 	}
 
