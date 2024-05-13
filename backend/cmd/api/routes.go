@@ -109,7 +109,7 @@ func (app *application) routes() *http.ServeMux {
 	)
 	// Read submission from student view
 	router.HandleFunc(
-		"POST /v1/course/assignment/{assignmentId}/submission/read",
+		"POST /v1/course/{courseId}/assignment/{assignmentId}/submission/read",
 		app.studentsubmissionReadHandler,
 	)
 

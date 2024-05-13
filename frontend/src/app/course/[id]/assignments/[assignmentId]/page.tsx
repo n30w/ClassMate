@@ -3,7 +3,7 @@ import { Assignment, Submission, User } from "@/lib/types";
 import { useEffect, useState } from "react";
 import InfoBadge from "@/components/badge/InfoBadge";
 import formattedDate from "@/lib/helpers/formattedDate";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function Page({ params }: { params: { assignmentId: string } }) {
   const [viewAssignment, setViewAssignment] = useState<Assignment>({
@@ -26,6 +26,8 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
   const [submissionId, setSubmissionId] = useState("");
   const [uploadedExcel, setUploadedExcel] = useState<File>();
   const [studentsSubmission, setStudentsSubmission] = useState<Submission>();
+  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const urlPath = window.location.pathname;
@@ -70,7 +72,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
 
     const studentReadSubmission = async () => {
       const response = await fetch(
-        `http://localhost:6789/v1/course/assignment/${params.assignmentId}/submission/read`,
+        `http://localhost:6789/v1/course/${courseId}/assignment/${params.assignmentId}/submission/read`,
         {
           method: "POST",
           body: JSON.stringify({
@@ -243,6 +245,9 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         body: formData,
       }
     );
+    if (response.ok) {
+      setSuccessMessage("Grades successfully updated!");
+    }
   };
 
   const downloadExcel = async () => {
@@ -290,20 +295,30 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ) {
         setUploadedExcel(file);
-        uploadExcel(uploadedExcel);
+        console.log("UPLOADED EXCEL: ", file);
       }
     }
   };
 
+  const handleUploadedExcel = async () => {
+    uploadExcel(uploadedExcel);
+  };
+
   const handleDeleteAssignment = async () => {
     try {
+      const headers = new Headers();
+      headers.append("Content-Type", "application/json");
+      headers.append("Authorization", `${token}`);
       const response = await fetch(
         `http://localhost:6789/v1/course/assignment/${params.assignmentId}/delete`,
         {
           method: "DELETE",
+          headers: {
+            // "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Request-Method": "POST",
+          },
         }
       );
-
       if (response.ok) {
         router.push(`/course/${courseId}`);
         console.log("Assignment deleted successfully");
@@ -375,7 +390,7 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
                 </button>
                 <button
                   onClick={handleDeleteAssignment}
-                  className="bg-red-500 text-white font-bold py-2 px-4 rounded mt-4 hover:bg-red-700"
+                  className="bg-red-500 text-white font-bold py-2 px-4 rounded mt-4 hover:bg-red-700 ml-4"
                 >
                   Delete Assignment
                 </button>
@@ -432,16 +447,18 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
           )}
           {roster && isTeacher && (
             <>
-              {roster.map((user, i) => (
-                <div
-                  className="roster-item hover:bg-gray-700 text-white text-md h-fit"
-                  key={i}
-                  onClick={() => downloadSubmission(user.id)}
-                >
-                  <h4 className="font-bold w-full">{user.full_name}</h4>
-                  <p>{user.id}</p>
-                </div>
-              ))}
+              <div>
+                {roster.map((user, i) => (
+                  <div
+                    className="roster-item hover:bg-gray-700 text-white text-md h-fit"
+                    key={i}
+                    onClick={() => downloadSubmission(user.id)}
+                  >
+                    <h4 className="font-bold w-full">{user.full_name}</h4>
+                    <p>{user.id}</p>
+                  </div>
+                ))}
+              </div>
               {!roster && isTeacher && (
                 <div className={"roster-item"}>
                   <p className={"text-hint p-2"}>Students will appear here.</p>
@@ -458,20 +475,35 @@ export default function Page({ params }: { params: { assignmentId: string } }) {
           )}
           {isTeacher && (
             <div>
-              <label
-                htmlFor="fileUpload"
-                className="text-white text-xl mb-16 mr-4"
-              >
-                Upload Excel File:
-              </label>
-              <input
-                type="file"
-                id="fileUpload"
-                accept=".xlsx"
-                onChange={handleExcelFileUpload}
-                required
-                className="mb-16"
-              />
+              <div>
+                <label
+                  htmlFor="fileUpload"
+                  className="text-white text-xl mb-16 mr-4"
+                >
+                  Upload Excel File:
+                </label>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  accept=".xlsx"
+                  onChange={handleExcelFileUpload}
+                  required
+                  className="mb-4"
+                />
+                <div className="flex">
+                  <button
+                    onClick={() => {
+                      handleUploadedExcel();
+                    }}
+                    className="bg-white text-black font-bold py-2 px-4 rounded hover:bg-gray-300 active:bg-gray-500 mb-4 h-12"
+                  >
+                    Upload Excel File
+                  </button>
+                  {successMessage && (
+                    <h1 className={"text-hint p-2 mb-16"}>{successMessage}</h1>
+                  )}
+                </div>
+              </div>
               <button
                 onClick={() => {
                   downloadExcel();

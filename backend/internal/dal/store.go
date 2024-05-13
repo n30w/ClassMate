@@ -18,7 +18,7 @@ import (
 type username string
 type password string
 type email string
-type membership int
+type Membership int
 type ID string
 
 func (i ID) String() string { return string(i) }
@@ -33,8 +33,8 @@ func (p password) Valid() error   { return nil }
 func (e email) String() string { return string(e) }
 func (e email) Valid() error   { return nil }
 
-func (m membership) String() string { return fmt.Sprintf("%d", m) }
-func (m membership) Valid() error   { return nil }
+func (m Membership) String() string { return fmt.Sprintf("%d", m) }
+func (m Membership) Valid() error   { return nil }
 
 // Store implements interfaces found in respective domain packages.
 type Store struct {
@@ -190,7 +190,7 @@ func (s *Store) GetSubmissions(assignmentId string) (
 
 func (s *Store) UpdateSubmission(submission *models.Submission) error {
 	// Change the submission data in the database using the submission ID.
-	fmt.Printf("Updating submission with grade: %f, feedback: %s", submission.Grade, submission.Feedback)
+	fmt.Printf("Updating submission with grade: %f, feedback: %s with submission id: %s", submission.Grade, submission.Feedback, submission.ID)
 	query := `UPDATE submissions SET grade = $1, feedback = $2 WHERE id = $3`
 	_, err := s.db.Exec(
 		query, submission.Grade, submission.Feedback, submission.ID,
@@ -263,7 +263,7 @@ func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
 
 	u.Password = password(p)
 	u.Email = email(e)
-	u.Membership = membership(m)
+	u.Membership = Membership(m)
 
 	// Now get their courses.
 
@@ -1275,7 +1275,7 @@ func (s *Store) GetMembershipById(userid string) (
 		}
 		return nil, err
 	}
-	u.Membership = membership(m)
+	u.Membership = Membership(m)
 	return &u.Membership, nil
 }
 
@@ -1320,7 +1320,7 @@ func (s *Store) GetNameById(userid string) (
 		}
 		return nil, err
 	}
-	u.Membership = membership(m)
+	u.Membership = Membership(m)
 	return &u.Membership, nil
 }
 
