@@ -595,6 +595,16 @@ VALUES
       'Very thorough and well-structured report'
    );
 
+-- Link arbitrary assignments to arbitrary submissions.
+INSERT INTO assignment_submissions (assignment_id, submission_id)
+SELECT a.id, s.id
+FROM assignments a
+         CROSS JOIN submissions s
+WHERE NOT EXISTS (
+    SELECT 1 FROM assignment_submissions asp
+    WHERE asp.assignment_id = a.id AND asp.submission_id = s.id
+);
+
 -- Inserting courses for John Cena into the user_courses junction table
 INSERT INTO
    user_courses (user_net_id, course_id)
