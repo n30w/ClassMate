@@ -4,30 +4,47 @@ import "time"
 
 type Post struct {
 	Entity
-	Title       string
-	Description string
-	Media       []string
-	Date        string
-	Course      string
-	Owner       string
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Media       []string `json:"media,omitempty"`
+	Date        string   `json:"date,omitempty"`
+	Course      string   `json:"course,omitempty"`
+
+	// Owner is often the Net ID.
+	Owner string `json:"owner,omitempty"`
+}
+
+func NewPost(title, description, owner string) *Post {
+	return &Post{
+		Title:       title,
+		Description: description,
+		Owner:       owner,
+	}
 }
 
 type Assignment struct {
-	Post       `json:"post"`
+	Post
 	Submission []string  `json:"submission,omitempty"`
 	DueDate    time.Time `json:"due_date"`
+}
+
+func NewAssignment() *Assignment {
+	return &Assignment{}
 }
 
 type Submission struct {
 	Entity
 	Grade          float64 `json:"grade,omitempty"`
-	AssignmentId   string
+	AssignmentId   string  `json:"assignment_id"`
 	User           User
-	FileType       string
 	SubmissionTime time.Time
-	Media          string
-	Feedback       string
+	Media          []string
+	Feedback       string `json:"feedback"`
 	OnTime         bool
+}
+
+func NewSubmission() *Submission {
+	return &Submission{}
 }
 
 // IsOnTime checks if an assignment's submission time is
@@ -55,17 +72,22 @@ type Course struct {
 	Roster      []string   `json:"roster"`
 	Assignments []string   `json:"assignments"`
 	Archived    bool       `json:"archived"`
-	Banner      string     `json:"banner"`
 
-	// TODO write on time calculation method.
-	OnTime bool
+	// UUID of the banner
+	Banner string `json:"banner"`
 }
 
 type Message struct {
 	Post
-	ID       string
 	Comments []string
-	Type     uint8 // 0 if discussion, 1 if announcement
+	Type     bool // false if discussion, true if announcement
+}
+
+func NewMessage(title, description, owner string, t bool) *Message {
+	return &Message{
+		Post: *NewPost(title, description, owner),
+		Type: t,
+	}
 }
 
 type Comment struct {

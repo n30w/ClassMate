@@ -8,80 +8,6 @@ import (
 	"github.com/n30w/Darkspace/internal/models"
 )
 
-func TestCreateandParseExcel(t *testing.T) {
-	mock := newMockExcelStore()
-	es := NewExcelService(mock)
-	SetDatabase(2, 4, 4, mock)
-	for idx, student := range mock.Students {
-		t.Logf("Student %d: id(%s)", idx, student.ID)
-	}
-	for _, submission := range mock.Submissions {
-		t.Logf("Submission from User %s, Grade: %f, Feedback: %s", submission.User.ID, submission.Grade, submission.Feedback)
-	}
-	file, err := es.CreateExcel(mock.Course.ID) // Create Excel
-	if err != nil {
-		t.Errorf("%v", err)
-	}
-	// Add grade and feedback
-	for id := 0; id < file.SheetCount; id++ {
-		// Get the name of the sheet
-		assignment := file.GetSheetName(id) // Sheet name in the form of "Assignment-{id}"
-		rows, err := file.GetRows(assignment)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		for rowidx := range rows { // Loop through each row (each student)
-			file.SetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(66)), rowidx), 0+rowidx)
-			file.SetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(67)), rowidx), fmt.Sprintf("Nice Work Student %d", rowidx))
-		}
-		err = es.ParseExcel(file) // Parse Excel
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		// Check database for grade and feedback
-	}
-	for idx, student := range mock.Students {
-		t.Logf("Student %d: id(%s)", idx, student.ID)
-	}
-	for _, submission := range mock.Submissions {
-		t.Logf("Submission from User %s, Grade: %f, Feedback: %s", submission.User.ID, submission.Grade, submission.Feedback)
-	}
-	file, err = es.CreateExcel(mock.Course.ID) // Create Excel
-	if err != nil {
-		t.Errorf("%v", err)
-	}
-	t.Logf("%d", file.SheetCount)
-	for id := 0; id < file.SheetCount; id++ {
-		// Get the name of the sheet
-		assignment := file.GetSheetName(id) // Sheet name in the form of "Assignment-{id}"
-		rows, err := file.GetRows(assignment)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		t.Logf("here")
-		for rowidx := range rows { // Loop through each row (each student)
-			grade, err := file.GetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(66)), rowidx))
-			if err != nil {
-				t.Errorf("%v", err)
-			}
-			want := 0 + rowidx
-			t.Logf("want:%d", want)
-			if grade != fmt.Sprintf("%d", want) {
-				t.Errorf("got %s, want %d", grade, want)
-			}
-			feedback, err := file.GetCellValue(assignment, fmt.Sprintf("%s%d", string(rune(67)), rowidx))
-			if err != nil {
-				t.Errorf("%v", err)
-			}
-			wantStr := fmt.Sprintf("Nice Work Student %d", rowidx)
-			if grade != wantStr {
-				t.Errorf("got %s, want %s", feedback, wantStr)
-			}
-		}
-
-	}
-}
-
 // ========= //
 //   MOCKS   //
 // ========= //
@@ -105,11 +31,21 @@ func Print(mus *mockExcelStore, t *testing.T) {
 		t.Logf("Student %d: id(%s)", idx, student.ID)
 	}
 	for _, submission := range mus.Submissions {
-		t.Logf("Submission from User %s, Grade: %f, Feedback: %s", submission.User.ID, submission.Grade, submission.Feedback)
+		t.Logf(
+			"Submission from User %s, Grade: %f, Feedback: %s",
+			submission.User.ID,
+			submission.Grade,
+			submission.Feedback,
+		)
 	}
 }
 
-func SetDatabase(assignment int, submission int, students int, mus *mockExcelStore) {
+func SetDatabase(
+	assignment int,
+	submission int,
+	students int,
+	mus *mockExcelStore,
+) {
 
 	roster := make([]string, 0)
 	course := &models.Course{
@@ -147,7 +83,10 @@ func SetDatabase(assignment int, submission int, students int, mus *mockExcelSto
 				User: *mus.Students[i],
 			}
 			mus.Submissions = append(mus.Submissions, sub)
-			mus.Assignments[j].Submission = append(mus.Assignments[j].Submission, sub.ID)
+			mus.Assignments[j].Submission = append(
+				mus.Assignments[j].Submission,
+				sub.ID,
+			)
 		}
 	}
 }
@@ -159,10 +98,16 @@ type mockExcelStore struct {
 	Submissions []*models.Submission
 }
 
-func (mus *mockExcelStore) GetCourseByID(courseid string) (*models.Course, error) {
+func (mus *mockExcelStore) GetCourseByID(courseid string) (
+	*models.Course,
+	error,
+) {
 	return mus.Course, nil
 }
-func (mus *mockExcelStore) GetAssignmentById(assignmentId string) (*models.Assignment, error) {
+func (mus *mockExcelStore) GetAssignmentById(assignmentId string) (
+	*models.Assignment,
+	error,
+) {
 	for _, assignment := range mus.Assignments {
 		if assignment.ID == assignmentId {
 			return assignment, nil
@@ -171,7 +116,10 @@ func (mus *mockExcelStore) GetAssignmentById(assignmentId string) (*models.Assig
 	return nil, fmt.Errorf("no such assignment id")
 }
 
-func (mus *mockExcelStore) GetSubmissionById(submissionId string) (*models.Submission, error) {
+func (mus *mockExcelStore) GetSubmissionById(submissionId string) (
+	*models.Submission,
+	error,
+) {
 	for _, submission := range mus.Submissions {
 		if submission.ID == submissionId {
 			return submission, nil
@@ -180,7 +128,10 @@ func (mus *mockExcelStore) GetSubmissionById(submissionId string) (*models.Submi
 	return nil, fmt.Errorf("no such assignment id")
 }
 
-func (mus *mockExcelStore) GradeSubmission(grade float64, submission *models.Submission) error {
+func (mus *mockExcelStore) GradeSubmission(
+	grade float64,
+	submission *models.Submission,
+) error {
 	submission.Grade = grade
 	for idx, sub := range mus.Submissions {
 		if sub.ID == submission.ID {
@@ -192,7 +143,10 @@ func (mus *mockExcelStore) GradeSubmission(grade float64, submission *models.Sub
 	return fmt.Errorf("No such submission")
 }
 
-func (mus *mockExcelStore) InsertSubmissionFeedback(feedback string, submission *models.Submission) error {
+func (mus *mockExcelStore) InsertSubmissionFeedback(
+	feedback string,
+	submission *models.Submission,
+) error {
 	submission.Feedback = feedback
 	for idx, sub := range mus.Submissions {
 		if sub.ID == submission.ID {

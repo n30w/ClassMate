@@ -11,9 +11,10 @@ type Service struct {
 	ExcelService          *ExcelService
 	MediaService          *MediaService
 	AuthenticationService *AuthenticationService
+	FileService           *FileService
 }
 
-func NewServices(s *dal.Store, e *dal.ExcelStore) *Service {
+func NewServices(s *dal.Store, e *dal.ExcelStore, f *dal.LocalVolume) *Service {
 	return &Service{
 		UserService:           NewUserService(s),
 		CourseService:         NewCourseService(s),
@@ -23,6 +24,7 @@ func NewServices(s *dal.Store, e *dal.ExcelStore) *Service {
 		ExcelService:          NewExcelService(e),
 		MediaService:          NewMediaService(s),
 		AuthenticationService: NewAuthenticationService(s),
+		FileService:           NewFileService(f),
 	}
 }
 

@@ -18,7 +18,7 @@ import (
 type username string
 type password string
 type email string
-type membership int
+type Membership int
 type ID string
 
 func (i ID) String() string { return string(i) }
@@ -33,12 +33,20 @@ func (p password) Valid() error   { return nil }
 func (e email) String() string { return string(e) }
 func (e email) Valid() error   { return nil }
 
-func (m membership) String() string { return fmt.Sprintf("%d", m) }
-func (m membership) Valid() error   { return nil }
+func (m Membership) String() string { return fmt.Sprintf("%d", m) }
+func (m Membership) Valid() error   { return nil }
 
 // Store implements interfaces found in respective domain packages.
 type Store struct {
 	db *sql.DB
+}
+
+var err error
+
+func NewStore(db *sql.DB) *Store {
+	return &Store{
+		db: db,
+	}
 }
 
 func (s *Store) InsertMediaReference(media *models.Media) error {
@@ -53,25 +61,151 @@ func (s *Store) UploadMedia(
 	panic("implement me")
 }
 
+func (s *Store) GetSubmissionMedia(submission *models.Submission) (*models.Submission, error) {
+	query := `SELECT media_id FROM submission_media WHERE submission_id=$1`
+	rows, err := s.db.Query(query, submission.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	// List of media
+	for rows.Next() {
+		var mediaid string
+		err := rows.Scan(
+			&mediaid,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		submission.Media = append(submission.Media, mediaid)
+	}
+	fmt.Printf("Gettin")
+	return submission, nil
+}
+
 func (s *Store) GetSubmissionById(submissionId string) (
 	*models.Submission,
 	error,
 ) {
-	//TODO implement me
-	panic("implement me")
+	sub := models.NewSubmission()
+	fmt.Printf("getting submission by id %s \n", submissionId)
+	query := `SELECT id, submission_time, on_time, grade, feedback, user_id 
+FROM submissions WHERE id=$1`
+
+	row := s.db.QueryRow(query, submissionId)
+
+	err = row.Scan(
+		&sub.ID, &sub.SubmissionTime, &sub.OnTime, &sub.Grade,
+		&sub.Feedback, &sub.User.ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
 }
 
-func (s *Store) UpdateSubmission(submission *models.Submission) error {
-	//TODO implement me
-	panic("implement me")
+func (s *Store) GetSubmissionIdByUserAndAssignment(userId string, assignmentId string) (string, error) {
+	// Retrieve list of submissions by user
+	query := `SELECT submission_id FROM user_submissions WHERE user_net_id=$1`
+
+	rows, err := s.db.Query(query, userId)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	// List of submissions from user
+	var submissions []string
+	for rows.Next() {
+		var submission string
+		err := rows.Scan(
+			&submission,
+		)
+		if err != nil {
+			return "", fmt.Errorf("error scanning row: %v", err)
+		}
+		submissions = append(submissions, submission)
+	}
+	fmt.Printf("Submission ids related to use: %s\n", submissions)
+	fmt.Printf("Assignment id:%s\n", assignmentId)
+
+	if err = rows.Err(); err != nil {
+		return "", fmt.Errorf("error iterating rows: %v", err)
+	}
+	var submissionid string
+	for _, id := range submissions {
+		query = `SELECT submission_id FROM assignment_submissions WHERE assignment_id=$1 AND submission_id=$2`
+		row := s.db.QueryRow(query, assignmentId, id)
+		err = row.Scan(&submissionid)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				continue
+			default:
+				return "", err
+			}
+		}
+	}
+	return submissionid, nil
 }
 
-func (s *Store) SubmitAssignment(assignment *models.Assignment) (
-	*models.Assignment,
+// GetSubmissions queries a junction table to retrieve all related
+// submissions for an assignment.
+func (s *Store) GetSubmissions(assignmentId string) (
+	[]*models.Submission,
 	error,
 ) {
-	//TODO implement me
-	panic("implement me")
+	var submissions []*models.Submission
+	query := `  
+		SELECT s.id, s.grade, s.feedback, u.full_name, u.net_id
+		FROM submissions s
+		JOIN assignment_submissions a ON s.id = a.submission_id
+		JOIN users u ON s.user_id = u.net_id
+		WHERE a.assignment_id = $1
+	`
+
+	rows, err := s.db.Query(query, assignmentId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		sub := models.NewSubmission()
+		err := rows.Scan(
+			&sub.ID,
+			&sub.Grade,
+			&sub.Feedback,
+			&sub.User.FullName,
+			&sub.User.ID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		submissions = append(submissions, sub)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return submissions, nil
+}
+
+// UpdateSubmission returns the submission model that was input.
+func (s *Store) UpdateSubmission(submission *models.Submission) error {
+	// Change the submission data in the database using the submission ID.
+	query := `UPDATE submissions SET grade = $1, 
+feedback = $2 WHERE id = $3 AND user_id = $4`
+	_, err := s.db.Exec(
+		query, submission.Grade, submission.Feedback, submission.ID,
+		submission.User.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Store) ChangeAssignment(
@@ -83,21 +217,15 @@ func (s *Store) ChangeAssignment(
 	panic("implement me")
 }
 
-var err error
-
-func NewStore(db *sql.DB) *Store {
-	return &Store{
-		db: db,
-	}
-}
-
 // InsertUser inserts into the database using a user model.
 func (s *Store) InsertUser(u *models.User) error {
 	id := 0
-	stmt, err := s.db.Prepare(`
+	stmt, err := s.db.Prepare(
+		`
 		INSERT INTO users (net_id, created_at, updated_at,
 		username, password, email, membership, full_name)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+	)
 	if err != nil {
 		return err
 	}
@@ -118,12 +246,17 @@ func (s *Store) InsertUser(u *models.User) error {
 	return nil
 }
 
-// GetUserByID retrieve's a user by their Net ID.
+// GetUserByID retrieves a user by their Net ID. It returns a
+// struct with populated user information.
 func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
-	var p string
-	var e string
-	var m int
+	// First retrieve the user using their Net ID.
+	var (
+		p, e string
+		m    int
+	)
+
 	query := `SELECT net_id, full_name, password, email, membership FROM users WHERE net_id = $1`
+
 	row := s.db.QueryRow(query, u.ID)
 	if err := row.Scan(&u.ID, &u.FullName, &p, &e, &m); err != nil {
 		switch {
@@ -133,50 +266,38 @@ func (s *Store) GetUserByID(u *models.User) (*models.User, error) {
 			return nil, err
 		}
 	}
+
+	u.Password = password(p)
+	u.Email = email(e)
+	u.Membership = Membership(m)
+
+	// Now get their courses.
+
 	var courses []string
-	query2 := `SELECT uc.course_id FROM users u JOIN user_courses uc ON u.net_id = uc.user_net_id WHERE u.net_id = $1`
-	rows, err := s.db.Query(query2, u.ID)
+
+	query = `SELECT uc.course_id FROM users u JOIN user_courses uc ON u.
+net_id = uc.user_net_id WHERE u.net_id = $1`
+
+	rows, err := s.db.Query(query, u.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	for rows.Next() {
 		var courseID string
-		if err := rows.Scan(&courseID); err != nil {
+
+		err := rows.Scan(&courseID)
+		if err != nil {
 			return nil, err
 		}
 		courses = append(courses, courseID)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	u.Courses = courses
-	u.Password = password(p)
-	u.Email = email(e)
-	u.Membership = membership(m)
-
-	return u, nil
-}
-
-func (s *Store) GetUserById_2(c models.Credential) (*models.User, error) {
-	u := &models.User{}
-	var e string
-
-	query := `SELECT net_id, password FROM users WHERE net_id = $1`
-	row := s.db.QueryRow(query, c.String())
-	if err := row.Scan(&u.ID, &e); err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, ERR_RECORD_NOT_FOUND
-		default:
-			return nil, err
-		}
-	}
-
-	u.Password = password(e)
 
 	return u, nil
 }
@@ -209,42 +330,6 @@ func (s *Store) GetUserByEmail(c models.Credential) (*models.User, error) {
 	return u, nil
 }
 
-// func (s *Store) GetUserByUsername(username models.Credential) (
-// 	*models.User,
-// 	error,
-// ) {
-// 	u := &models.User{}
-
-// 	query := `SELECT net_id, email, full_name FROM users WHERE username=$1`
-// 	rows, err := s.db.Query(query, username.String())
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var e string
-
-// 	for rows.Next() {
-// 		if err := rows.Scan(&u.ID, &e, &u.FullName); err != nil {
-// 			switch {
-// 			case errors.Is(err, sql.ErrNoRows):
-// 				return nil, ERR_RECORD_NOT_FOUND
-// 			default:
-// 				return nil, err
-// 			}
-// 		}
-// 	}
-
-// 	err = rows.Err()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	u.Email = email(e)
-
-// 	return u, nil
-// }
-
 func (s *Store) DeleteUserByNetID(netId string) (int64, error) {
 	query := `DELETE FROM users WHERE net_id = $1`
 	var result sql.Result
@@ -269,27 +354,21 @@ func (s *Store) DeleteUserByNetID(netId string) (int64, error) {
 	return rows, nil
 }
 
-func (s *Store) DeleteCourseByID(id string) (int64, error) {
+func (s *Store) DeleteCourseByID(id string) error {
 	query := `DELETE FROM courses WHERE id = $1`
-	var result sql.Result
 	var err error
 
-	result, err = s.db.Exec(query, id)
+	_, err = s.db.Exec(query, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return 0, ERR_RECORD_NOT_FOUND
+			return ERR_RECORD_NOT_FOUND
 		default:
-			return 0, err
+			return err
 		}
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-
-	return rows, nil
+	return nil
 }
 
 func (s *Store) DeleteCourseByTitle(title string) (int64, error) {
@@ -338,7 +417,7 @@ func (s *Store) DeleteMediaByID(id string) (int64, error) {
 	return rows, nil
 }
 
-func (s *Store) DeleteAssignmentByID(id string) (int64, error) {
+func (s *Store) DeleteAssignmentByID(id string) error {
 	query := `DELETE FROM assignments WHERE id = $1`
 	var result sql.Result
 	var err error
@@ -347,41 +426,35 @@ func (s *Store) DeleteAssignmentByID(id string) (int64, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return 0, ERR_RECORD_NOT_FOUND
+			return ERR_RECORD_NOT_FOUND
 		default:
-			return 0, err
+			return err
 		}
 	}
 
-	rows, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return rows, nil
+	return nil
 }
 
-func (s *Store) DeleteSubmissionByID(id string) (int64, error) {
+func (s *Store) DeleteSubmissionByID(id string) error {
 	query := `DELETE FROM submissions WHERE id = $1`
-	var result sql.Result
 	var err error
 
-	result, err = s.db.Exec(query, id)
+	_, err = s.db.Exec(query, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return 0, ERR_RECORD_NOT_FOUND
+			return ERR_RECORD_NOT_FOUND
 		default:
-			return 0, err
+			return err
 		}
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-
-	return rows, nil
+	return nil
 }
 
 func (s *Store) DeleteCourseFromUser(
@@ -410,21 +483,16 @@ func (s *Store) DeleteCourseFromUser(
 
 func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 	courses := make([]models.Course, 0)
-	for _, courseID := range u.Courses {
-		coursequery := `SELECT id, title FROM courses WHERE id = $1;`
-		// query := `
-		// SELECT
-		// 	c.id AS id,
-		// 	c.title AS title,
-		// 	ARRAY_AGG(ct.teacher_id) AS teacher_id
-		// FROM courses c
-		// JOIN course_teachers ct ON c.id = ct.course_id
-		// WHERE c.id = $1
-		// GROUP BY c.id, c.title;`
-		row := s.db.QueryRow(coursequery, courseID)
-
+	for _, courseId := range u.Courses {
+		// bannerId may be null, so use NullString to check and use
+		// default value.
+		var bannerId sql.NullString
 		var course models.Course
-		err = row.Scan(&course.ID, &course.Title)
+
+		query := `SELECT id, title, banner_id FROM courses WHERE id = $1;`
+		row := s.db.QueryRow(query, courseId)
+
+		err = row.Scan(&course.ID, &course.Title, &bannerId)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -433,9 +501,19 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 				return nil, err
 			}
 		}
-		teacherquery := `SELECT * FROM course_teachers WHERE course_id=$1`
 
-		rows, err := s.db.Query(teacherquery, courseID)
+		if bannerId.Valid {
+			course.Banner = bannerId.String
+		} else {
+			course.Banner = models.DefaultImageId
+		}
+
+		query = `SELECT * FROM course_teachers WHERE course_id=$1`
+
+		// Course ID variable for scanning return.
+		var ci string
+
+		rows, err := s.db.Query(query, courseId)
 		if err != nil {
 			return nil, err
 		}
@@ -445,7 +523,7 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 
 		for rows.Next() {
 			var teacherID string
-			if err := rows.Scan(&teacherID); err != nil {
+			if err := rows.Scan(&teacherID, &ci); err != nil {
 				return nil, err
 			}
 			teacherIDs = append(teacherIDs, teacherID)
@@ -453,7 +531,9 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
+
 		course.Teachers = teacherIDs
+
 		courses = append(courses, course)
 	}
 
@@ -488,8 +568,10 @@ func (s *Store) GetUserCourses(u *models.User) ([]models.Course, error) {
 // 	}
 
 // }
-func (s *Store) InsertBanner(courseid string, bannerurl string) (string,
-	error) {
+func (s *Store) InsertBanner(courseid string, bannerurl string) (
+	string,
+	error,
+) {
 	return "", nil
 }
 
@@ -536,7 +618,10 @@ func (s *Store) InsertTeacherToCourse(c *models.Course, t string) error {
 	return nil
 }
 
-func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid string) (
+func (s *Store) CheckCourseProfessorDuplicate(
+	courseName string,
+	teacherid string,
+) (
 	bool,
 	error,
 ) {
@@ -566,37 +651,6 @@ func (s *Store) CheckCourseProfessorDuplicate(courseName string, teacherid strin
 
 }
 
-func (s *Store) GetCourseByName(name string) (
-	*models.Course,
-	error,
-) {
-	c := &models.Course{}
-
-	query := `SELECT id, description, created_at FROM courses WHERE title=$1`
-	rows, err := s.db.Query(query, name)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		if err := rows.Scan(&c.ID, &c.Description, &c.CreatedAt); err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ERR_RECORD_NOT_FOUND
-			default:
-				return nil, err
-			}
-		}
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
 func (s *Store) GetMessagesByCourse(courseid string) ([]string, error) {
 	query := `SELECT message_id FROM course_messages WHERE course_id = $1`
 	rows, err := s.db.Query(query, courseid)
@@ -626,8 +680,9 @@ func (s *Store) GetCourseByID(courseid string) (
 ) {
 	c := &models.Course{}
 	c.ID = courseid
+	var bannerId sql.NullString
 
-	query := `SELECT title, description, created_at FROM courses WHERE id=$1`
+	query := `SELECT title, description, created_at, banner_id FROM courses WHERE id=$1`
 	rows, err := s.db.Query(query, courseid)
 
 	if err != nil {
@@ -639,6 +694,7 @@ func (s *Store) GetCourseByID(courseid string) (
 			&c.Title,
 			&c.Description,
 			&c.CreatedAt,
+			&bannerId,
 		); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -649,11 +705,16 @@ func (s *Store) GetCourseByID(courseid string) (
 		}
 	}
 
+	if bannerId.Valid {
+		c.Banner = bannerId.String
+	} else {
+		c.Banner = models.DefaultImageId
+	}
+
 	err = rows.Err()
 	if err != nil {
 		return nil, err
 	}
-
 	return c, nil
 }
 
@@ -662,20 +723,25 @@ func (s *Store) GetRoster(courseid string) (
 	error,
 ) {
 	var roster []models.User
+	var e string
 
-	query := `SELECT users.net_id, users.email, users.full_name FROM users INNER JOIN courses ON courses.id = $1 AND users.net_id = ANY(courses.roster)`
+	query := `SELECT u.net_id, u.email, u.full_name FROM users u
+              JOIN course_roster cr ON u.net_id = cr.student_id
+              WHERE cr.course_id = $1`
 
 	rows, err := s.db.Query(query, courseid)
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Email, &user.FullName); err != nil {
+		if err := rows.Scan(&user.ID, &e, &user.FullName); err != nil {
 			return nil, err
 		}
+		user.Email = email(e)
 		roster = append(roster, user)
 	}
 
@@ -700,29 +766,20 @@ func (s *Store) DeleteCourse(c *models.Course) error {
 	return nil
 }
 
-func (s *Store) ChangeCourseName(c *models.Course, name string) error {
-	query := `UPDATE courses SET title = $1 WHERE id = $2`
-
-	_, err := s.db.Exec(query, name, c.ID)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Store) InsertMessage(
 	m *models.Message,
 	courseid string,
 ) error {
-	query := `INSERT INTO messages (title, description, type) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO messages (title, description, type, date) VALUES ($1, 
+$2, $3, $4) RETURNING id`
 	row := s.db.QueryRow(
 		query,
 		m.Title,
 		m.Description,
 		m.Type,
+		m.CreatedAt,
 	)
+
 	err := row.Scan(&m.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -733,7 +790,7 @@ func (s *Store) InsertMessage(
 	courseQuery := `INSERT INTO course_messages (course_id, message_id)
 VALUES ($1, $2)`
 
-	_, err = s.db.Exec(courseQuery, courseid, m.ID)
+	_, err = s.db.Exec(courseQuery, courseid, m.Post.ID)
 	if err != nil {
 		return err
 	}
@@ -747,14 +804,16 @@ func (s *Store) GetMessageById(messageid string) (
 ) {
 	message := &models.Message{}
 
-	query := `SELECT id, title, description, type FROM messages WHERE id = $1`
+	query := `SELECT id, title, description, type, 
+date FROM messages WHERE id = $1`
 	row := s.db.QueryRow(query, messageid)
 
 	err := row.Scan(
-		&message.ID,
+		&message.Post.ID,
 		&message.Title,
 		&message.Description,
 		&message.Type,
+		&message.Date,
 	)
 
 	if err != nil {
@@ -766,16 +825,18 @@ func (s *Store) GetMessageById(messageid string) (
 
 	return message, nil
 }
+func (s *Store) DeleteMessageByID(id string) error {
+	query := `DELETE FROM messages WHERE id = $1`
+	var err error
 
-func (s *Store) DeleteMessage(m *models.Message) error {
-	query := `
-        DELETE FROM messages
-        WHERE id = $1
-    `
-
-	_, err := s.db.Exec(query, m.ID)
+	_, err = s.db.Exec(query, id)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ERR_RECORD_NOT_FOUND
+		default:
+			return err
+		}
 	}
 
 	return nil
@@ -784,11 +845,11 @@ func (s *Store) DeleteMessage(m *models.Message) error {
 func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 	query := `UPDATE messages SET title = $1 WHERE id = $2 RETURNING id, title, description, media, date, course, owner`
 
-	row := s.db.QueryRow(query, m.Title, m.ID)
+	row := s.db.QueryRow(query, m.Title, m.Post.ID)
 
 	updatedMessage := &models.Message{}
 	err := row.Scan(
-		&updatedMessage.ID,
+		&updatedMessage.Post.ID,
 		&updatedMessage.Title,
 		&updatedMessage.Description,
 		&updatedMessage.Media,
@@ -805,11 +866,11 @@ func (s *Store) ChangeMessageTitle(m *models.Message) (*models.Message, error) {
 func (s *Store) ChangeMessageBody(m *models.Message) (*models.Message, error) {
 	query := `UPDATE messages SET description = $1 WHERE id = $2 RETURNING id, title, description, media, date, course, owner`
 
-	row := s.db.QueryRow(query, m.Description, m.ID)
+	row := s.db.QueryRow(query, m.Description, m.Post.ID)
 
 	updatedMessage := &models.Message{}
 	err := row.Scan(
-		&updatedMessage.ID,
+		&updatedMessage.Post.ID,
 		&updatedMessage.Title,
 		&updatedMessage.Description,
 		&updatedMessage.Media,
@@ -827,7 +888,7 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 	*models.Assignment,
 	error,
 ) {
-	assignment := &models.Assignment{}
+	assignment := models.NewAssignment()
 
 	query := `SELECT id, title, description, due_date FROM assignments WHERE id = $1`
 	row := s.db.QueryRow(query, assignmentid)
@@ -838,9 +899,8 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 		&assignment.Description,
 		&assignment.DueDate,
 	)
-	fmt.Printf("In get assignment by id, %s", assignment.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ERR_RECORD_NOT_FOUND
 		}
 		return nil, err
@@ -849,7 +909,10 @@ func (s *Store) GetAssignmentById(assignmentid string) (
 	return assignment, nil
 }
 
-func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertAssignment(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	query := `INSERT INTO assignments (title, description, due_date) VALUES ($1, $2, $3) RETURNING id`
 
 	row := s.db.QueryRow(query, a.Title, a.Description, a.DueDate)
@@ -863,19 +926,25 @@ func (s *Store) InsertAssignment(a *models.Assignment) (*models.Assignment, erro
 		}
 		return nil, err
 	}
-	return a , err
+	return a, err
 }
 
-func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (*models.Assignment, error){
+func (s *Store) InsertIntoCourseAssignments(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	coursequery := `INSERT INTO course_assignments (course_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(coursequery, a.Course, a.ID)
 	if err != nil {
 		return nil, err
 	}
-	return a , err
+	return a, err
 }
 
-func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (*models.Assignment, error) {
+func (s *Store) InsertAssignmentIntoUser(a *models.Assignment) (
+	*models.Assignment,
+	error,
+) {
 	userquery := `INSERT INTO user_assignments (user_net_id, assignment_id) VALUES ($1, $2)`
 	_, err = s.db.Exec(userquery, a.Owner, a.ID)
 	if err != nil {
@@ -975,7 +1044,8 @@ func (s *Store) InsertToken(t *models.Token) error {
 }
 
 func (s *Store) GetTokenFromNetId(t *models.Token) (*models.Token, error) {
-	query := `SELECT hash, expiry, scope FROM tokens WHERE hash = $1;`
+	query := `SELECT hash, expiry, scope FROM tokens WHERE net_id = $1`
+
 	row := s.db.QueryRow(query, t.NetID)
 
 	err := row.Scan(
@@ -983,16 +1053,16 @@ func (s *Store) GetTokenFromNetId(t *models.Token) (*models.Token, error) {
 		&t.Expiry,
 		&t.Scope,
 	)
-
 	if err != nil {
-		if err == sql.ErrNoRows {
+		switch err {
+		case sql.ErrNoRows:
 			return nil, ERR_RECORD_NOT_FOUND
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return t, nil
-
 }
 
 // DeleteTokenFrom deletes a user's authentication Token using their
@@ -1110,9 +1180,15 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (
 	*models.Course,
 	error,
 ) {
-	query := `UPDATE courses SET roster = array_remove(roster, $1) WHERE id = $2`
+	query := `DELETE FROM course_roster WHERE student_id=$1 AND course_id=$2`
 
 	_, err := s.db.Exec(query, userid, c.ID)
+	if err != nil {
+		return nil, err
+	}
+	query = `DELETE FROM user_courses WHERE user_net_id=$1 AND course_id=$2`
+
+	_, err = s.db.Exec(query, userid, c.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1122,26 +1198,61 @@ func (s *Store) RemoveStudent(c *models.Course, userid string) (
 
 func (s *Store) InsertSubmission(
 	sub *models.Submission,
-	file string,
 ) (
 	*models.Submission,
 	error,
 ) {
-	query := `INSERT INTO submissions (id, file_type, submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO submissions (submission_time, on_time, grade, feedback) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	_, err := s.db.Exec(query, file, sub.ID)
+	row := s.db.QueryRow(
+		query,
+		&sub.SubmissionTime,
+		&sub.OnTime,
+		&sub.Grade,
+		&sub.Feedback,
+	)
+	err := row.Scan(
+		&sub.ID,
+	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
 		return nil, err
 	}
-
 	return sub, nil
 }
 
-func (s *Store) GradeSubmission(grade float64, submission *models.Submission) error {
+func (s *Store) InsertSubmissionIntoAssignment(sub *models.Submission) (*models.Submission, error) {
+	query := `INSERT INTO assignment_submissions (assignment_id, submission_id) VALUES ($1, $2)`
+
+	_, err := s.db.Exec(query, sub.AssignmentId, sub.ID)
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
+}
+func (s *Store) InsertSubmissionIntoUser(sub *models.Submission) (*models.Submission, error) {
+	query := `INSERT INTO user_submissions (user_net_id, submission_id) VALUES ($1, $2)`
+
+	_, err := s.db.Exec(query, sub.User.ID, sub.ID)
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
+}
+
+func (s *Store) GradeSubmission(
+	grade float64,
+	submission *models.Submission,
+) error {
 	return nil
 }
 
-func (s *Store) InsertSubmissionFeedback(feedback string, submission *models.Submission) error {
+func (s *Store) InsertSubmissionFeedback(
+	feedback string,
+	submission *models.Submission,
+) error {
 	return nil
 }
 
@@ -1166,7 +1277,7 @@ func (s *Store) GetMembershipById(userid string) (
 		}
 		return nil, err
 	}
-	u.Membership = membership(m)
+	u.Membership = Membership(m)
 	return &u.Membership, nil
 }
 
@@ -1211,6 +1322,113 @@ func (s *Store) GetNameById(userid string) (
 		}
 		return nil, err
 	}
-	u.Membership = membership(m)
+	u.Membership = Membership(m)
 	return &u.Membership, nil
+}
+
+func (s *Store) InsertMedia(
+	m *models.Media,
+) (
+	*models.Media,
+	error,
+) {
+	query := `INSERT INTO media (type, path, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id`
+
+	row := s.db.QueryRow(
+		query,
+		m.FileType,
+		m.FilePath,
+		m.CreatedAt,
+		m.UpdatedAt,
+	)
+	err := row.Scan(&m.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (s *Store) GetMediaById(mediaId string) (
+	*models.Media,
+	error,
+) {
+	media := &models.Media{}
+
+	query := `SELECT id, type, path FROM media WHERE id = $1`
+	row := s.db.QueryRow(query, mediaId)
+
+	err := row.Scan(
+		&media.ID,
+		&media.FileType,
+		&media.FilePath,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ERR_RECORD_NOT_FOUND
+		}
+		return nil, err
+	}
+
+	return media, nil
+}
+
+func (s *Store) InsertMediaIntoCourse(
+	m *models.Media,
+) error {
+	query := `INSERT INTO course_media (course_id, media_id, media_path) VALUES ($1, $2, $3)`
+
+	_, err := s.db.Exec(query, m.AttributionsByType["course"], m.ID, m.FilePath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *Store) InsertMediaIntoCourseBanner(
+	m *models.Media,
+) error {
+
+	query := `UPDATE courses SET banner_id = $2 WHERE id = $1;`
+	_, err = s.db.Exec(query, m.AttributionsByType["course"], m.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) InsertMediaIntoAssignment(
+	m *models.Media,
+) error {
+	query := `INSERT INTO assignment_media (assignment_id, media_id, media_path) VALUES ($1, $2, $3)`
+
+	_, err := s.db.Exec(
+		query,
+		m.AttributionsByType["assignment"],
+		m.ID,
+		m.FilePath,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) InsertMediaIntoSubmission(
+	m *models.Media,
+) error {
+	query := `INSERT INTO submission_media (submission_id, media_id, media_path) VALUES ($1, $2, $3)`
+
+	_, err := s.db.Exec(
+		query,
+		m.AttributionsByType["submission"],
+		m.ID,
+		m.FilePath,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

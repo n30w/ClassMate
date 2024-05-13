@@ -9,8 +9,9 @@ import { Course } from "@/lib/types";
 import CourseItem from "@/components/homepage/Courses";
 
 export default function Home() {
+  const initCourses: Course[] = [];
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courseArray, setCourseArray] = useState<Course[]>(initCourses);
   const [navbarActive, setNavbarActive] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
   const router = useRouter();
@@ -18,53 +19,40 @@ export default function Home() {
   const currentTerm = "Spring 2024";
 
   const handleCreateCourse = (courseData: any) => {
-    setCourses([...courses, courseData]);
+    setCourseArray([...courseArray, courseData]);
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token")!;
     const permissions = localStorage.getItem("permissions");
-    if (permissions == "1") {
+
+    console.log(token);
+    if (permissions === "1") {
       setIsTeacher(true);
     }
-    if (token) {
-      const getCourses = async () => {
-        const fetchedCourses = await fetchCourses(token);
-        setCourses(fetchedCourses.courses);
-        console.log(courses);
-      };
-      getCourses();
-    }
-  }, []);
-
-  const fetchCourses = async (tok: string) => {
-    try {
-      const res: Response = await fetch("http://localhost:6789/v1/home", {
+    const fetchCourses = async (tok: string) => {
+      const route = "http://localhost:6789/v1/home";
+      const res: Response = await fetch(route, {
         method: "POST",
         body: JSON.stringify({
           token: tok,
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        return data;
-      } else {
-        console.error("Failed to fetch courses:", res.statusText);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      return [];
-    }
-  };
+      const { courses }: { courses: Course[] } = await res.json();
+      setCourseArray(courses);
+      console.log(courseArray);
+    };
+
+    fetchCourses(token).catch(console.error);
+  }, []);
 
   const handleIconClick = () => {
     setNavbarActive(!navbarActive);
   };
 
   return (
-    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh" }} className="bg-slate-900">
       <nav
         style={{
           backgroundImage: `url('/backgrounds/dashboard-bg.jpeg')`,
@@ -73,7 +61,7 @@ export default function Home() {
         }}
       >
         <div className="relative">
-          <div className="absolute inset-0 bg-black opacity-70"></div>
+          <div className="absolute inset-0 opacity-70"></div>
           <div className="py-8 px-32 flex justify-between items-center relative z-10">
             <div className="flex items-center gap-4">
               <Image
@@ -117,7 +105,7 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="bg-black bg-cover bg-no-repeat">
+      <div className="bg-cover bg-no-repeat">
         (
         <div className="flex items-center justify-between py-8 px-32">
           <h1 className="font-bold text-4xl text-white">{currentTerm}</h1>
@@ -132,7 +120,7 @@ export default function Home() {
         </div>
         )
         <div className="grid grid-cols-3 gap-4 mr-16">
-          {courses.map((course, i) => (
+          {courseArray.map((course, i) => (
             <CourseItem
               key={i}
               data={course}

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/n30w/Darkspace/internal/models"
 )
@@ -11,7 +10,6 @@ type UserStore interface {
 	InsertUser(u *models.User) error
 	GetUserByID(u *models.User) (*models.User, error)
 	GetUserByEmail(c models.Credential) (*models.User, error)
-	// GetUserByUsername(username models.Credential) (*models.User, error)
 	DeleteCourseFromUser(u *models.User, courseid string) error
 	GetMembershipById(netid string) (*models.Credential, error)
 	GetUserCourses(u *models.User) ([]models.Course, error)
@@ -26,10 +24,13 @@ func NewUserService(us UserStore) *UserService {
 }
 
 func (us *UserService) ValidateUser(netid string, password string) error {
-	u := &models.User{}
-	u.ID = netid
+	u := &models.User{
+		Entity: models.Entity{
+			ID: netid,
+		},
+	}
+
 	user, err := us.store.GetUserByID(u)
-	fmt.Printf("%s :: %s", user.Password.String(), password)
 	if err != nil {
 		return err
 	}
@@ -99,37 +100,39 @@ func (us *UserService) GetByID(userid string) (*models.User, error) {
 	return user, nil
 }
 
-// What if we want only some information from Assignments or Courses?
+// RetrieveFromUser currently is used for the homepage. It just retrieves
+// the user's courses.
 func (us *UserService) RetrieveFromUser(
 	userid string,
-	field string,
-) (interface{}, error) {
+) ([]models.Course, error) {
 	// TEMP
 	m := &models.User{}
 	m.ID = userid
+	courses, err := us.store.GetUserCourses(m)
+	if err != nil {
+		return nil, err
+	}
+	return courses, err
+}
+
+func (us *UserService) GetUserCourses(userId string) ([]models.Course, error) {
+	m := &models.User{
+		Entity: models.Entity{
+			ID: userId,
+		},
+	}
+
 	user, err := us.store.GetUserByID(m)
 	if err != nil {
 		return nil, err
 	}
-	if field == "Courses" {
-		courses, err := us.store.GetUserCourses(m)
-		if err != nil {
-			return nil, err
-		}
-		return courses, err
+
+	courses, err := us.store.GetUserCourses(user)
+	if err != nil {
+		return nil, err
 	}
 
-	model := reflect.ValueOf(user).Elem()
-	fieldValue := model.FieldByName(field)
-
-	if !fieldValue.IsValid() {
-		return nil, fmt.Errorf(
-			"field %s does not exist or is uninitialized",
-			field,
-		)
-	}
-
-	return fieldValue.Interface(), nil
+	return courses, err
 }
 
 func (us *UserService) GetMembership(netid string) (*models.Credential, error) {

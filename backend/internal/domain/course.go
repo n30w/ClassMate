@@ -8,17 +8,13 @@ import (
 
 type CourseStore interface {
 	InsertCourse(c *models.Course) (string, error)
-	GetCourseByName(name string) (*models.Course, error)
 	GetCourseByID(courseid string) (*models.Course, error)
 	GetRoster(c string) ([]models.User, error)
-	ChangeCourseName(c *models.Course, name string) error
-	DeleteCourse(c *models.Course) error
+	DeleteCourseByID(courseid string) error
 	AddStudent(c *models.Course, userid string) (*models.Course, error)
-	AddTeacher(courseId, userId string) error
 	RemoveStudent(c *models.Course, userid string) (*models.Course, error)
 	CheckCourseProfessorDuplicate(courseName string, teacherId string) (bool, error)
 	InsertIntoUserCourses(c *models.Course, userid string) error
-	InsertBanner(courseid string, bannerurl string) (string, error)
 }
 
 type CourseService struct {
@@ -29,7 +25,7 @@ func NewCourseService(c CourseStore) *CourseService { return &CourseService{stor
 
 // CreateCourse creates a new course in the database,
 // then assigns a UUID to it. This is not an idempotent method!
-func (cs *CourseService) CreateCourse(c *models.Course, teacherid string, bannerurl string) (*models.Course, error) {
+func (cs *CourseService) CreateCourse(c *models.Course, teacherid string) (*models.Course, error) {
 	// Check if course already exists. Can also try and do fuzzy name matching.
 	duplicate, err := cs.store.CheckCourseProfessorDuplicate(c.Title, teacherid)
 	if err != nil {
@@ -48,12 +44,6 @@ func (cs *CourseService) CreateCourse(c *models.Course, teacherid string, banner
 		return nil, err
 	}
 	c.ID = id
-	bannerid, err := cs.store.InsertBanner(c.ID, bannerurl)
-	if err != nil {
-		return nil, err
-	}
-	c.Banner = bannerid
-
 	err = cs.store.InsertIntoUserCourses(c, teacherid)
 	if err != nil {
 		return nil, err
@@ -107,40 +97,20 @@ func (cs *CourseService) AddToRoster(
 func (cs *CourseService) RemoveFromRoster(
 	courseid string,
 	userid string,
-) (*models.Course, error) {
-	c, err := cs.store.GetCourseByID(courseid)
-	if err != nil {
-		return nil, err
-	}
-	c, err = cs.store.RemoveStudent(c, userid)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-func (cs *CourseService) UpdateCourseName(
-	courseid string,
-	name string,
-) (*models.Course, error) {
-	c, err := cs.store.GetCourseByID(courseid)
-	if err != nil {
-		return nil, err
-	}
-
-	err = cs.store.ChangeCourseName(c, name)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-func (cs *CourseService) DeleteCourse(courseid string) error {
+) error {
 	c, err := cs.store.GetCourseByID(courseid)
 	if err != nil {
 		return err
 	}
-	err = cs.store.DeleteCourse(c)
+	_, err = cs.store.RemoveStudent(c, userid)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cs *CourseService) DeleteCourse(courseid string) error {
+	err := cs.store.DeleteCourseByID(courseid)
 	if err != nil {
 		return err
 	}

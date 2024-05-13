@@ -2,32 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
+@layer components {
+    .announcement-item {
+        @apply flex flex-col w-full p-6 h-full border shadow bg-gray-900 border-gray-700
+    }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
+    .assignment-item {
+        @apply flex flex-col w-full p-3 h-full border shadow bg-gray-900 border-gray-700
+    }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    .roster-item {
+        @apply inline-flex w-full p-2 h-full border shadow bg-gray-900 border-gray-700 align-middle space-x-2
+    }
+
+    .misc-item {
+        @apply flex flex-col space-y-2 w-full p-4 h-full border shadow bg-gray-900 border-gray-700
+    }
+
+    .text-hint {
+        @apply text-slate-500 italic
+    }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+    .text-balance {
+        text-wrap: balance;
+    }
+}
+
+
+html {
+    scrollbar-face-color: #646464;
+    scrollbar-base-color: #646464;
+    scrollbar-3dlight-color: #646464;
+    scrollbar-highlight-color: #646464;
+    scrollbar-track-color: #000;
+    scrollbar-arrow-color: #000;
+    scrollbar-shadow-color: #646464;
+    scrollbar-dark-shadow-color: #646464;
 }

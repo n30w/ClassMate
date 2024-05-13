@@ -5,12 +5,13 @@ import CreateAnnouncement from "./CreateAnnouncement";
 import AddButton from "@/components/buttons/AddButton";
 import AnnouncementDisplay from "./AnnouncementDisplay";
 import { useRouter, usePathname } from "next/navigation";
+import { Announcement } from "@/lib/types";
 
 interface props {
   courseId: string;
 }
 
-const Announcements: React.FC<props> = (props: props) => {
+const Announcements: React.FC<props> = ({ courseId }: props) => {
   const router = useRouter();
   const pathName = usePathname();
 
@@ -28,13 +29,13 @@ const Announcements: React.FC<props> = (props: props) => {
 
   async function fetchAnnouncements() {
     const response = await fetch(
-      `http://localhost:6789/v1/course/announcement/read/${props.courseId}`
+      `http://localhost:6789/v1/course/${courseId}/announcement/read`
     );
     const { announcements } = await response.json();
     setAnnouncements(announcements);
   }
 
-  const [announced, setAnnouncements] = useState<any>();
+  const [announced, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -52,16 +53,16 @@ const Announcements: React.FC<props> = (props: props) => {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between border-b-2 border-white mb-4 pb-4">
-        <h1 className="text-white font-bold text-2xl">Announcements</h1>
-        {isTeacher && (
-          <AddButton
-            onClick={() => {
-              setIsCreatingAnnouncement(true);
-            }}
-          />
-        )}
-      </div>
+      {isTeacher && (
+        <AddButton
+          fullWidth={true}
+          text="Create Announcement"
+          onClick={() => {
+            setIsCreatingAnnouncement(true);
+          }}
+        />
+      )}
+
       <AnnouncementDisplay announcements={announced} />
 
       {isCreatingAnnouncement && (
@@ -71,7 +72,7 @@ const Announcements: React.FC<props> = (props: props) => {
             refreshData();
           }}
           token={token}
-          params={{ id: props.courseId }}
+          params={{ id: courseId }}
         />
       )}
     </div>
