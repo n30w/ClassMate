@@ -5,52 +5,21 @@ import CloseButton from "@/components/buttons/CloseButton";
 
 interface props {
   onClose: () => void;
-  onAnnouncementCreate: (announcementData: any) => void;
+  // onAnnouncementCreate: (announcementData: any) => void;
+  params: {
+    id: string;
+  };
+  token: string;
 }
 
-const CreateAnnouncement: React.FC<props> = (props: props) => {
-  const currentDate = new Date();
-
-  const formattedDate = `${currentDate
-    .toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    })
-    .replace(/\//g, "-")} ${currentDate.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
-
-  const [announcementData, setAnnouncementData] = useState({
-    id: "",
+const CreateAnnouncement: React.FC<props> = (props) => {
+  const initialAnnouncement = {
+    courseId: props.params.id,
+    token: props.token,
     title: "",
-    date: formattedDate,
     description: "",
-  });
-
-  const postNewAnnouncement = async (announcementData: any) => {
-    try {
-      const res: Response = await fetch("/v1/course/announcement/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(announcementData),
-      });
-      if (res.ok) {
-        const newAnnouncement = await res.json();
-        newAnnouncement.name = announcementData.title;
-        newAnnouncement.id = announcementData.id;
-        newAnnouncement.description = announcementData.description;
-        newAnnouncement.date = announcementData.date;
-      } else {
-        console.error("Failed to create announcement:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error creating announcement:", error);
-    }
   };
+  const [announcementData, setAnnouncementData] = useState(initialAnnouncement);
 
   const handleChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
@@ -62,13 +31,24 @@ const CreateAnnouncement: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idNum = Date.now().toString();
-    setAnnouncementData({
-      ...announcementData,
-      id: idNum,
-    });
-    props.onAnnouncementCreate({ ...announcementData, id: idNum });
-    postNewAnnouncement(announcementData);
+    const postNewAnnouncement = async (announcementData: any) => {
+      const res: Response = await fetch(
+        `http://localhost:6789/v1/course/${announcementData.courseId}/announcement/create`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            courseid: announcementData.courseid,
+            token: announcementData.token,
+            title: announcementData.title,
+            description: announcementData.description,
+            media: [],
+          }),
+        }
+      );
+      return res;
+    };
+
+    postNewAnnouncement(announcementData).catch(console.error);
     props.onClose();
   };
 

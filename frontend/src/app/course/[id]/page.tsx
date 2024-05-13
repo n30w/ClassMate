@@ -1,79 +1,239 @@
+"use client";
+
 import Announcements from "@/components/coursepage/Announcements";
 import Assignments from "@/components/coursepage/Assignments";
-import Discussions from "@/components/Discussions";
-import { Announcement, Assignment, Discussion } from "@/lib/types";
-import Navbar from "@/components/Navbar";
-import apiPath from "@/lib/helpers/apiPath";
+import { Assignment, Course, User } from "@/lib/types";
+import AddStudent from "./AddStudent";
+import { useEffect, useState } from "react";
+import AddButton from "@/components/buttons/AddButton";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-// These data names must match what the API returns.
-interface HomepageData {
-  name: string;
-  teacher_name: string;
-  assignments: Assignment[];
-  discussions: Discussion[];
-  announcements: Announcement[];
-}
-
-// This function is adapted from:
-// https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#fetching-data-on-the-server-with-fetch
-async function getData(of: string): Promise<HomepageData> {
-  const path = apiPath(`/v1/course/homepage/${of}`);
-  console.log(path);
-
-  const res = await fetch(path, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+export default function Page({ params }: { params: { id: string } }) {
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [data, setData] = useState<Course>({
+    assignments: [],
+    roster: [],
+    id: "",
+    name: "",
+    description: "",
+    professor: "",
+    banner: "",
+    created_at: "",
+    updated_at: "",
+    deleted_at: "",
   });
+  const [roster, setRoster] = useState<User[]>([]);
+  const [token, setToken] = useState("");
+  const router = useRouter();
 
-  if (!res.ok) {
-    // This will activate the closest `error.js` Error Boundary
-    throw new Error("Failed to fetch data");
-  }
+  useEffect(() => {
+    const permissions = localStorage.getItem("permissions");
+    if (permissions === "1") {
+      setIsTeacher(true);
+    }
 
-  return res.json();
-}
+    const token = localStorage.getItem("token");
+    if (token) {
+      setToken(token);
+    }
 
-// Dynamic route example found here:
-// https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#example
-export default async function Page({ params }: { params: { slug: string } }) {
-  const data = await getData(params.slug);
+    const fetchData = async () => {
+      const path = `http://localhost:6789/v1/course/${params.id}/homepage`;
+      const response = await fetch(path);
+      const { course, roster }: { course: Course; roster: User[] } =
+        await response.json();
+      return { course, roster };
+    };
+
+    fetchData()
+      .then(({ course, roster }) => {
+        setData(course);
+        setRoster(roster);
+        console.log("SUCCESSFULLY GOT DATA", data);
+      })
+      .catch(console.error);
+  }, [params.id]);
+
+  const url = params.id;
+
+  const handleDeleteCourse = async () => {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", `${token}`);
+    headers.append("Access-Control-Request-Method", "POST");
+    try {
+      const response = await fetch(
+        `http://localhost:6789/v1/course/${params.id}/delete`,
+        {
+          method: "DELETE",
+          headers: headers,
+        }
+      );
+      if (response.ok) {
+        router.push("/homepage");
+        console.log("Course deleted successfully");
+      } else {
+        console.error("Failed to delete course");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
+
+  const handleDeleteStudent = async (netId: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:6789/v1/course/${params.id}/${netId}/deletestudent`,
+        {
+          method: "DELETE",
+          headers: {
+            "Access-Control-Request-Method": "POST",
+          },
+        }
+      );
+      if (response.ok) {
+        window.location.reload();
+        console.log("Student deleted successfully");
+      } else {
+        console.error("Failed to delete student");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
 
   return (
-    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
-      <Navbar />
-      <div
-        style={{
-          backgroundImage: `url('/backgrounds/course-bg.jpg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          width: "100%",
-          height: "300px",
-        }}
-      >
+    <>
+      <div>
         <div className="relative">
-          <div className="py-4 px-8 ml-32 mt-32 h-32 w-96 absolute bg-black bg-opacity-70 flex flex-col justify-center">
-            <h1 className="text-white text-3xl font-bold pb-2 block text-opacity-100">
-              {data.name}
-            </h1>
-            <h2 className="text-white text-2xl block text-opacity-100">
-              with, {data.teacher_name}
-            </h2>
+          <div className="bg-slate-900 py-4 px-8 ml-32 mt-32 h-32 w-fit absolute bg-opacity-70 flex flex-col justify-center text-white">
+            {data && (
+              <>
+                <h1 className="text-4xl font-bold pb-2 block text-opacity-100">
+                  {data.name}
+                </h1>
+                <p>COURSE ID: {data.id}</p>
+              </>
+            )}
           </div>
-          <div className="flex justify-end">
-            <Discussions />
+        </div>
+
+        {data.banner && (
+          <div className={"w-full h-[400px] flex"}>
+            <Image
+              src={`http://localhost:6789/v1/course/${data.banner}/banner/read`}
+              alt="Course Background"
+              className="w-full h-full"
+              style={{ objectFit: "cover" }}
+              width={400}
+              height={400}
+            />
           </div>
+        )}
+      </div>
+
+      {/* ANNOUNCEMENT AND ASSIGNMENTS Section*/}
+      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
+        <div className="flex justify-around col-span-2">
+          {data && (
+            <div className="flex flex-col w-full space-y-4">
+              <h2 className="text-white font-bold text-2xl">Announcements</h2>
+              <Announcements courseId={url} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-around">
+          {data && (
+            <div className="flex flex-col space-y-4">
+              <h2 className="text-white font-bold text-2xl">Assignments</h2>
+              <Assignments entries={data.assignments!} courseId={url} />
+            </div>
+          )}
         </div>
       </div>
-      <div className="flex justify-around p-16">
-        <div className="flex flex-col w-96">
-          <Announcements entries={data.announcements} />
+
+      {/* ROSTER AND INSTRUCTOR section */}
+      <div className="grid grid-flow-row grid-cols-3 grid-rows-1 gap-2 mx-20 my-12 mb-20">
+        <div className="flex justify-around">
+          {data && (
+            <div className="flex flex-col w-full space-y-4">
+              <h2 className="text-white font-bold text-2xl">Roster</h2>
+              {isTeacher && (
+                <AddButton
+                  text={"Add Student"}
+                  fullWidth={true}
+                  onClick={() => {
+                    setIsAddingStudent(true);
+                  }}
+                />
+              )}
+              <div
+                className={
+                  "w-full h-full grid grid-flow-row border-slate-200 border-opacity-10 border-2"
+                }
+              >
+                {roster ? (
+                  roster.map((user, i) => (
+                    <div
+                      className="roster-item hover:bg-gray-700 text-white text-md"
+                      key={i}
+                    >
+                      <h4 className="font-bold w-full">{user.full_name}</h4>
+                      <p>{user.email}</p>
+                      {isTeacher && (
+                        <button
+                          onClick={() => handleDeleteStudent(user.id)}
+                          className="text-white bg-red-500 hover:bg-red-700 active:bg-red-900 font-bold py-2 px-4 rounded mt-2 w-32"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className={"roster-item"}>
+                      <p className={"text-hint p-2"}>
+                        Students will appear here.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col">
-          <Assignments entries={data.assignments} />
+        <div className="flex justify-around">
+          {data && (
+            <div className="flex flex-col space-y-4">
+              <h2 className="text-white font-bold text-2xl">Instructors</h2>
+              <div></div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+
+      {isAddingStudent && (
+        <AddStudent
+          onClose={() => {
+            setIsAddingStudent(false);
+          }}
+          courseId={url}
+        />
+      )}
+      {isTeacher && (
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={handleDeleteCourse}
+            className="bg-red-500 hover:bg-red-700 active:bg-red-900 text-white font-bold py-2 px-4 rounded"
+          >
+            Delete Course
+          </button>
+        </div>
+      )}
+    </>
   );
 }

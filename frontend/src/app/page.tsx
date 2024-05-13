@@ -1,144 +1,145 @@
 "use client";
 
-import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import CreateCourse from "@/components/CreateCourse";
-import AddButton from "@/components/buttons/AddButton";
-import { Course } from "@/lib/types";
-import CourseItem from "@/components/homepage/Courses";
+import Image from "next/image";
+import Link from "next/link";
+import { Token } from "@/lib/types";
 
-export default function Home() {
-  const [isCreatingCourse, setIsCreatingCourse] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [navbarActive, setNavbarActive] = useState(false);
+export default function Page() {
+  const [userLogin, setUserLogin] = useState({
+    netid: "",
+    password: "",
+  });
+  const [loginError, setLoginError] = useState<string>("");
   const router = useRouter();
+  const [token, setToken] = useState("");
+  //
+  // useEffect(() => {
+  //   const t = localStorage.getItem("token");
+  //   if (t) {
+  //     setToken(t);
+  //     router.push(`/homepage`);
+  //   }
+  // }, []);
 
-  const currentTerm = "Spring 2024";
-
-  const handleCreateCourse = (courseData: any) => {
-    setCourses([...courses, courseData]);
-  };
-
-  const fetchCourses = async () => {
+  const loginUser = async () => {
     try {
-      const res: Response = await fetch("/v1/course/read", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const res: Response = await fetch("http://localhost:6789/v1/user/login", {
+        method: "POST",
+        body: JSON.stringify({
+          netid: userLogin.netid,
+          password: userLogin.password,
+        }),
       });
-
       if (res.ok) {
-        const courses = await res.json();
-        return courses;
+        const data: Token = await res.json();
+        localStorage.setItem("token", data.authentication_token.token);
+        localStorage.setItem("permissions", data.permissions);
+        router.push(`/homepage`);
       } else {
-        console.error("Failed to fetch courses:", res.statusText);
+        console.error("Failed to login user:", res.statusText);
         return [];
       }
     } catch (error) {
-      console.error("Error fetching courses:", error);
+      console.error("Error fetching logging user in:", error);
       return [];
     }
   };
 
-  useEffect(() => {
-    const getCourses = async () => {
-      const fetchedCourses = await fetchCourses();
-      setCourses(fetchedCourses);
-    };
+  const handleChange = (e: { target: { name: any; value: any } }) => {
+    const { name, value } = e.target;
+    setUserLogin({
+      ...userLogin,
+      [name]: value,
+    });
+  };
 
-    getCourses();
-  }, []);
-
-  const handleIconClick = () => {
-    setNavbarActive(!navbarActive);
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    loginUser();
   };
 
   return (
-    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
-      <nav
-        style={{
-          backgroundImage: `url('/backgrounds/dashboard-bg.jpeg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="relative">
-          <div className="absolute inset-0 bg-black opacity-70"></div>
-          <div className="py-8 px-32 flex justify-between items-center relative z-10">
-            <div className="flex items-center gap-4">
-              <Image
-                src="/backgrounds/NYU-logo.png"
-                width="150"
-                height="39"
-                alt="NYU Logo"
-              />
-              <Image
-                src="/backgrounds/darkspace.png"
-                width="200"
-                height="39"
-                alt="Darkspace Logo"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              {navbarActive && (
-                <div className="bg-white h-16 w-40 p-2 flex justify-center items-center rounded-md gap-4">
-                  <p
-                    className="text-black border-black hover:text-gray-500"
-                    onClick={() => router.push("/login")}
-                  >
-                    Login
-                  </p>
-                  <p
-                    className="text-black border-black hover:text-gray-500"
-                    onClick={() => router.push("/signup")}
-                  >
-                    Sign up
-                  </p>
-                </div>
-              )}
-              <Image
-                src="/backgrounds/profile-icon.png"
-                width="50"
-                height="39"
-                alt="Profile Icon"
-                onClick={handleIconClick}
-              />
-            </div>
-          </div>
-        </div>
-      </nav>
-      <div className="bg-black bg-cover bg-no-repeat">
-        <div className="flex items-center justify-between py-8 px-32">
-          <h1 className="font-bold text-4xl text-white">{currentTerm}</h1>
-          <AddButton
-            text={"New Course"}
-            onClick={() => {
-              setIsCreatingCourse(true);
-            }}
+    <div className="flex h-screen">
+      <div className="h-screen bg-black py-8 px-32 w-1/2">
+        <div className="flex items-center">
+          <Image
+            src="/backgrounds/NYU-logo.png"
+            width="100"
+            height="39"
+            alt="NYU Logo"
+            className="z-10"
+          />
+          <Image
+            src="/backgrounds/darkspace.png"
+            width="150"
+            height="39"
+            alt="Darkspace Logo"
+            className="z-10"
           />
         </div>
-
-        {courses.map((course, i) => (
-          <CourseItem
-            key={i}
-            data={course}
-            onClick={() => {
-              router.push(`/course/${course.id}`);
-            }}
-          />
-        ))}
-
-        {isCreatingCourse && (
-          <CreateCourse
-            onClose={() => {
-              setIsCreatingCourse(false);
-            }}
-            onCourseCreate={handleCreateCourse}
-          />
-        )}
+        <div className="flex flex-col my-32">
+          <h1 className="text-white font-bold text-3xl pb-16">Log in</h1>
+          <form
+            action="login.php"
+            method="post"
+            className="flex flex-col"
+            // onClick={handleFormClick}
+            onSubmit={handleSubmit}
+          >
+            <label htmlFor="netid" className="text-white font-light py-2">
+              NetID<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="netid"
+              name="netid"
+              placeholder="abc123"
+              required
+              className="w-80 h-10 px-4 mb-8"
+              onChange={handleChange}
+            />
+            <label htmlFor="password" className="text-white font-light py-2">
+              Password<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••••"
+              required
+              className="w-80 h-10 px-4 mb-8"
+              onChange={handleChange}
+            />
+            {loginError && <p className="text-red-500 pb-2">{loginError}</p>}
+            <input
+              type="submit"
+              value="LOG IN"
+              className="text-white font-bold w-24 h-10 px-4 border border-white my-16"
+            />
+          </form>
+          <h3 className="text-white font-light text-sm text-center">
+            Don&apos;t have an account yet?{" "}
+            <Link href="signup" className="underline">
+              Sign up
+            </Link>
+          </h3>
+        </div>
       </div>
+      <div
+        // className={`w-1/2 overflow-hidden ${
+        //   isBlurred
+        //     ? "filter blur-sm scale-105 transition-all duration-10000"
+        //     : ""
+        // }`}
+        className="w-1/2"
+        style={{
+          backgroundImage: `url('/backgrounds/auth-bg.png')`,
+          backgroundSize: "cover",
+          backgroundPosition: "right",
+        }}
+      ></div>
     </div>
   );
 }

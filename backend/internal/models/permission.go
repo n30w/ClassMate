@@ -1,14 +1,57 @@
-package domain
+package models
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
+
+// member defines the affiliation of a user, whether they are a student,
+// a teacher, or an administrator. In other words,
+// it defines what group someone is a part of.
+// The frontend will send either a 0 for STUDENT or a 1 for TEACHER.
+// The affiliation ADMIN is only created server-side.
+// The member type implements the Credential interface.
+type member uint8
+
+const (
+	STUDENT member = iota
+	TEACHER
+	ADMIN
+)
+
+// String returns the string representation of the membership type.
+func (m member) String() string {
+	switch m {
+	case STUDENT:
+		return "STUDENT"
+	case TEACHER:
+		return "TEACHER"
+	case ADMIN:
+		return "ADMIN"
+	default:
+		return ""
+	}
+}
+
+// Valid returns an error, checking whether the membership value
+// provided is even valid.
+func (m member) Valid() error {
+	if m > 2 || m < 0 {
+		return errors.New("invalid membership enumeration")
+	}
+
+	return nil
+}
 
 type scope uint8
 
 const (
 	// Determines what one can do with themselves.
+
 	SELF scope = iota
 
 	// Scopes for general pedagogy.
+
 	COURSE
 	QUIZ
 	ASSIGNMENT
@@ -16,8 +59,9 @@ const (
 	PROJECT
 
 	// Object specific and contextual scopes.
+
 	COMMENT
-	MEDIA
+	MEDIAS // MEDIAS has an "s", in order to differentiate between MEDIA
 	SUBMIT
 )
 
@@ -43,6 +87,9 @@ func createPermissions() permissions {
 		ASSIGNMENT: permission{},
 		DISCUSSION: permission{},
 		PROJECT:    permission{},
+		COMMENT:    permission{},
+		MEDIAS:     permission{},
+		SUBMIT:     permission{},
 	}
 }
 
@@ -119,29 +166,29 @@ func fromString(s string) permission {
 	return p
 }
 
-// accessControl defines a user's membership and their permissions.
+// AccessControl defines a user's membership and their permissions.
 // Essentially, the scope of their abilities. It abstracts away type permissions
 // in order to conceal behavior and interference in the higher levels
 // of the API. AccessControl exists on pedagogical types or users as a pointer.
 // Reason being, remember that in Go, pointers have a null value as their
 // zero value. This means that a null value has the meaning that an object
 // has no permissions at all.
-type accessControl struct {
+type AccessControl struct {
 	perms permissions
 }
 
-func (a accessControl) read(s scope) bool {
+func (a AccessControl) Read(s scope) bool {
 	return a.perms[s].read
 }
 
-func (a accessControl) write(s scope) bool {
+func (a AccessControl) Write(s scope) bool {
 	return a.perms[s].write
 }
 
-func (a accessControl) update(s scope) bool {
+func (a AccessControl) Update(s scope) bool {
 	return a.perms[s].update
 }
 
-func (a accessControl) delete(s scope) bool {
+func (a AccessControl) Delete(s scope) bool {
 	return a.perms[s].delete
 }

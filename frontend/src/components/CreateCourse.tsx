@@ -10,10 +10,8 @@ interface props {
 
 const CreateCourse: React.FC<props> = (props: props) => {
   const [courseData, setCourseData] = useState({
-    id: "",
     title: "",
     professor: "",
-    location: "",
   });
 
   const postNewCourse = async (courseData: any) => {
@@ -23,14 +21,12 @@ const CreateCourse: React.FC<props> = (props: props) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(courseData),
+        body: JSON.stringify({
+          title: courseData.title,
+          teacherid: courseData.professor
+        }),
       });
       if (res.ok) {
-        const newCourse = await res.json();
-        newCourse.name = courseData.title;
-        newCourse.id = courseData.id;
-        newCourse.teachers.push(courseData.professor);
-        newCourse.archived = false;
       } else {
         console.error("Failed to create course:", res.statusText);
       }
@@ -49,12 +45,7 @@ const CreateCourse: React.FC<props> = (props: props) => {
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const idNum = Date.now().toString();
-    setCourseData({
-      ...courseData,
-      id: idNum,
-    });
-    props.onCourseCreate({ ...courseData, id: idNum });
+    props.onCourseCreate({ ...courseData });
     postNewCourse(courseData);
     props.onClose();
   };
@@ -79,40 +70,6 @@ const CreateCourse: React.FC<props> = (props: props) => {
               id="title"
               name="title"
               value={courseData.title}
-              onChange={handleChange}
-              className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
-              required
-            />
-          </div>
-          <div className="mb-2">
-            <label
-              htmlFor="teacher"
-              className="block text-lg font-medium text-gray-700 py-2"
-            >
-              Professor:
-            </label>
-            <input
-              type="text"
-              id="teacher"
-              name="professor"
-              value={courseData.professor}
-              onChange={handleChange}
-              className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
-              required
-            />
-          </div>
-          <div className="mb-2">
-            <label
-              htmlFor="location"
-              className="block text-lg font-medium text-gray-700 py-2"
-            >
-              Location:
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={courseData.location}
               onChange={handleChange}
               className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md h-8"
               required

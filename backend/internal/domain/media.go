@@ -1,23 +1,89 @@
 package domain
 
-import "time"
-
-type filetype int
-
-const (
-	JPG filetype = iota
-	PNG
-	PDF
-	M4A
-	MP3
-	TXT
-	NULL
+import (
+	"github.com/n30w/Darkspace/internal/models"
 )
 
-type Media struct {
-	Name               string    `json:"name"`
-	Uuid               string    `json:"uuid"`
-	DateUploaded       time.Time `json:"date_uploaded"`
-	CourseAttributions []Course  `json:"course_attributions"`
-	FileType           string    `json:"file_type"`
+// announcement and discussion services
+type MediaStore interface {
+	GetMediaById(id string) (*models.Media, error)
+	InsertMedia(media *models.Media) (*models.Media, error)
+	InsertMediaIntoCourse(m *models.Media) error
+	InsertMediaIntoAssignment(m *models.Media) error
+	InsertMediaIntoSubmission(m *models.Media) error
+	InsertMediaIntoCourseBanner(m *models.Media) error
+}
+
+type MediaService struct {
+	store MediaStore
+}
+
+func NewMediaService(m MediaStore) *MediaService { return &MediaService{store: m} }
+
+func (ms *MediaService) AddBanner(
+	media *models.Media,
+) (*models.Media, error) {
+	media, err := ms.store.InsertMedia(media)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.store.InsertMediaIntoCourse(media)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.store.InsertMediaIntoCourseBanner(media)
+	if err != nil {
+		return nil, err
+	}
+
+	return media, nil
+}
+
+func (ms *MediaService) AddAssignmentMedia(
+	media *models.Media,
+) (*models.Media, error) {
+	media, err := ms.store.InsertMedia(media)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.store.InsertMediaIntoAssignment(media)
+	if err != nil {
+		return nil, err
+	}
+	return media, nil
+}
+
+func (ms *MediaService) AddSubmissionMedia(
+	media *models.Media,
+) (*models.Media, error) {
+	media, err := ms.store.InsertMedia(media)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.store.InsertMediaIntoSubmission(media)
+	if err != nil {
+		return nil, err
+	}
+	return media, nil
+}
+
+// GetMedia retrieves a piece of media from a file system given a path.
+// It does two things: finds a piece of media in the database by its
+// path and, if it does find it, returns it as a struct representation.
+func (ms *MediaService) GetMedia(id string) (*models.Media, error) {
+	var media *models.Media
+	var err error
+
+	if id == models.DefaultImageId {
+		media = models.NewMedia("default_image", models.JPG)
+		return media, nil
+	}
+
+	media, err = ms.store.GetMediaById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return media, nil
 }

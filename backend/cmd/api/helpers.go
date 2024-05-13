@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"time"
+	"github.com/n30w/Darkspace/internal/models"
+	"path/filepath"
+
 )
 
 // jsonWrap wraps a json message response before it gets sent out.
@@ -135,7 +135,11 @@ func (app *application) writeJSON(
 	// Add headers, then write to the output stream.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(js)
+	_, err = w.Write(js)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -155,22 +159,25 @@ func jsonBuilder(data any) ([]byte, error) {
 	return js, nil
 }
 
-// Database helpers
-
-// openDB opens a connection to the database using a certain config.
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open(cfg.db.driver, cfg.db.dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err = db.PingContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+// File Helpers
+func GetFileType(filename string) models.FileType {
+    extension := strings.ToLower(filepath.Ext(filename))
+    switch extension {
+    case ".jpg", ".jpeg":
+        return models.JPG
+    case ".png":
+        return models.PNG
+    case ".pdf":
+        return models.PDF
+    case ".m4a":
+        return models.M4A
+    case ".mp3":
+        return models.MP3
+    case ".txt":
+        return models.TXT
+    case ".xlsx":
+        return models.XLSX
+    default:
+        return models.NULL
+    }
 }

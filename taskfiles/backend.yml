@@ -2,14 +2,85 @@ version: "3"
 
 tasks:
   dev:
+    dir: backend
+    cmds:
+      - task back:db-up -s
+      - defer: task back:db-down -s
+      - task back:run -s
+  run:
     dir: backend/cmd/api
     cmds:
       - go run .
   test:
     dir: backend
     cmds:
-      - go test -v ./backend/**
+      - task back:db-test-up -s
+      - defer: task back:db-test-down -s
+      - go test -v ./internal/**
   tidy:
     dir: backend
     cmds:
       - go mod tidy
+
+  # Docker commands
+
+  db-up:
+    dir: backend/remote/development
+    cmds:
+      # First check if docker engine is running.
+      # Retrieved from: https://stackoverflow.com/a/55283209/20087581
+      - |
+        if ! docker info > /dev/null 2>&1; then
+          echo "This script uses docker, and it isn't running - please start docker and try again."
+          exit 1
+        fi
+        
+      # Then run compose
+      - docker compose --env-file ../../.env  up -d
+
+  # db-stop stops running containers, does not delete them.
+  db-stop:
+    dir: backend/remote/development
+    cmds:
+      - docker compose stop
+  db-down:
+    dir: backend/remote/development
+    cmds:
+      - docker compose down
+
+  # Rebuild the container(s) due to adjusted settings.
+  db-build:
+    dir: backend/remote/development
+    cmds:
+      - docker compose build
+
+  # db-down-clean deletes volumes and their data! See:
+  # https://docs.docker.com/compose/gettingstarted/#step-8-experiment-with-some-other-commands
+  db-down-clean:
+    dir: backend/remote/development
+    cmds:
+      - docker compose down --volumes
+      # https://forums.docker.com/t/how-to-delete-cache/5753/2
+      # The darkspace-backend-database name comes from the
+      # compose.yaml file. It starts with the name,
+      # darkspace-backend, then the name of the service,
+      # in this case it is "database".
+      - docker rmi darkspace-dev-database
+
+  # db-test-up does a docker compose on the test database.
+  db-test-up:
+    dir: backend/remote/test
+    cmds:
+      - |
+          if ! docker info > /dev/null 2>&1; then
+            echo "This script uses docker, and it isn't running - please start docker and try again."
+            exit 1
+          fi
+      - docker compose -f compose.yaml --env-file ../../.env up -d
+
+  # db-test-down does a db-down-clean operation on the test compose file.
+  db-test-down:
+    dir: backend/remote/test
+    cmds:
+      - docker compose down --volumes --remove-orphans
+      - docker rmi darkspace-test-database
